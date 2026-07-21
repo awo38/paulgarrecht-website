@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="vendor/gsap/ScrollTrigger.min.js"></script>
 <style>
   :root{
     --ink:#F3F1E8;
@@ -80,6 +80,17 @@
     align-items:center; gap:4vw;
     width:100%; max-width:1280px; padding:0 6vw;
   }
+  .portrait{
+    width:104px; height:104px; margin-bottom:28px;
+    border:1px dashed var(--muted); border-radius:4px;
+    background:var(--ink-2); color:var(--muted);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  }
+  .portrait svg{ width:38px; height:38px; opacity:0.55; }
+  .portrait-tag{
+    font-family:'JetBrains Mono', monospace; font-size:9px;
+    letter-spacing:0.08em; text-transform:uppercase;
+  }
   .hero-copy .eyebrow{
     font-size:12px; letter-spacing:0.18em; color:var(--blue);
     text-transform:uppercase; margin-bottom:18px; display:block;
@@ -148,7 +159,7 @@
 
   /* --- Experience timeline --- */
   .tl{ position:relative; }
-  .tl-line{ position:absolute; left:9px; top:8px; bottom:8px; width:1px; background:var(--line); }
+  .tl-line{ position:absolute; left:9px; top:8px; bottom:8px; width:1px; background:var(--blue); transform-origin:top; transform:scaleY(0); }
   .tl-item{ position:relative; padding:0 0 56px 46px; }
   .tl-item:last-child{ padding-bottom:0; }
   .tl-dot{
@@ -240,6 +251,13 @@
   <div class="hero-pin">
     <div class="hero-grid">
       <div class="hero-copy">
+        <div class="portrait" aria-label="Platzhalter für Porträtfoto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
+          </svg>
+          <span class="portrait-tag">Foto folgt</span>
+        </div>
         <span class="eyebrow mono">Projektingenieur — Kerntechnik</span>
         <h1 class="display">Paul<br>Garrecht</h1>
         <p class="role">Projektingenieur &amp; Einsatzleiter im kerntechnischen Rückbau bei <b>MHC Anlagentechnik</b>. Mechatronik-Ingenieur, internationaler Schweißfachingenieur (IWE) — Präzision ist der Beruf, nicht nur der Anspruch.</p>
@@ -249,10 +267,12 @@
         <svg id="schematic" viewBox="0 0 700 470" xmlns="http://www.w3.org/2000/svg">
           <!-- dimension lines -->
           <g class="draw" id="dims">
-            <line class="sch-line-dim" x1="30" y1="90" x2="30" y2="400"/>
-            <line class="sch-line-dim" x1="24" y1="90" x2="36" y2="90"/>
-            <line class="sch-line-dim" x1="24" y1="400" x2="36" y2="400"/>
-            <text class="sch-label" x="12" y="245" transform="rotate(-90 12 245)">REV.03 · MHC-ANLAGENTECHNIK</text>
+            <line id="dims-line" class="sch-line-dim" x1="30" y1="90" x2="30" y2="400"/>
+            <g id="dims-deco">
+              <line class="sch-line-dim" x1="24" y1="90" x2="36" y2="90"/>
+              <line class="sch-line-dim" x1="24" y1="400" x2="36" y2="400"/>
+              <text class="sch-label" x="12" y="245" transform="rotate(-90 12 245)">REV.03 · MHC-ANLAGENTECHNIK</text>
+            </g>
           </g>
 
           <!-- main vessel: horizontal shell + heads + nozzle stubs -->
@@ -465,6 +485,35 @@
       opacity: 1,
       duration: 0.4,
     }, i * 0.9 + 0.6);
+  });
+
+  // finale: zoom into the dimension line — it becomes the thread the timeline below picks up
+  const zoomStart = (groups.length - 1) * 0.9 + 0.8;
+  tl.to('#vessel, #pipeL, #pipeR, #valve, #callouts, #dims-deco', {
+    opacity: 0,
+    duration: 0.5,
+  }, zoomStart)
+  .to('#dims-line', {
+    stroke: '#2C4A9E',
+    duration: 0.4,
+  }, zoomStart)
+  .to('#schematic', {
+    scale: 16,
+    duration: 1.3,
+    ease: 'power2.in',
+    transformOrigin: '4% 52%',
+  }, zoomStart);
+
+  // Zeitstrahl: die Linie wächst mit, während man durch die Erfahrung scrollt
+  gsap.to('.tl-line', {
+    scaleY: 1,
+    ease: 'none',
+    scrollTrigger:{
+      trigger: '.tl',
+      start: 'top 70%',
+      end: 'bottom 80%',
+      scrub: 0.6,
+    }
   });
 
   // subtle fade-up for panels
