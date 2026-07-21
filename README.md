@@ -27,7 +27,7 @@ Gedacht für [Vercel](https://vercel.com) (Static-Site-Import, kein Framework n�
 ## Struktur
 
 - `index.html` — die eigentliche Website
-- `impressum.html` — Impressum & Datenschutzhinweise (**Platzhalter-Adresse — vor Live-Schaltung mit echten Daten befüllen**)
+- `impressum.html` — Impressum & Datenschutzhinweise
 
 ## Entstehungsprozess
 
