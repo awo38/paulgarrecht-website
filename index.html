@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paul Garrecht — Projektingenieur</title>
+<meta name="description" content="Paul Garrecht — Projektingenieur & Einsatzleiter im kerntechnischen Rückbau bei MHC Anlagentechnik. Mechatronik-Ingenieur, internationaler Schweißfachingenieur (IWE).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  :root{
+    --ink:#F3F1E8;
+    --ink-2:#EBE8DB;
+    --ink-3:#E6E3D5;
+    --line:#D9D5C4;
+    --blue:#2C4A9E;
+    --blue-dim:#7286BC;
+    --paper:#171A16;
+    --muted:#726C5C;
+    --amber:#A8620F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--blue); color:var(--ink); }
+
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+
+  /* --- grid backdrop --- */
+  .grid-bg{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:64px 64px;
+    opacity:0.7;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, black 40%, transparent 90%);
+  }
+
+  header.nav{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:22px 6vw;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; letter-spacing:0.08em;
+    color:var(--muted);
+    backdrop-filter: blur(6px);
+    background:linear-gradient(180deg, rgba(243,241,232,0.82), transparent);
+  }
+  header.nav .id{ color:var(--paper); }
+  header.nav nav a{
+    color:var(--muted); text-decoration:none; margin-left:24px;
+    text-transform:uppercase;
+  }
+  header.nav nav a:hover{ color:var(--blue); }
+
+  section{ position:relative; z-index:1; }
+
+  /* --- HERO --- */
+  .hero{
+    height:340vh;
+    position:relative;
+  }
+  .hero-pin{
+    position:sticky; top:0; height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .hero-grid{
+    display:grid; grid-template-columns: 1fr 1.1fr;
+    align-items:center; gap:4vw;
+    width:100%; max-width:1280px; padding:0 6vw;
+  }
+  .hero-copy .eyebrow{
+    font-size:12px; letter-spacing:0.18em; color:var(--blue);
+    text-transform:uppercase; margin-bottom:18px; display:block;
+  }
+  .hero-copy h1{
+    font-size:clamp(38px, 5.4vw, 68px);
+    line-height:1.04;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .hero-copy .role{
+    margin-top:20px; color:var(--muted); font-size:17px; line-height:1.6;
+    max-width:38ch;
+  }
+  .hero-copy .role b{ color:var(--paper); font-weight:500; }
+  .scroll-cue{
+    margin-top:48px; font-size:11px; color:var(--muted);
+    display:flex; align-items:center; gap:10px;
+    font-family:'JetBrains Mono', monospace; letter-spacing:0.1em;
+  }
+  .scroll-cue .bar{ width:1px; height:34px; background:var(--line); position:relative; overflow:hidden; }
+  .scroll-cue .bar::after{
+    content:''; position:absolute; top:0; left:0; width:100%; height:40%;
+    background:var(--blue); animation:scrolldown 1.6s ease-in-out infinite;
+  }
+  @keyframes scrolldown{ 0%{transform:translateY(-100%)} 100%{transform:translateY(250%)} }
+
+  .schematic-wrap{ position:relative; width:100%; }
+  svg#schematic{ width:100%; height:auto; overflow:visible; }
+  .sch-line{ fill:none; stroke:var(--blue); stroke-width:1.6; }
+  .sch-line-dim{ fill:none; stroke:var(--line); stroke-width:1; }
+  .sch-fill{ fill:var(--ink-3); stroke:var(--blue); stroke-width:1.2; }
+  .sch-dot{ fill:var(--amber); }
+  .sch-label{ font-family:'JetBrains Mono', monospace; font-size:9px; fill:var(--muted); }
+  .sch-label-hl{ fill:var(--amber); }
+
+  /* --- section shell --- */
+  .panel{
+    max-width:1280px; margin:0 auto; padding:160px 6vw;
+    border-top:1px solid var(--line);
+  }
+  .eyebrow-row{
+    display:flex; align-items:center; gap:14px; margin-bottom:28px;
+    font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.1em;
+    color:var(--muted); text-transform:uppercase;
+  }
+  .eyebrow-row .tick{ width:24px; height:1px; background:var(--blue); }
+  .panel h2{
+    font-family:'Space Grotesk', sans-serif; font-weight:600;
+    font-size:clamp(28px, 3.4vw, 42px); letter-spacing:-0.01em; margin-bottom:36px;
+    max-width:16ch;
+  }
+
+  /* --- About --- */
+  .about-grid{ display:grid; grid-template-columns: 1.3fr 1fr; gap:60px; }
+  .about-grid p{ color:var(--muted); font-size:17px; line-height:1.75; margin-bottom:18px; }
+  .about-grid p b{ color:var(--paper); font-weight:500; }
+  .spec-list{ border-top:1px solid var(--line); }
+  .spec-row{
+    display:flex; justify-content:space-between; padding:16px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .spec-row .k{ color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; }
+  .spec-row .v{ color:var(--paper); text-align:right; }
+
+  /* --- Experience timeline --- */
+  .tl{ position:relative; }
+  .tl-line{ position:absolute; left:9px; top:8px; bottom:8px; width:1px; background:var(--line); }
+  .tl-item{ position:relative; padding:0 0 56px 46px; }
+  .tl-item:last-child{ padding-bottom:0; }
+  .tl-dot{
+    position:absolute; left:0; top:4px; width:20px; height:20px; border-radius:50%;
+    border:1px solid var(--blue); background:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .tl-dot::after{ content:''; width:6px; height:6px; border-radius:50%; background:var(--blue); }
+  .tl-item .period{
+    font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--blue); letter-spacing:0.05em;
+  }
+  .tl-item h3{ font-family:'Space Grotesk', sans-serif; font-size:22px; font-weight:600; margin:8px 0 6px; }
+  .tl-item .org{ color:var(--muted); font-size:15px; margin-bottom:10px; }
+  .tl-item .tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .tag{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted);
+    border:1px solid var(--line); padding:4px 10px; border-radius:2px;
+  }
+
+  /* --- Skills --- */
+  .skill-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
+  .skill-cell{ background:var(--ink); padding:32px 28px; }
+  .skill-cell .num{ font-family:'JetBrains Mono', monospace; color:var(--blue-dim); font-size:12px; margin-bottom:16px; display:block; }
+  .skill-cell h4{ font-family:'Space Grotesk', sans-serif; font-size:18px; font-weight:600; margin-bottom:10px; }
+  .skill-cell p{ color:var(--muted); font-size:14px; line-height:1.6; }
+
+  /* --- Meta / About this site --- */
+  .meta-panel{ background:var(--ink-2); }
+  .meta-grid{ display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start; }
+  .meta-grid p{ color:var(--muted); font-size:16px; line-height:1.75; margin-bottom:16px; }
+  .meta-grid p b{ color:var(--paper); }
+  .stack-list{ list-style:none; }
+  .stack-list li{
+    display:flex; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--line);
+    font-family:'JetBrains Mono', monospace; font-size:13px;
+  }
+  .stack-list li span:first-child{ color:var(--paper); }
+  .stack-list li span:last-child{ color:var(--muted); }
+
+  /* --- Contact --- */
+  .contact{ text-align:left; }
+  .contact h2{ max-width:none; }
+  .contact-links{ display:flex; flex-wrap:wrap; gap:16px; margin-top:36px; }
+  .contact-links a{
+    color:var(--paper); text-decoration:none; font-family:'JetBrains Mono', monospace;
+    font-size:14px; border:1px solid var(--line); padding:14px 22px; border-radius:2px;
+    display:flex; align-items:center; gap:10px; transition:border-color .2s, color .2s;
+  }
+  .contact-links a:hover{ border-color:var(--blue); color:var(--blue); }
+  footer{
+    padding:40px 6vw; color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:11px;
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+    border-top:1px solid var(--line);
+  }
+  footer a{ color:var(--muted); text-decoration:none; }
+  footer a:hover{ color:var(--blue); }
+
+  @media (max-width:860px){
+    .hero-grid{ grid-template-columns:1fr; }
+    .schematic-wrap{ opacity:0.5; margin-top:20px; }
+    .about-grid, .meta-grid{ grid-template-columns:1fr; gap:32px; }
+    .skill-grid{ grid-template-columns:1fr; }
+    .panel{ padding:100px 6vw; }
+    header.nav nav{ display:none; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+    html{ scroll-behavior:auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<header class="nav">
+  <span class="id">PG / 01</span>
+  <nav>
+    <a href="#about">Profil</a>
+    <a href="#experience">Erfahrung</a>
+    <a href="#skills">Kompetenzen</a>
+    <a href="#contact">Kontakt</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-pin">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow mono">Projektingenieur — Kerntechnik</span>
+        <h1 class="display">Paul<br>Garrecht</h1>
+        <p class="role">Projektingenieur &amp; Einsatzleiter im kerntechnischen Rückbau bei <b>MHC Anlagentechnik</b>. Mechatronik-Ingenieur, internationaler Schweißfachingenieur (IWE) — Präzision ist der Beruf, nicht nur der Anspruch.</p>
+        <div class="scroll-cue"><span class="bar"></span> SCROLLEN, UM ZUSAMMENZUBAUEN</div>
+      </div>
+      <div class="schematic-wrap">
+        <svg id="schematic" viewBox="0 0 560 620" xmlns="http://www.w3.org/2000/svg">
+          <!-- dimension lines -->
+          <g class="draw" id="dims">
+            <line class="sch-line-dim" x1="30" y1="60" x2="30" y2="560"/>
+            <line class="sch-line-dim" x1="24" y1="60" x2="36" y2="60"/>
+            <line class="sch-line-dim" x1="24" y1="560" x2="36" y2="560"/>
+            <text class="sch-label" x="10" y="310" transform="rotate(-90 10 310)">REV.03 · MHC-ANLAGENTECHNIK</text>
+          </g>
+
+          <!-- main vessel -->
+          <g class="draw" id="vessel">
+            <rect class="sch-fill" x="180" y="140" width="200" height="320" rx="6"/>
+            <ellipse class="sch-fill" cx="280" cy="140" rx="100" ry="24"/>
+            <ellipse class="sch-line" cx="280" cy="460" rx="100" ry="24"/>
+            <line class="sch-line-dim" x1="220" y1="150" x2="220" y2="450"/>
+            <line class="sch-line-dim" x1="280" y1="150" x2="280" y2="450"/>
+            <line class="sch-line-dim" x1="340" y1="150" x2="340" y2="450"/>
+          </g>
+
+          <!-- inlet pipe left -->
+          <g class="draw" id="pipeL">
+            <path class="sch-line" d="M180 220 L90 220 L90 100"/>
+            <circle class="sch-fill" cx="90" cy="100" r="14"/>
+            <path class="sch-line-dim" d="M78 100 L102 100 M90 88 L90 112"/>
+          </g>
+
+          <!-- outlet pipe right -->
+          <g class="draw" id="pipeR">
+            <path class="sch-line" d="M380 320 L470 320 L470 480"/>
+            <circle class="sch-fill" cx="470" cy="480" r="14"/>
+            <path class="sch-line-dim" d="M458 480 L482 480 M470 468 L470 492"/>
+          </g>
+
+          <!-- valve detail -->
+          <g class="draw" id="valve">
+            <circle class="sch-line" cx="280" cy="300" r="34"/>
+            <path class="sch-line" d="M254 274 L306 326 M306 274 L254 326"/>
+          </g>
+
+          <!-- annotation callouts -->
+          <g class="draw" id="callouts">
+            <line class="sch-line-dim" x1="380" y1="180" x2="440" y2="150"/>
+            <circle class="sch-dot" cx="440" cy="150" r="2.5"/>
+            <text class="sch-label sch-label-hl" x="448" y="147">B.ENG MECHATRONIK</text>
+
+            <line class="sch-line-dim" x1="180" y1="380" x2="120" y2="410"/>
+            <circle class="sch-dot" cx="120" cy="410" r="2.5"/>
+            <text class="sch-label sch-label-hl" x="20" y="407">IWE — SCHWEISSFACHING.</text>
+
+            <line class="sch-line-dim" x1="280" y1="460" x2="280" y2="520"/>
+            <circle class="sch-dot" cx="280" cy="520" r="2.5"/>
+            <text class="sch-label sch-label-hl" x="230" y="538">7 JAHRE PROJEKTERFAHRUNG</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="panel" id="about">
+  <div class="eyebrow-row"><span class="tick"></span> 02 — PROFIL</div>
+  <div class="about-grid">
+    <div>
+      <p><b>Ich bin Paul, Projektingenieur und Einsatzleiter im kerntechnischen Hilfsdienst</b> bei der MHC Anlagentechnik GmbH in Ladenburg. Mein Aufgabenfeld liegt im Betrieb, der Stilllegung und dem Rückbau kerntechnischer Anlagen — ein Bereich, in dem Genauigkeit keine Option, sondern Voraussetzung ist.</p>
+      <p>Nach meinem dualen Studium Mechatronik mit Schwerpunkt Project Engineering an der DHBW Mannheim — unter anderem bei HeidelbergCement — bin ich seit 2019 bei MHC. Ergänzend habe ich die Qualifikation zum internationalen Schweißfachingenieur (IWE) erworben, die technisches Tiefenwissen mit Projektverantwortung verbindet.</p>
+      <p>Was mich antreibt: komplexe technische Systeme so zu strukturieren, dass sie sicher, nachvollziehbar und termingerecht umgesetzt werden — im Projekt genauso wie, als kleines Hobby, beim Bauen dieser Seite mit KI.</p>
+    </div>
+    <div class="spec-list">
+      <div class="spec-row"><span class="k">Standort</span><span class="v">Ladenburg, Baden-Württemberg</span></div>
+      <div class="spec-row"><span class="k">Rolle</span><span class="v">Projektingenieur / Einsatzleiter</span></div>
+      <div class="spec-row"><span class="k">Branche</span><span class="v">Kerntechnischer Rückbau</span></div>
+      <div class="spec-row"><span class="k">Ausbildung</span><span class="v">B.Eng. Mechatronik, DHBW Mannheim</span></div>
+      <div class="spec-row"><span class="k">Zertifizierung</span><span class="v">Int. Schweißfachingenieur (IWE)</span></div>
+      <div class="spec-row"><span class="k">Bei MHC seit</span><span class="v">2019 · 7 Jahre</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section class="panel" id="experience">
+  <div class="eyebrow-row"><span class="tick"></span> 03 — ERFAHRUNG</div>
+  <h2>Stationen im<br>Werdegang.</h2>
+  <div class="tl">
+    <div class="tl-line"></div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="period">DEZ. 2019 — HEUTE · 6 JAHRE 8 MONATE</div>
+      <h3>Projektingenieur</h3>
+      <div class="org">MHC Anlagentechnik GmbH</div>
+      <p style="color:var(--muted); font-size:15px; line-height:1.6;">Projektingenieur und Einsatzleitung im kerntechnischen Hilfsdienst — Verantwortung für Planung und Umsetzung im Bereich Betrieb, Stilllegung und Rückbau.</p>
+      <div class="tags"><span class="tag">SolidWorks</span><span class="tag">Projektmanagement</span><span class="tag">Einsatzleitung</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="period">AUG. 2019 — NOV. 2019 · 4 MONATE</div>
+      <h3>Dualer Student Mechatronik, Project Engineering</h3>
+      <div class="org">MHC Anlagentechnik GmbH</div>
+      <div class="tags"><span class="tag">Projektmanagement</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="period">SEPT. 2016 — JULI 2019 · 2 JAHRE 11 MONATE</div>
+      <h3>Dualer Student Mechatronik, Project Engineering</h3>
+      <div class="org">HeidelbergCement · Duales Studium</div>
+      <div class="tags"><span class="tag">Projektmanagement</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section class="panel" id="skills">
+  <div class="eyebrow-row"><span class="tick"></span> 04 — KOMPETENZEN</div>
+  <h2>Werkzeuge &amp;<br>Fachwissen.</h2>
+  <div class="skill-grid">
+    <div class="skill-cell">
+      <span class="num mono">01</span>
+      <h4>SolidWorks &amp; CAD</h4>
+      <p>Konstruktion und technische Ausarbeitung von Anlagenkomponenten für Rückbau- und Stilllegungsprojekte.</p>
+    </div>
+    <div class="skill-cell">
+      <span class="num mono">02</span>
+      <h4>Projektmanagement</h4>
+      <p>Planung, Steuerung und Einsatzleitung technischer Projekte im kerntechnischen Umfeld.</p>
+    </div>
+    <div class="skill-cell">
+      <span class="num mono">03</span>
+      <h4>Schweißtechnik (IWE)</h4>
+      <p>Internationaler Schweißfachingenieur — Qualitätssicherung und fachliche Bewertung schweißtechnischer Prozesse.</p>
+    </div>
+  </div>
+</section>
+
+<!-- META: how the site was built -->
+<section class="panel meta-panel">
+  <div class="eyebrow-row"><span class="tick"></span> 05 — WIE DIESE SEITE ENTSTAND</div>
+  <div class="meta-grid">
+    <div>
+      <p><b>Diese Website ist selbst ein kleines Projekt</b> — mein Hobby, mit KI zu bauen, angewendet auf etwas Reales statt auf ein Spielzeug-Beispiel.</p>
+      <p>Der Ablauf: Inhalte und Struktur mit Claude erarbeitet, Design-Richtung bewusst vom generischen KI-Look abgegrenzt (kein Standard-Dunkelmodus-Template), und die scroll-gesteuerte technische Zeichnung als Kernidee statt eines echten Videos umgesetzt — passend zum eigenen Beruf als Ingenieur.</p>
+      <p>Der nächste Schritt: die Seite lokal mit Claude Code weiter verfeinern, mit echten Projektbildern füllen und live schalten.</p>
+    </div>
+    <ul class="stack-list">
+      <li><span>Konzept &amp; Copy</span><span>Claude</span></li>
+      <li><span>Layout &amp; Prototyp</span><span>HTML / CSS / JS</span></li>
+      <li><span>Scroll-Animation</span><span>GSAP ScrollTrigger</span></li>
+      <li><span>Weiterentwicklung</span><span>Claude Code</span></li>
+      <li><span>Hosting</span><span>Vercel / GitHub Pages</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="panel contact" id="contact">
+  <div class="eyebrow-row"><span class="tick"></span> 06 — KONTAKT</div>
+  <h2>Lassen Sie uns<br>sprechen.</h2>
+  <p style="color:var(--muted); max-width:48ch; font-size:16px; line-height:1.7;">Offen für Austausch rund um kerntechnischen Rückbau, Projektingenieurwesen oder auch dieses kleine KI-Nebenprojekt.</p>
+  <div class="contact-links">
+    <a href="https://www.linkedin.com/in/paulgarrecht/" target="_blank" rel="noopener">→ LinkedIn</a>
+    <a href="mailto:hallo@paulgarrecht.de">→ E-Mail</a>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Paul Garrecht</span>
+  <span><a href="impressum.html">Impressum &amp; Datenschutz</a></span>
+  <span>LADENBURG, DE</span>
+</footer>
+
+<script>
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Prepare stroke-draw effect on schematic groups
+  const groups = ['#dims', '#vessel', '#pipeL', '#pipeR', '#valve', '#callouts'];
+  groups.forEach((sel) => {
+    document.querySelectorAll(sel + ' .sch-line, ' + sel + ' .sch-line-dim, ' + sel + ' .sch-fill').forEach(el => {
+      const len = el.getTotalLength ? el.getTotalLength() : 0;
+      if(len){
+        el.style.strokeDasharray = len;
+        el.style.strokeDashoffset = len;
+      }
+    });
+    document.querySelectorAll(sel + ' .sch-dot, ' + sel + ' .sch-label').forEach(el => {
+      el.style.opacity = 0;
+    });
+  });
+
+  const tl = gsap.timeline({
+    scrollTrigger:{
+      trigger: '.hero',
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 0.6,
+    }
+  });
+
+  groups.forEach((sel, i) => {
+    tl.to(sel + ' .sch-line, ' + sel + ' .sch-line-dim, ' + sel + ' .sch-fill', {
+      strokeDashoffset: 0,
+      duration: 1,
+      ease: 'none'
+    }, i * 0.9)
+    .to(sel + ' .sch-dot, ' + sel + ' .sch-label', {
+      opacity: 1,
+      duration: 0.4,
+    }, i * 0.9 + 0.6);
+  });
+
+  // subtle fade-up for panels
+  document.querySelectorAll('.panel').forEach(panel => {
+    gsap.from(panel.querySelectorAll('h2, .about-grid, .tl-item, .skill-cell, .meta-grid, .contact-links'), {
+      opacity: 0,
+      y: 24,
+      duration: 0.8,
+      ease: 'power2.out',
+      stagger: 0.08,
+      scrollTrigger:{
+        trigger: panel,
+        start: 'top 75%',
+      }
+    });
+  });
+</script>
+</body>
+</html>
