@@ -160,6 +160,23 @@
   .spec-row .k{ color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; }
   .spec-row .v{ color:var(--paper); text-align:right; }
 
+  /* --- live counters: seit wann --- */
+  .counter-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); margin-top:56px;
+  }
+  .counter-cell{ background:var(--ink); padding:28px 26px; }
+  .counter-cell .c-label{
+    font-family:'Space Grotesk', sans-serif; font-size:16px; font-weight:600; margin-bottom:14px;
+  }
+  .counter-cell .c-value{
+    font-family:'JetBrains Mono', monospace; font-size:15px; color:var(--blue); line-height:1.5;
+  }
+  .counter-cell .c-since{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted); margin-top:10px; display:block;
+  }
+  @media (max-width:860px){ .counter-grid{ grid-template-columns:1fr; } }
+
   /* --- persistent thread: the hero's zoomed line keeps wandering down the page --- */
   .thread-wrap{ position:relative; }
   svg.thread{
@@ -199,20 +216,6 @@
   .skill-cell h4{ font-family:'Space Grotesk', sans-serif; font-size:18px; font-weight:600; margin-bottom:10px; }
   .skill-cell p{ color:var(--muted); font-size:14px; line-height:1.6; }
 
-  /* --- Zertifikate / Dokumente (Platzhalter) --- */
-  .doc-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; }
-  .doc-cell{
-    border:1px dashed var(--muted); border-radius:4px; background:var(--ink-2);
-    padding:28px 24px; display:flex; flex-direction:column; align-items:flex-start; gap:14px;
-    min-height:150px; justify-content:space-between;
-  }
-  .doc-cell svg{ width:26px; height:26px; color:var(--muted); opacity:0.6; }
-  .doc-cell .doc-name{ font-family:'Space Grotesk', sans-serif; font-size:15px; font-weight:600; color:var(--paper); }
-  .doc-cell .doc-tag{
-    font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
-    color:var(--muted);
-  }
-
   /* --- Meta / About this site --- */
   .meta-panel{ background:var(--ink-2); }
   .meta-grid{ display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start; }
@@ -236,6 +239,37 @@
     display:flex; align-items:center; gap:10px; transition:border-color .2s, color .2s;
   }
   .contact-links a:hover{ border-color:var(--blue); color:var(--blue); }
+
+  /* --- Fotografie: interaktive Weltkarte --- */
+  .map-wrap{ position:relative; margin-top:20px; }
+  svg.world-map{ width:100%; height:auto; display:block; overflow:visible; }
+  .map-zone{ fill:var(--ink-3); opacity:0.6; }
+  .map-grid{ stroke:var(--line); stroke-width:1; fill:none; }
+  .map-pin{ cursor:pointer; }
+  .map-pin circle{ fill:var(--amber); transition:r .2s ease; }
+  .map-pin:hover circle, .map-pin.active circle{ r:6; }
+  .map-pin text{ font-family:'JetBrains Mono', monospace; font-size:12px; fill:var(--muted); }
+  .map-pin:hover text, .map-pin.active text{ fill:var(--blue); }
+  .photo-card{
+    position:absolute; left:0; top:0; transform:translate(-50%,-125%);
+    background:var(--ink-2); border:1px dashed var(--muted); border-radius:4px;
+    padding:16px 18px; display:flex; flex-direction:column; align-items:center; gap:8px;
+    min-width:130px; text-align:center;
+    opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
+    z-index:3;
+  }
+  .photo-card.active{ opacity:1; transform:translate(-50%,-135%); pointer-events:auto; }
+  .photo-card svg{ width:24px; height:24px; color:var(--muted); opacity:0.6; }
+  .photo-card .photo-country{ font-family:'Space Grotesk', sans-serif; font-size:14px; font-weight:600; }
+  .photo-card .photo-tag{
+    font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--muted);
+  }
+  .map-hint{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted);
+    margin-top:18px; letter-spacing:0.04em;
+  }
+
   footer{
     padding:40px 6vw; color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:11px;
     display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
@@ -249,7 +283,6 @@
     .schematic-wrap{ opacity:0.5; margin-top:20px; height:46vh; }
     .about-grid, .meta-grid{ grid-template-columns:1fr; gap:32px; }
     .skill-grid{ grid-template-columns:1fr; }
-    .doc-grid{ grid-template-columns:1fr; }
     .panel{ padding:100px 6vw; }
     header.nav nav{ display:none; }
   }
@@ -270,7 +303,9 @@
     <a href="#about">Profil</a>
     <a href="#experience">Erfahrung</a>
     <a href="#skills">Kompetenzen</a>
+    <a href="#photography">Fotografie</a>
     <a href="#contact">Kontakt</a>
+    <a href="dokumente.html">Dokumente</a>
   </nav>
 </header>
 
@@ -426,6 +461,23 @@
       <div class="spec-row"><span class="k">Bei MHC seit</span><span class="v">2019 · 7 Jahre</span></div>
     </div>
   </div>
+  <div class="counter-grid">
+    <div class="counter-cell">
+      <div class="c-label">B.Eng. Mechatronik</div>
+      <div class="c-value mono" data-since="2019-09-01T00:00:00" data-unit="Bachelor of Engineering">läuft…</div>
+      <span class="c-since">seit 01.09.2019</span>
+    </div>
+    <div class="counter-cell">
+      <div class="c-label">Projektingenieur</div>
+      <div class="c-value mono" data-since="2019-09-01T00:00:00" data-unit="Projektingenieur">läuft…</div>
+      <span class="c-since">seit 01.09.2019 · MHC Anlagentechnik</span>
+    </div>
+    <div class="counter-cell">
+      <div class="c-label">Int. Schweißfachingenieur (IWE)</div>
+      <div class="c-value mono" data-since="2022-03-01T00:00:00" data-unit="IWE">läuft…</div>
+      <span class="c-since">seit 01.03.2022</span>
+    </div>
+  </div>
 </section>
 
 <!-- EXPERIENCE -->
@@ -482,32 +534,9 @@
   </div>
 </section>
 
-<!-- DOCUMENTS / CERTIFICATES (placeholders, to be filled in later) -->
-<section class="panel" id="documents">
-  <div class="eyebrow-row"><span class="tick"></span> 05 — ZERTIFIKATE &amp; DOKUMENTE</div>
-  <h2>Nachweise &amp;<br>Qualifikationen.</h2>
-  <div class="doc-grid">
-    <div class="doc-cell">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-      <span class="doc-name">IWE-Zertifikat</span>
-      <span class="doc-tag">Dokument folgt</span>
-    </div>
-    <div class="doc-cell">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-      <span class="doc-name">B.Eng. Urkunde</span>
-      <span class="doc-tag">Dokument folgt</span>
-    </div>
-    <div class="doc-cell">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-      <span class="doc-name">Weitere Nachweise</span>
-      <span class="doc-tag">Dokument folgt</span>
-    </div>
-  </div>
-</section>
-
 <!-- META: how the site was built -->
 <section class="panel meta-panel">
-  <div class="eyebrow-row"><span class="tick"></span> 06 — WIE DIESE SEITE ENTSTAND</div>
+  <div class="eyebrow-row"><span class="tick"></span> 05 — WIE DIESE SEITE ENTSTAND</div>
   <div class="meta-grid">
     <div>
       <p><b>Diese Website ist selbst ein kleines Projekt</b> — mein Hobby, mit KI zu bauen, angewendet auf etwas Reales statt auf ein Spielzeug-Beispiel.</p>
@@ -526,13 +555,100 @@
 
 <!-- CONTACT -->
 <section class="panel contact" id="contact">
-  <div class="eyebrow-row"><span class="tick"></span> 07 — KONTAKT</div>
+  <div class="eyebrow-row"><span class="tick"></span> 06 — KONTAKT</div>
   <h2>Lassen Sie uns<br>sprechen.</h2>
   <p style="color:var(--muted); max-width:48ch; font-size:16px; line-height:1.7;">Offen für Austausch rund um kerntechnischen Rückbau, Projektingenieurwesen oder auch dieses kleine KI-Nebenprojekt.</p>
   <div class="contact-links">
     <a href="https://www.linkedin.com/in/paulgarrecht/" target="_blank" rel="noopener">→ LinkedIn</a>
     <a href="mailto:hallo@paulgarrecht.de">→ E-Mail</a>
   </div>
+</section>
+
+<!-- PHOTOGRAPHY: interactive world map, the thread coils in here -->
+<section class="panel" id="photography">
+  <div class="eyebrow-row"><span class="tick"></span> 07 — FOTOGRAFIE</div>
+  <h2>Ein anderes<br>Hobby: unterwegs.</h2>
+  <p style="color:var(--muted); max-width:52ch; font-size:16px; line-height:1.7;">Neben KI und Technik: Fotografie auf Reisen. Eine kleine, unvollständige Auswahl der Orte — mit dem Cursor über die Punkte fahren, um Bilder zu sehen.</p>
+
+  <div class="map-wrap">
+    <svg class="world-map" viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg">
+      <!-- coordinate grid -->
+      <g class="map-grid">
+        <line x1="0" y1="130" x2="1000" y2="130"/>
+        <line x1="0" y1="260" x2="1000" y2="260"/>
+        <line x1="0" y1="390" x2="1000" y2="390"/>
+        <line x1="166" y1="0" x2="166" y2="520"/>
+        <line x1="333" y1="0" x2="333" y2="520"/>
+        <line x1="500" y1="0" x2="500" y2="520"/>
+        <line x1="666" y1="0" x2="666" y2="520"/>
+        <line x1="833" y1="0" x2="833" y2="520"/>
+      </g>
+
+      <!-- abstracted landmass zones (schematisch, keine exakten Küstenlinien) -->
+      <g>
+        <ellipse class="map-zone" cx="220" cy="160" rx="140" ry="100"/>
+        <ellipse class="map-zone" cx="290" cy="370" rx="70" ry="110"/>
+        <ellipse class="map-zone" cx="510" cy="120" rx="60" ry="50"/>
+        <ellipse class="map-zone" cx="520" cy="290" rx="75" ry="130"/>
+        <ellipse class="map-zone" cx="740" cy="160" rx="170" ry="110"/>
+        <ellipse class="map-zone" cx="860" cy="390" rx="70" ry="50"/>
+      </g>
+
+      <!-- pins -->
+      <g class="map-pin" data-country="usa">
+        <line class="sch-line-dim" x1="226" y1="136" x2="226" y2="100"/>
+        <circle cx="226" cy="136" r="4"/>
+        <text x="200" y="90">USA</text>
+      </g>
+      <g class="map-pin" data-country="spanien">
+        <line class="sch-line-dim" x1="490" y1="134" x2="470" y2="90"/>
+        <circle cx="490" cy="134" r="4"/>
+        <text x="418" y="86">SPANIEN</text>
+      </g>
+      <g class="map-pin" data-country="griechenland">
+        <line class="sch-line-dim" x1="561" y1="139" x2="590" y2="185"/>
+        <circle cx="561" cy="139" r="4"/>
+        <text x="596" y="190">GRIECHENLAND</text>
+      </g>
+      <g class="map-pin" data-country="japan">
+        <line class="sch-line-dim" x1="884" y1="149" x2="920" y2="110"/>
+        <circle cx="884" cy="149" r="4"/>
+        <text x="860" y="100">JAPAN</text>
+      </g>
+      <g class="map-pin" data-country="srilanka">
+        <line class="sch-line-dim" x1="724" y1="258" x2="700" y2="310"/>
+        <circle cx="724" cy="258" r="4"/>
+        <text x="618" y="325">SRI LANKA</text>
+      </g>
+    </svg>
+
+    <div class="photo-card" id="photo-usa" style="left:22.6%; top:26.2%;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span class="photo-country">USA</span>
+      <span class="photo-tag">Foto folgt</span>
+    </div>
+    <div class="photo-card" id="photo-spanien" style="left:49%; top:25.8%;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span class="photo-country">Spanien</span>
+      <span class="photo-tag">Foto folgt</span>
+    </div>
+    <div class="photo-card" id="photo-griechenland" style="left:56.1%; top:26.7%;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span class="photo-country">Griechenland</span>
+      <span class="photo-tag">Foto folgt</span>
+    </div>
+    <div class="photo-card" id="photo-japan" style="left:88.4%; top:28.7%;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span class="photo-country">Japan</span>
+      <span class="photo-tag">Foto folgt</span>
+    </div>
+    <div class="photo-card" id="photo-srilanka" style="left:72.4%; top:49.6%;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span class="photo-country">Sri Lanka</span>
+      <span class="photo-tag">Foto folgt</span>
+    </div>
+  </div>
+  <div class="map-hint mono">← Platzhalter — echte Fotos folgen in Kürze</div>
 </section>
 
 </div>
@@ -545,6 +661,23 @@
 
 <script>
   gsap.registerPlugin(ScrollTrigger);
+
+  // live counters: "seit X Tagen, Y Std, Z Min"
+  function updateCounters(){
+    const now = Date.now();
+    document.querySelectorAll('.c-value[data-since]').forEach(el => {
+      const since = new Date(el.dataset.since).getTime();
+      let diff = Math.max(0, now - since);
+      const days = Math.floor(diff / 86400000);
+      diff -= days * 86400000;
+      const hours = Math.floor(diff / 3600000);
+      diff -= hours * 3600000;
+      const minutes = Math.floor(diff / 60000);
+      el.textContent = `seit ${days} Tagen, ${hours} Std, ${minutes} Min`;
+    });
+  }
+  updateCounters();
+  setInterval(updateCounters, 1000);
 
   // Prepare stroke-draw effect on schematic groups
   const groups = ['#dims', '#vessel', '#pipeL', '#pipeR', '#valve', '#aa-detail', '#callouts'];
@@ -631,7 +764,7 @@
   const threadWaypoints = [
     [0.62, 0.000], [0.50, 0.045], [0.16, 0.150], [0.16, 0.300],
     [0.58, 0.400], [0.58, 0.480], [0.30, 0.600], [0.50, 0.700],
-    [0.50, 0.800], [0.20, 0.900], [0.20, 1.000],
+    [0.50, 0.780], [0.20, 0.860],
   ];
   const pulseAt = [2, 6]; // indices into threadWaypoints that get a zoom-pulse marker
 
@@ -644,6 +777,25 @@
     if(!W || !H) return;
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     const pts = threadWaypoints.map(([fx,fy]) => [fx*W, fy*H]);
+
+    // finale: the thread coils into the world map at the very bottom of the page
+    const mapEl = document.querySelector('.map-wrap');
+    if(mapEl){
+      const mapRect = mapEl.getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      const cx = mapRect.left - wrapRect.left + mapRect.width * 0.5;
+      const cy = mapRect.top - wrapRect.top + mapRect.height * 0.42;
+      const turns = 2.75, steps = 48, maxR = Math.min(90, mapRect.width * 0.12);
+      const last = pts[pts.length - 1];
+      const startAngle = Math.atan2(last[1] - cy, last[0] - cx);
+      for(let i = 0; i <= steps; i++){
+        const t = i / steps;
+        const angle = startAngle + t * turns * Math.PI * 2;
+        const r = maxR * (1 - t);
+        pts.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
+      }
+    }
+
     path.setAttribute('d', catmullRomPath(pts));
     const len = path.getTotalLength();
     path.style.strokeDasharray = len;
@@ -691,9 +843,32 @@
     .to(el, { scale: 0.8, opacity: 0.3, duration: 0.5, ease: 'power1.in' });
   });
 
+  // Weltkarte: Pins zeigen Platzhalter-Fotokarten bei Hover/Tap
+  document.querySelectorAll('.map-pin').forEach(pin => {
+    const country = pin.dataset.country;
+    const card = document.getElementById('photo-' + country);
+    if(!card) return;
+    function closeAll(){
+      document.querySelectorAll('.photo-card.active').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.map-pin.active').forEach(p => p.classList.remove('active'));
+    }
+    function show(){ closeAll(); card.classList.add('active'); pin.classList.add('active'); }
+    function hide(){ card.classList.remove('active'); pin.classList.remove('active'); }
+    pin.addEventListener('mouseenter', show);
+    pin.addEventListener('mouseleave', hide);
+    pin.addEventListener('click', (e) => {
+      e.stopPropagation();
+      card.classList.contains('active') ? hide() : show();
+    });
+  });
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.photo-card.active').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.map-pin.active').forEach(p => p.classList.remove('active'));
+  });
+
   // subtle fade-up for panels
   document.querySelectorAll('.panel').forEach(panel => {
-    gsap.from(panel.querySelectorAll('h2, .about-grid, .tl-item, .skill-cell, .doc-cell, .meta-grid, .contact-links'), {
+    gsap.from(panel.querySelectorAll('h2, .about-grid, .tl-item, .skill-cell, .meta-grid, .contact-links, .map-wrap'), {
       opacity: 0,
       y: 24,
       duration: 0.8,

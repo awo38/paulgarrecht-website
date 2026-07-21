@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zertifikate & Dokumente — Paul Garrecht</title>
+<meta name="description" content="Zertifikate und Nachweise von Paul Garrecht.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#F3F1E8;
+    --ink-2:#EBE8DB;
+    --ink-3:#E6E3D5;
+    --line:#D9D5C4;
+    --blue:#2C4A9E;
+    --blue-dim:#7286BC;
+    --paper:#171A16;
+    --muted:#726C5C;
+    --amber:#A8620F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--ink); color:var(--paper);
+    font-family:'Inter', sans-serif;
+  }
+  ::selection{ background:var(--blue); color:var(--ink); }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .grid-bg{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:64px 64px; opacity:0.7;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 10%, black 40%, transparent 90%);
+  }
+
+  header.nav{
+    position:relative; z-index:1;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:22px 6vw;
+    font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.08em;
+    color:var(--muted);
+  }
+  header.nav .id{ color:var(--paper); }
+  header.nav a{ color:var(--muted); text-decoration:none; }
+  header.nav a:hover{ color:var(--blue); }
+
+  main{ position:relative; z-index:1; max-width:1280px; margin:0 auto; padding:60px 6vw 160px; }
+  .back{
+    display:inline-block; margin-bottom:48px; font-family:'JetBrains Mono', monospace; font-size:13px;
+    color:var(--muted); text-decoration:none;
+  }
+  .back:hover{ color:var(--blue); }
+
+  .eyebrow-row{
+    display:flex; align-items:center; gap:14px; margin-bottom:28px;
+    font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.1em;
+    color:var(--muted); text-transform:uppercase;
+  }
+  .eyebrow-row .tick{ width:24px; height:1px; background:var(--blue); }
+  h1{
+    font-family:'Space Grotesk', sans-serif; font-weight:600;
+    font-size:clamp(28px, 3.4vw, 42px); letter-spacing:-0.01em; margin-bottom:24px;
+  }
+  .intro{ color:var(--muted); font-size:17px; line-height:1.7; max-width:60ch; margin-bottom:56px; }
+
+  .doc-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; }
+  .doc-cell{
+    border:1px dashed var(--muted); border-radius:4px; background:var(--ink-2);
+    padding:28px 24px; display:flex; flex-direction:column; align-items:flex-start; gap:14px;
+    min-height:150px; justify-content:space-between;
+  }
+  .doc-cell svg{ width:26px; height:26px; color:var(--muted); opacity:0.6; }
+  .doc-cell .doc-name{ font-family:'Space Grotesk', sans-serif; font-size:15px; font-weight:600; color:var(--paper); }
+  .doc-cell .doc-tag{
+    font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--muted);
+  }
+
+  footer{
+    position:relative; z-index:1;
+    padding:40px 6vw; color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:11px;
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+    border-top:1px solid var(--line);
+  }
+  footer a{ color:var(--muted); text-decoration:none; }
+  footer a:hover{ color:var(--blue); }
+
+  @media (max-width:860px){
+    .doc-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<header class="nav">
+  <span class="id">PG / 01</span>
+  <a href="index.html">← Zurück zur Startseite</a>
+</header>
+
+<main>
+  <a class="back" href="index.html">← Profil</a>
+  <div class="eyebrow-row"><span class="tick"></span> ZERTIFIKATE &amp; DOKUMENTE</div>
+  <h1>Nachweise &amp; Qualifikationen.</h1>
+  <p class="intro">Zertifikate, Urkunden und weitere Nachweise zu meiner Ausbildung und meinen Qualifikationen. Die Dokumente werden hier nach und nach ergänzt.</p>
+
+  <div class="doc-grid">
+    <div class="doc-cell">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <span class="doc-name">IWE-Zertifikat</span>
+      <span class="doc-tag">Dokument folgt</span>
+    </div>
+    <div class="doc-cell">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <span class="doc-name">B.Eng. Urkunde</span>
+      <span class="doc-tag">Dokument folgt</span>
+    </div>
+    <div class="doc-cell">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <span class="doc-name">Weitere Nachweise</span>
+      <span class="doc-tag">Dokument folgt</span>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span>© 2026 Paul Garrecht</span>
+  <span><a href="impressum.html">Impressum &amp; Datenschutz</a></span>
+  <span>LADENBURG, DE</span>
+</footer>
+
+</body>
+</html>
