@@ -246,58 +246,71 @@
         <div class="scroll-cue"><span class="bar"></span> SCROLLEN, UM ZUSAMMENZUBAUEN</div>
       </div>
       <div class="schematic-wrap">
-        <svg id="schematic" viewBox="0 0 560 620" xmlns="http://www.w3.org/2000/svg">
+        <svg id="schematic" viewBox="0 0 700 470" xmlns="http://www.w3.org/2000/svg">
           <!-- dimension lines -->
           <g class="draw" id="dims">
-            <line class="sch-line-dim" x1="30" y1="60" x2="30" y2="560"/>
-            <line class="sch-line-dim" x1="24" y1="60" x2="36" y2="60"/>
-            <line class="sch-line-dim" x1="24" y1="560" x2="36" y2="560"/>
-            <text class="sch-label" x="10" y="310" transform="rotate(-90 10 310)">REV.03 · MHC-ANLAGENTECHNIK</text>
+            <line class="sch-line-dim" x1="30" y1="90" x2="30" y2="400"/>
+            <line class="sch-line-dim" x1="24" y1="90" x2="36" y2="90"/>
+            <line class="sch-line-dim" x1="24" y1="400" x2="36" y2="400"/>
+            <text class="sch-label" x="12" y="245" transform="rotate(-90 12 245)">REV.03 · MHC-ANLAGENTECHNIK</text>
           </g>
 
-          <!-- main vessel -->
+          <!-- main vessel: horizontal shell + heads + nozzle stubs -->
           <g class="draw" id="vessel">
-            <rect class="sch-fill" x="180" y="140" width="200" height="320" rx="6"/>
-            <ellipse class="sch-fill" cx="280" cy="140" rx="100" ry="24"/>
-            <ellipse class="sch-line" cx="280" cy="460" rx="100" ry="24"/>
-            <line class="sch-line-dim" x1="220" y1="150" x2="220" y2="450"/>
-            <line class="sch-line-dim" x1="280" y1="150" x2="280" y2="450"/>
-            <line class="sch-line-dim" x1="340" y1="150" x2="340" y2="450"/>
+            <rect class="sch-fill" x="170" y="165" width="360" height="130"/>
+            <ellipse class="sch-fill" cx="170" cy="230" rx="26" ry="65"/>
+            <ellipse class="sch-line" cx="530" cy="230" rx="26" ry="65"/>
+            <line class="sch-line-dim" x1="140" y1="230" x2="560" y2="230"/>
+            <line class="sch-line-dim" x1="250" y1="165" x2="250" y2="295"/>
+            <line class="sch-line-dim" x1="350" y1="165" x2="350" y2="295"/>
+            <line class="sch-line-dim" x1="450" y1="165" x2="450" y2="295"/>
+            <rect class="sch-fill" x="222" y="145" width="16" height="20"/>
+            <ellipse class="sch-line" cx="230" cy="145" rx="8" ry="3"/>
+            <rect class="sch-fill" x="462" y="145" width="16" height="20"/>
+            <ellipse class="sch-line" cx="470" cy="145" rx="8" ry="3"/>
           </g>
 
-          <!-- inlet pipe left -->
+          <!-- left saddle support -->
           <g class="draw" id="pipeL">
-            <path class="sch-line" d="M180 220 L90 220 L90 100"/>
-            <circle class="sch-fill" cx="90" cy="100" r="14"/>
-            <path class="sch-line-dim" d="M78 100 L102 100 M90 88 L90 112"/>
+            <rect class="sch-fill" x="245" y="293" width="30" height="14"/>
+            <path class="sch-line" d="M230 307 L212 380 L308 380 L290 307 Z"/>
+            <rect class="sch-fill" x="197" y="380" width="126" height="10"/>
+            <path class="sch-line-dim" d="M180 307 L180 390 M174 307 L186 307 M174 390 L186 390"/>
           </g>
 
-          <!-- outlet pipe right -->
+          <!-- right saddle support -->
           <g class="draw" id="pipeR">
-            <path class="sch-line" d="M380 320 L470 320 L470 480"/>
-            <circle class="sch-fill" cx="470" cy="480" r="14"/>
-            <path class="sch-line-dim" d="M458 480 L482 480 M470 468 L470 492"/>
+            <rect class="sch-fill" x="425" y="293" width="30" height="14"/>
+            <path class="sch-line" d="M410 307 L392 380 L488 380 L470 307 Z"/>
+            <rect class="sch-fill" x="377" y="380" width="126" height="10"/>
           </g>
 
-          <!-- valve detail -->
+          <!-- manhole nozzle + bolt-circle detail (à la Schnitt A-A) -->
           <g class="draw" id="valve">
-            <circle class="sch-line" cx="280" cy="300" r="34"/>
-            <path class="sch-line" d="M254 274 L306 326 M306 274 L254 326"/>
+            <rect class="sch-fill" x="333" y="122" width="34" height="43"/>
+            <circle class="sch-line" cx="350" cy="98" r="32"/>
+            <circle class="sch-fill" cx="350" cy="98" r="21"/>
+            <circle class="sch-dot" cx="377" cy="98" r="2"/>
+            <circle class="sch-dot" cx="363.5" cy="74.6" r="2"/>
+            <circle class="sch-dot" cx="336.5" cy="74.6" r="2"/>
+            <circle class="sch-dot" cx="323" cy="98" r="2"/>
+            <circle class="sch-dot" cx="336.5" cy="121.4" r="2"/>
+            <circle class="sch-dot" cx="363.5" cy="121.4" r="2"/>
           </g>
 
           <!-- annotation callouts -->
           <g class="draw" id="callouts">
-            <line class="sch-line-dim" x1="380" y1="180" x2="440" y2="150"/>
-            <circle class="sch-dot" cx="440" cy="150" r="2.5"/>
-            <text class="sch-label sch-label-hl" x="448" y="147">B.ENG MECHATRONIK</text>
+            <line class="sch-line-dim" x1="382" y1="85" x2="440" y2="55"/>
+            <circle class="sch-dot" cx="440" cy="55" r="2.5"/>
+            <text class="sch-label sch-label-hl" x="448" y="52">B.ENG MECHATRONIK</text>
 
-            <line class="sch-line-dim" x1="180" y1="380" x2="120" y2="410"/>
-            <circle class="sch-dot" cx="120" cy="410" r="2.5"/>
-            <text class="sch-label sch-label-hl" x="20" y="407">IWE — SCHWEISSFACHING.</text>
+            <line class="sch-line-dim" x1="150" y1="230" x2="90" y2="260"/>
+            <circle class="sch-dot" cx="90" cy="260" r="2.5"/>
+            <text class="sch-label sch-label-hl" x="6" y="257">IWE — SCHWEISSFACHING.</text>
 
-            <line class="sch-line-dim" x1="280" y1="460" x2="280" y2="520"/>
-            <circle class="sch-dot" cx="280" cy="520" r="2.5"/>
-            <text class="sch-label sch-label-hl" x="230" y="538">7 JAHRE PROJEKTERFAHRUNG</text>
+            <line class="sch-line-dim" x1="350" y1="390" x2="350" y2="430"/>
+            <circle class="sch-dot" cx="350" cy="430" r="2.5"/>
+            <text class="sch-label sch-label-hl" x="300" y="448">7 JAHRE PROJEKTERFAHRUNG</text>
           </g>
         </svg>
       </div>
@@ -385,7 +398,7 @@
   <div class="meta-grid">
     <div>
       <p><b>Diese Website ist selbst ein kleines Projekt</b> — mein Hobby, mit KI zu bauen, angewendet auf etwas Reales statt auf ein Spielzeug-Beispiel.</p>
-      <p>Der Ablauf: Inhalte und Struktur mit Claude erarbeitet, Design-Richtung bewusst vom generischen KI-Look abgegrenzt (kein Standard-Dunkelmodus-Template), und die scroll-gesteuerte technische Zeichnung als Kernidee statt eines echten Videos umgesetzt — passend zum eigenen Beruf als Ingenieur.</p>
+      <p>Der Ablauf: Inhalte und Struktur mit Claude erarbeitet, Design-Richtung bewusst vom generischen KI-Look abgegrenzt (kein Standard-Dunkelmodus-Template), und die scroll-gesteuerte technische Zeichnung als Kernidee statt eines echten Videos umgesetzt — passend zum eigenen Beruf als Ingenieur. Die Hero-Grafik ist als eigenständige Vektorzeichnung an eine reale Druckbehälter-Anordnung (liegender Behälter auf Sattellagern) angelehnt.</p>
       <p>Der nächste Schritt: die Seite lokal mit Claude Code weiter verfeinern, mit echten Projektbildern füllen und live schalten.</p>
     </div>
     <ul class="stack-list">
