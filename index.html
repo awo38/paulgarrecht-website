@@ -796,7 +796,37 @@
       }
     }
 
-    path.setAttribute('d', catmullRomPath(pts));
+    // "Part 2": the thread dissolves into the spec-list table, then re-forms and continues
+    let d;
+    const specEl = document.querySelector('.spec-list');
+    if(specEl){
+      const specRect = specEl.getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      const left = specRect.left - wrapRect.left;
+      const right = specRect.right - wrapRect.left;
+      const top = specRect.top - wrapRect.top;
+      const bottom = specRect.bottom - wrapRect.top;
+
+      let k = 0;
+      while(k < pts.length - 2 && pts[k + 1][1] < top) k++;
+      const before = pts.slice(0, k + 1);
+      const after = pts.slice(k + 1);
+
+      let tableTrace = `M${left.toFixed(1)},${top.toFixed(1)} L${right.toFixed(1)},${top.toFixed(1)} L${right.toFixed(1)},${bottom.toFixed(1)} L${left.toFixed(1)},${bottom.toFixed(1)} L${left.toFixed(1)},${top.toFixed(1)}`;
+      const rows = specEl.querySelectorAll('.spec-row');
+      rows.forEach((row, i) => {
+        if(i === rows.length - 1) return;
+        const rowRect = row.getBoundingClientRect();
+        const y = rowRect.bottom - wrapRect.top;
+        tableTrace += ` M${left.toFixed(1)},${y.toFixed(1)} L${right.toFixed(1)},${y.toFixed(1)}`;
+      });
+
+      d = catmullRomPath(before) + ' ' + tableTrace + ' ' + catmullRomPath([[left, bottom], ...after]);
+    } else {
+      d = catmullRomPath(pts);
+    }
+
+    path.setAttribute('d', d);
     const len = path.getTotalLength();
     path.style.strokeDasharray = len;
     path.style.strokeDashoffset = len;
