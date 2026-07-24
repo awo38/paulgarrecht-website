@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="vendor/three/three.min.js"></script>
 <script src="vendor/gsap/gsap.min.js"></script>
 <script src="vendor/gsap/ScrollTrigger.min.js"></script>
 <style>
@@ -120,15 +121,34 @@
 
   .schematic-wrap{
     position:relative; width:100%; height:84vh;
-    display:flex; align-items:center; justify-content:center;
   }
-  svg#schematic{ height:100%; width:auto; max-width:100%; overflow:visible; }
-  .sch-line{ fill:none; stroke:var(--blue); stroke-width:1.6; }
   .sch-line-dim{ fill:none; stroke:var(--line); stroke-width:1; }
-  .sch-fill{ fill:var(--ink-3); stroke:var(--blue); stroke-width:1; }
-  .sch-dot{ fill:var(--amber); }
-  .sch-label{ font-family:'JetBrains Mono', monospace; font-size:9px; fill:var(--muted); }
-  .sch-label-hl{ fill:var(--amber); }
+  /* the 3D robot itself lives in a single fixed, viewport-covering canvas so it can
+     travel from full-size in the hero down to a small corner companion for the rest
+     of the page — schematic-wrap only reserves its layout slot and anchors the callouts */
+  #robot-canvas{
+    position:fixed; inset:0; width:100vw; height:100vh;
+    z-index:40; pointer-events:none;
+    clip-path: inset(0 0 0 40%);
+  }
+  .rev-tag{
+    position:absolute; left:6px; top:50%; transform:translateY(-50%) rotate(-90deg);
+    transform-origin:left center;
+    font-size:9px; letter-spacing:0.12em; color:var(--muted); white-space:nowrap;
+  }
+  .callout-chip{
+    position:absolute; opacity:0;
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.06em;
+    color:var(--amber); text-transform:uppercase; white-space:nowrap;
+    display:flex; align-items:center; gap:8px;
+  }
+  .callout-chip::before{ content:''; width:22px; height:1px; background:var(--amber); flex:none; }
+  .callout-chip.align-right{ flex-direction:row-reverse; }
+  @media (max-width:860px){
+    #robot-canvas{ display:none; }
+    .schematic-wrap{ height:auto; padding:8px 0 8px 24px; }
+    .callout-chip, .callout-chip.align-right{ position:static; margin-top:12px; flex-direction:row; }
+  }
 
   /* --- section shell --- */
   .panel{
@@ -296,6 +316,7 @@
 <body>
 
 <div class="grid-bg"></div>
+<canvas id="robot-canvas" aria-hidden="true"></canvas>
 
 <header class="nav">
   <span class="id">PG / 01</span>
@@ -327,87 +348,15 @@
         <div class="scroll-cue"><span class="bar"></span> SCROLLEN, UM ZUSAMMENZUBAUEN</div>
       </div>
       <div class="schematic-wrap">
-        <svg id="schematic" viewBox="0 0 760 1600" xmlns="http://www.w3.org/2000/svg">
-          <!-- dimension line: this becomes the thread that runs through the whole site -->
-          <g class="draw" id="dims">
-            <line id="dims-line" class="sch-line-dim" x1="20" y1="55" x2="20" y2="1526"/>
-            <g id="dims-deco">
-              <line class="sch-line-dim" x1="14" y1="55" x2="26" y2="55"/>
-              <line class="sch-line-dim" x1="14" y1="1526" x2="26" y2="1526"/>
-              <text class="sch-label" x="6" y="790" transform="rotate(-90 6 790)">REV.03 · MHC-ANLAGENTECHNIK</text>
-            </g>
-          </g>
-
-          <!-- Roboterarm aus echter 3D-Geometrie (STL), Explosionszeichnung: Teile fliegen beim Scrollen zusammen -->
-          <g id="explode-guides">
-            <line class="sch-line-dim" x1="139.2" y1="886.7" x2="277.2" y2="827.8" stroke-dasharray="3,4"/>
-            <line class="sch-line-dim" x1="196.3" y1="687.4" x2="341.4" y2="711.1" stroke-dasharray="3,4"/>
-            <line class="sch-line-dim" x1="514.6" y1="551.2" x2="502.5" y2="654.6" stroke-dasharray="3,4"/>
-            <line class="sch-line-dim" x1="691.7" y1="691.9" x2="583.6" y2="715.8" stroke-dasharray="3,4"/>
-            <line class="sch-line-dim" x1="672.7" y1="615.6" x2="576.7" y2="679.8" stroke-dasharray="3,4"/>
-            <line class="sch-line-dim" x1="810.7" y1="892.0" x2="676.1" y2="825.8" stroke-dasharray="3,4"/>
-          </g>
-
-          <g class="draw explode" id="base">
-            <path class="sch-fill" fill-rule="evenodd" d="M125.3,751.9 L110.3,801.5 L110.0,805.6 L112.4,808.7 L128.7,816.4 L126.3,820.5 L126.3,838.9 L127.7,840.6 L156.1,846.5 L156.8,847.2 L158.5,861.4 L167.5,861.4 L168.6,863.2 L177.6,868.7 L221.3,863.5 L247.6,847.9 L251.8,844.4 L251.8,882.2 L245.9,886.0 L240.3,893.0 L239.6,895.7 L239.6,930.4 L210.5,955.7 L207.4,960.6 L206.4,964.4 L206.7,968.9 L208.1,972.7 L214.7,980.3 L222.3,985.5 L241.0,993.5 L235.5,1001.1 L235.8,1004.9 L238.6,1008.4 L246.9,1012.9 L258.4,1016.0 L272.6,1017.7 L288.5,1017.7 L300.6,1016.4 L313.8,1012.9 L322.1,1008.4 L325.6,1003.2 L341.6,1002.5 L348.5,1005.3 L359.6,1007.7 L369.3,1008.7 L387.0,1008.7 L400.5,1007.0 L408.8,1004.9 L417.5,1001.1 L421.6,997.6 L423.0,994.9 L423.0,992.1 L415.7,981.7 L420.9,977.2 L425.1,970.6 L425.8,963.3 L424.7,960.2 L418.5,952.2 L392.5,930.4 L392.5,895.0 L391.5,891.9 L388.7,888.1 L384.2,884.3 L379.0,881.5 L377.6,877.7 L375.9,876.3 L379.0,871.5 L380.4,867.0 L380.4,764.7 L378.3,763.7 L377.6,758.8 L375.5,756.1 L340.2,748.8 L337.0,741.9 L327.3,741.2 L318.0,742.5 L319.0,740.1 L312.4,740.5 L314.2,739.4 L302.0,741.9 L289.6,748.8 L284.7,736.0 L281.9,734.6 L275.3,735.3 L275.3,731.8 L278.1,729.4 L277.8,725.9 L280.5,723.5 L280.5,719.7 L283.3,717.2 L283.3,714.8 L281.6,710.0 L286.4,707.5 L288.2,705.5 L286.4,697.8 L288.5,694.4 L285.7,689.5 L285.4,690.9 L283.7,687.8 L281.2,686.4 L280.9,681.5 L276.7,680.5 L272.9,680.5 L268.4,682.9 L268.8,686.7 L265.6,689.2 L266.0,692.6 L263.2,695.1 L263.2,698.5 L264.9,702.7 L258.7,706.2 L258.0,707.9 L258.7,710.3 L255.9,712.4 L255.9,716.6 L253.2,719.0 L253.5,722.4 L250.4,725.2 L251.1,728.3 L248.3,730.4 L248.3,734.2 L245.5,737.0 L245.5,739.8 L247.6,745.0 L240.7,750.2 L232.4,748.4 L228.2,749.8 L218.1,755.7 L217.5,759.9 L212.3,761.3 L207.1,764.4 L208.1,756.4 L205.3,752.9 L162.0,733.2 L157.1,732.5 L127.0,750.2 Z"/>
-          </g>
-
-          <g class="draw explode" id="boom">
-            <path class="sch-fill" fill-rule="evenodd" d="M458.1,639.1 L455.0,639.1 L440.7,650.5 L441.8,647.1 L351.3,719.5 L350.3,720.2 L346.4,719.5 L328.4,730.2 L318.0,739.6 L310.4,739.9 L296.9,748.3 L305.5,747.6 L305.5,748.3 L288.9,752.1 L303.1,750.0 L305.5,750.3 L302.1,752.8 L298.6,752.8 L295.8,754.5 L297.2,754.5 L297.2,755.2 L293.4,755.9 L297.2,756.2 L294.1,760.0 L287.8,763.8 L286.8,765.9 L284.7,767.0 L290.3,766.6 L289.6,776.0 L292.0,776.0 L285.8,778.4 L286.8,779.4 L284.0,780.5 L291.7,780.5 L291.7,786.0 L262.9,780.1 L267.4,783.3 L266.7,783.6 L268.8,783.9 L274.0,787.8 L260.5,786.4 L277.8,790.2 L281.6,793.0 L279.5,793.3 L258.4,789.8 L285.8,796.1 L288.2,797.5 L259.4,792.3 L279.2,797.1 L276.1,797.8 L269.1,801.6 L277.1,811.0 L280.9,813.0 L277.1,813.0 L280.9,816.9 L282.3,822.4 L284.7,819.6 L284.7,823.4 L291.3,832.5 L292.4,832.8 L296.2,829.7 L300.3,817.9 L305.2,830.7 L305.2,889.3 L305.9,833.5 L306.6,834.9 L307.3,897.9 L308.3,840.4 L309.3,842.8 L310.0,901.8 L312.5,852.6 L316.3,862.6 L317.0,895.5 L317.3,866.1 L319.7,872.6 L319.7,828.6 L320.4,828.6 L322.9,835.2 L326.7,834.9 L337.1,827.3 L338.1,832.8 L340.5,830.0 L341.6,830.7 L344.0,828.3 L344.7,834.2 L345.7,834.5 L361.0,823.8 L365.5,815.8 L368.3,804.7 L370.4,803.3 L372.4,796.4 L392.9,778.4 L393.2,774.6 L391.9,771.1 L486.2,678.3 L486.9,676.2 L476.1,682.1 L473.3,682.1 L460.5,691.4 L460.5,689.7 L469.2,681.0 L460.8,686.9 L458.4,687.3 L448.4,695.6 L443.2,688.7 L455.6,677.6 L456.0,674.8 L454.6,672.0 L452.5,669.9 L448.7,668.9 L436.2,679.6 L432.4,675.5 L431.7,672.4 L445.6,659.9 L435.9,665.8 L435.2,665.4 L449.8,651.2 Z M385.3,744.8 L387.3,747.6 L387.3,749.6 L381.5,754.8 L378.3,750.7 Z M371.1,726.4 L373.8,730.6 L367.2,736.5 L365.2,734.0 L365.2,731.3 Z M406.8,723.7 L409.2,726.8 L409.9,729.2 L403.6,735.1 L400.5,730.9 L405.0,727.1 Z M393.2,706.7 L398.1,712.6 L393.9,712.9 L389.1,716.7 L387.0,713.6 L387.0,712.2 Z M427.9,702.5 L431.4,706.7 L432.1,709.8 L425.8,715.3 L420.6,708.8 Z M415.4,686.6 L420.6,693.5 L413.7,699.7 L409.9,694.9 L409.5,692.1 Z M268.1,695.6 L272.2,701.1 L275.7,702.9 L275.7,707.7 L284.4,708.4 L286.8,707.4 L287.8,706.0 L287.5,702.5 L289.9,700.8 L291.0,698.7 L290.3,696.3 L293.0,694.2 L293.4,691.4 L292.7,690.4 L295.8,687.6 L295.5,684.2 L298.2,681.7 L297.9,678.3 L301.0,675.1 L301.0,673.1 L298.6,667.5 L299.3,665.1 L297.6,661.6 L305.5,661.3 L310.0,659.6 L318.0,654.7 L323.9,646.7 L335.0,655.4 L337.1,655.4 L339.2,654.0 L342.3,655.7 L345.4,654.4 L349.6,655.7 L352.0,654.4 L354.1,655.7 L358.6,654.7 L362.4,656.1 L364.8,654.7 L366.9,656.1 L369.7,656.1 L374.5,652.3 L379.4,656.4 L383.9,655.4 L386.0,656.8 L387.7,656.8 L390.1,655.4 L392.2,656.8 L396.7,655.7 L400.5,657.1 L403.3,655.7 L405.0,657.1 L407.5,657.1 L409.5,655.7 L412.0,657.5 L413.4,657.5 L419.6,652.3 L422.0,651.9 L423.8,650.2 L421.3,648.1 L421.7,644.7 L419.9,643.3 L421.3,641.2 L419.6,640.5 L418.9,638.1 L414.4,637.4 L409.2,631.1 L405.4,632.9 L406.4,630.8 L405.4,631.8 L405.0,631.1 L403.6,631.8 L400.9,630.1 L397.4,631.5 L395.0,630.1 L392.9,630.1 L390.5,631.5 L388.0,629.8 L384.6,631.1 L381.8,629.8 L379.7,629.8 L374.5,633.6 L369.7,629.4 L367.6,629.4 L365.5,630.8 L362.0,629.1 L359.3,630.4 L355.1,629.1 L352.7,630.4 L349.6,628.7 L346.4,630.1 L344.0,628.7 L341.9,628.7 L339.5,630.1 L336.7,628.4 L334.3,629.1 L329.4,633.6 L327.0,633.9 L324.6,636.7 L321.1,629.4 L315.2,624.2 L310.4,622.5 L300.7,623.2 L289.9,629.4 L284.4,637.0 L283.3,640.1 L283.7,647.8 L288.5,657.1 L287.8,658.2 L284.7,658.9 L283.3,661.3 L278.1,663.0 L276.1,664.7 L276.4,668.6 L274.0,670.3 L273.3,671.7 L273.6,674.8 L270.5,677.9 L271.2,680.7 L268.8,682.4 L268.1,684.2 L269.5,689.0 Z"/>
-          </g>
-
-          <g class="draw explode" id="elbow">
-            <path class="sch-fill" fill-rule="evenodd" d="M577.6,666.6 L559.2,642.0 L562.7,635.7 L560.6,636.4 L558.2,634.7 L560.3,625.7 L560.3,619.4 L558.6,610.7 L554.4,601.4 L549.9,595.1 L543.3,588.9 L536.4,584.7 L529.1,582.3 L514.2,582.3 L505.5,584.0 L484.4,596.1 L477.1,603.4 L468.4,618.0 L466.3,619.8 L463.9,618.7 L461.8,619.1 L451.1,628.4 L444.8,635.4 L434.8,633.6 L424.7,639.2 L423.0,636.8 L420.2,636.1 L414.3,630.5 L412.2,630.5 L409.8,631.9 L407.0,630.2 L403.2,631.9 L401.1,635.4 L405.3,637.5 L404.6,640.2 L406.3,642.3 L406.0,644.8 L411.2,647.9 L417.4,649.6 L414.3,651.0 L418.5,651.0 L421.6,652.0 L424.4,649.3 L425.1,650.0 L425.1,659.0 L426.5,659.3 L438.9,651.3 L439.6,651.7 L434.1,658.6 L436.5,658.6 L436.9,659.3 L414.0,681.6 L435.8,664.2 L425.8,674.6 L436.2,666.6 L437.9,666.6 L454.5,688.5 L454.2,690.6 L459.0,687.5 L460.8,689.2 L452.1,698.2 L463.2,689.5 L470.1,685.7 L473.6,685.7 L476.0,684.0 L477.1,684.0 L480.2,686.8 L483.0,686.8 L485.4,684.3 L489.6,685.4 L502.4,674.3 L507.2,668.4 L515.6,668.0 L520.4,665.9 L523.5,665.9 L531.9,661.1 L548.5,681.9 L552.0,685.0 L541.6,670.8 L541.9,670.1 L554.0,684.7 L547.1,676.0 L547.5,675.3 L555.8,684.7 L549.9,676.7 L556.8,683.6 L554.7,681.2 L555.1,680.5 L556.8,682.2 L553.0,677.4 L553.4,676.7 L557.9,681.9 L547.8,668.0 L555.8,660.7 L553.0,659.0 L551.3,660.0 L548.5,656.6 L546.1,657.9 L543.3,654.8 L549.2,649.3 L551.6,645.8 L568.6,667.0 L569.6,667.3 L567.6,665.9 L567.9,665.2 L568.6,665.9 L562.4,657.9 L562.7,657.3 L570.0,666.3 L571.7,667.3 L571.4,668.0 L572.8,668.7 L569.3,663.8 L570.7,664.5 L558.6,649.3 L558.9,648.6 L573.5,665.9 L575.9,668.0 L567.6,657.3 L567.9,656.6 L574.5,664.2 L569.6,657.9 L571.7,659.3 Z"/>
-          </g>
-
-          <g class="draw explode" id="forearm">
-            <path class="sch-fill" fill-rule="evenodd" d="M514.2,666.7 L539.1,698.7 L537.4,700.4 L548.5,715.0 L554.4,722.3 L555.8,721.2 L557.2,721.9 L580.8,752.1 L580.8,754.2 L578.0,756.6 L588.7,770.1 L590.8,776.4 L588.0,780.6 L595.0,789.2 L598.8,792.4 L606.1,796.2 L607.8,796.2 L612.7,793.4 L622.4,794.1 L624.5,796.5 L622.4,798.3 L626.5,802.1 L624.8,799.6 L625.5,799.3 L627.2,801.0 L627.2,800.0 L629.3,802.4 L632.8,798.6 L634.9,800.3 L647.0,795.1 L648.7,791.7 L651.9,791.3 L650.8,788.2 L653.6,787.8 L652.5,785.8 L655.7,783.0 L655.0,781.6 L658.1,779.9 L656.0,775.3 L658.8,777.4 L656.0,772.9 L655.0,772.6 L653.2,774.0 L651.2,771.5 L652.5,767.7 L652.9,762.2 L656.0,759.0 L657.4,756.3 L653.2,743.4 L647.0,735.1 L644.9,735.1 L642.1,737.2 L635.6,732.0 L625.5,719.5 L622.4,721.6 L621.0,720.9 L596.7,690.0 L593.2,692.4 L578.7,675.7 L588.4,687.9 L588.0,688.6 L575.9,675.1 L588.0,692.1 L586.0,690.7 L574.5,677.1 L581.1,685.8 L576.6,681.3 L588.4,696.2 L590.5,695.5 L613.4,724.7 L605.7,730.2 L599.1,721.6 L600.5,719.8 L600.9,715.3 L597.7,715.0 L597.1,714.3 L597.1,710.8 L593.2,709.8 L593.6,705.9 L590.1,705.2 L589.8,701.1 L586.0,700.0 L586.3,696.6 L582.1,695.5 L582.5,691.7 L577.6,691.4 L576.2,692.1 L573.8,688.9 L575.2,687.2 L575.2,683.7 L571.0,682.3 L571.4,679.2 L570.0,679.6 L567.6,678.5 L567.2,675.1 L563.1,675.1 L561.7,671.9 L558.2,671.2 L557.5,668.1 L552.7,668.1 L553.7,666.7 L552.7,665.0 L551.6,665.0 L548.1,668.1 L541.9,660.5 L544.0,662.9 L542.9,663.3 L544.0,664.3 L543.6,665.0 L537.7,658.0 L546.1,668.8 L545.4,669.2 L538.4,661.2 L543.3,667.4 L542.9,668.5 L534.3,658.7 L538.8,664.6 L534.6,661.5 L535.7,661.9 L535.7,662.9 L540.5,668.8 L540.2,669.8 L535.3,663.9 L537.7,668.1 L538.8,668.5 L538.8,669.5 L536.7,671.2 L536.4,675.1 L540.5,676.4 L540.2,679.9 L543.6,680.6 L544.0,684.8 L547.8,685.8 L547.5,689.3 L550.9,690.0 L551.3,694.1 L555.1,695.2 L554.7,698.7 L558.9,699.7 L562.0,703.2 L562.0,708.0 L565.8,709.1 L565.5,712.5 L569.7,713.6 L569.3,717.4 L573.1,718.4 L572.8,721.9 L576.9,722.9 L576.6,726.8 L580.4,727.8 L580.4,731.6 L585.3,732.0 L586.6,731.3 L593.2,740.0 L586.3,745.9 L563.1,716.4 L564.4,713.9 L548.5,693.4 L547.1,692.8 L545.7,693.8 L523.9,665.7 L522.8,666.0 L519.7,663.6 Z"/>
-          </g>
-
-          <g class="draw explode" id="wrist">
-            <path class="sch-fill" fill-rule="evenodd" d="M533.8,649.0 L533.5,651.1 L543.9,664.3 L539.7,662.9 L540.4,667.4 L538.0,665.0 L539.7,668.1 L537.7,670.2 L537.7,673.6 L541.8,674.0 L542.2,677.4 L543.2,676.4 L547.7,681.2 L555.0,685.4 L557.8,686.1 L573.1,705.5 L576.9,703.4 L596.7,728.0 L581.7,708.6 L582.1,707.9 L599.8,729.1 L583.5,706.5 L583.8,705.8 L599.8,725.6 L592.8,716.6 L593.2,715.9 L596.7,720.0 L588.7,709.7 L589.0,709.0 L593.9,714.9 L581.7,699.6 L583.1,697.9 L580.7,694.4 L581.7,691.6 L578.6,691.3 L575.1,687.1 L575.5,683.0 L571.7,681.9 L571.7,678.1 L567.9,677.1 L568.2,673.6 L564.7,672.9 L564.4,668.8 L560.6,667.7 L560.9,663.9 L557.1,662.9 L556.7,659.1 L552.6,658.7 L550.8,659.8 L540.4,646.6 L539.4,646.9 L537.7,645.9 Z M555.0,640.0 L556.7,642.1 L555.4,641.7 L556.4,643.8 L558.5,645.5 L567.9,658.4 L566.1,657.3 L554.3,642.8 L563.0,654.9 L561.3,653.9 L555.0,646.2 L560.6,653.2 L560.2,653.9 L553.6,646.2 L557.4,651.8 L556.4,651.4 L558.5,652.8 L558.1,653.5 L557.4,652.8 L573.1,673.3 L571.7,675.0 L588.3,696.1 L591.8,693.0 L595.6,691.3 L607.1,705.1 L609.5,713.1 L614.7,723.5 L618.2,724.2 L626.9,733.9 L621.0,725.9 L621.3,725.2 L629.3,733.6 L623.0,724.6 L623.4,723.9 L628.2,729.4 L621.0,721.1 L619.9,711.7 L614.4,694.1 L612.6,694.1 L609.2,684.0 L609.2,683.0 L613.3,679.9 L616.4,674.0 L616.4,668.4 L614.0,663.2 L610.2,659.8 L605.7,658.0 L599.1,658.7 L594.2,661.5 L580.7,649.0 L562.6,635.5 L560.9,636.2 L556.4,641.7 Z M597.4,686.1 L603.3,686.4 L605.7,695.8 L604.6,697.5 L606.0,703.1 L596.7,690.6 L598.4,688.9 Z M567.9,652.5 L574.8,657.7 L577.6,657.0 L589.0,666.0 L586.6,672.9 L582.1,667.0 L579.7,668.1 Z"/>
-          </g>
-
-          <g class="draw explode" id="gripper">
-            <path class="sch-fill" fill-rule="evenodd" d="M648.0,773.6 L647.7,776.1 L645.2,774.7 L642.1,777.1 L640.7,777.1 L638.0,780.2 L636.6,779.9 L634.8,782.3 L633.8,780.2 L634.1,783.0 L631.4,782.7 L632.1,784.4 L629.6,785.1 L630.3,786.1 L625.5,790.3 L625.8,793.8 L622.3,798.3 L626.1,803.5 L624.1,811.8 L625.1,818.1 L626.5,820.2 L630.3,818.8 L633.1,821.2 L636.9,822.6 L642.1,820.2 L643.5,821.2 L641.8,822.9 L642.8,825.4 L641.4,827.4 L641.1,831.6 L639.0,833.7 L640.7,837.2 L643.2,836.8 L646.3,840.6 L645.6,843.4 L646.6,844.1 L651.2,854.9 L653.6,855.9 L655.0,859.0 L655.0,861.1 L653.2,862.2 L653.2,863.2 L655.0,866.3 L657.1,865.6 L660.9,868.8 L660.5,872.6 L663.3,873.6 L666.8,871.5 L668.5,872.2 L669.9,874.7 L678.9,878.1 L682.8,877.8 L683.1,881.2 L686.2,882.3 L689.7,880.2 L691.1,876.4 L692.8,876.4 L698.0,873.3 L699.1,869.4 L698.4,868.4 L703.9,864.9 L705.0,861.5 L710.2,859.0 L709.9,855.9 L706.4,854.9 L706.0,852.1 L707.4,850.4 L706.7,849.7 L705.7,840.3 L703.9,838.9 L703.3,835.8 L706.4,833.7 L706.4,832.0 L707.8,833.0 L712.3,853.5 L714.0,856.9 L718.2,856.6 L723.1,853.8 L724.8,849.7 L730.0,847.2 L729.7,844.1 L726.2,843.4 L725.8,840.6 L727.2,838.6 L726.5,837.9 L725.5,828.5 L723.4,826.4 L723.1,824.0 L726.2,821.9 L725.8,819.1 L722.0,818.1 L719.9,813.9 L721.0,811.5 L717.8,809.0 L715.1,810.8 L711.2,807.7 L711.2,805.9 L701.9,798.6 L701.2,797.2 L698.4,797.2 L696.0,794.1 L696.7,791.7 L693.9,789.3 L684.8,792.7 L679.6,795.9 L676.5,799.0 L674.8,797.2 L672.3,798.6 L671.6,797.2 L675.1,793.4 L675.1,788.9 L673.4,785.1 L675.5,781.6 L669.6,777.8 L665.7,777.1 L659.5,777.5 L655.7,772.6 L650.8,774.7 Z M664.4,830.2 L668.9,829.5 L672.0,827.8 L680.0,834.7 L681.7,839.9 L684.5,842.7 L688.0,844.5 L692.1,864.6 L677.6,857.3 L676.2,852.1 L673.4,849.3 L670.3,847.9 L663.3,833.7 Z M685.5,812.9 L687.3,812.5 L697.4,821.2 L695.3,822.6 L691.4,819.5 L691.1,817.0 Z"/>
-          </g>
-
-          <!-- annotation callouts -->
-          <g class="draw" id="callouts">
-            <circle class="sch-line-dim" cx="150" cy="1050" r="11"/>
-            <text class="sch-label" x="146" y="1054">1</text>
-            <line class="sch-line-dim" x1="161" y1="1045" x2="250" y2="900"/>
-
-            <circle class="sch-line-dim" cx="100" cy="600" r="11"/>
-            <text class="sch-label" x="96" y="604">2</text>
-            <line class="sch-line-dim" x1="111" y1="600" x2="300" y2="700"/>
-
-            <circle class="sch-line-dim" cx="520" cy="470" r="11"/>
-            <text class="sch-label" x="516" y="474">3</text>
-            <line class="sch-line-dim" x1="516" y1="480" x2="503" y2="605"/>
-
-            <circle class="sch-line-dim" cx="705" cy="560" r="11"/>
-            <text class="sch-label" x="701" y="564">4</text>
-            <line class="sch-line-dim" x1="694" y1="565" x2="590" y2="690"/>
-
-            <circle class="sch-line-dim" cx="705" cy="1010" r="11"/>
-            <text class="sch-label" x="701" y="1014">5</text>
-            <line class="sch-line-dim" x1="694" y1="1005" x2="650" y2="870"/>
-
-            <line class="sch-line-dim" x1="130" y1="710" x2="300" y2="715"/>
-            <circle class="sch-dot" cx="300" cy="715" r="3"/>
-            <text class="sch-label sch-label-hl" x="60" y="700">B.ENG MECHATRONIK</text>
-
-            <line class="sch-line-dim" x1="560" y1="380" x2="503" y2="605"/>
-            <circle class="sch-dot" cx="503" cy="605" r="3"/>
-            <text class="sch-label sch-label-hl" x="480" y="368">IWE — SCHWEISSFACHING.</text>
-
-            <line class="sch-line-dim" x1="150" y1="1200" x2="270" y2="880"/>
-            <circle class="sch-dot" cx="270" cy="880" r="3"/>
-            <text class="sch-label sch-label-hl" x="90" y="1218">7 JAHRE PROJEKTERFAHRUNG</text>
-          </g>
-        </svg>
+        <span class="rev-tag mono">REV.03 · MHC-ANLAGENTECHNIK</span>
+        <div class="callout-chip" id="callout-1" style="left:8%; top:6%;">B.ENG MECHATRONIK</div>
+        <div class="callout-chip align-right" id="callout-2" style="left:56%; top:6%;">IWE — SCHWEISSFACHING.</div>
+        <div class="callout-chip" id="callout-3" style="left:8%; top:15%;">7 JAHRE PROJEKTERFAHRUNG</div>
       </div>
+    </div>
+  </div>
+</section>
+
     </div>
   </div>
 </section>
@@ -516,12 +465,13 @@
   <div class="meta-grid">
     <div>
       <p><b>Diese Website ist selbst ein kleines Projekt</b> — mein Hobby, mit KI zu bauen, angewendet auf etwas Reales statt auf ein Spielzeug-Beispiel.</p>
-      <p>Der Ablauf: Inhalte und Struktur mit Claude erarbeitet, Design-Richtung bewusst vom generischen KI-Look abgegrenzt (kein Standard-Dunkelmodus-Template), und die scroll-gesteuerte technische Zeichnung als Kernidee statt eines echten Videos umgesetzt — passend zum eigenen Beruf als Ingenieur. Die Hero-Grafik ist direkt aus der originalen DXF-Konstruktionszeichnung eines Druckbehälters extrahiert (Sattellager, Stutzen, Flansche, inklusive Schnitt A-A), nicht nachgezeichnet — hochkant gestellt, damit sie präsent im Bild steht. Die Maßlinie aus dem Zoom-Finale zieht sich als wandernder Faden durch die ganze Seite weiter.</p>
+      <p>Der Ablauf: Inhalte und Struktur mit Claude erarbeitet, Design-Richtung bewusst vom generischen KI-Look abgegrenzt (kein Standard-Dunkelmodus-Template), und statt eines echten Videos ein prozedural gebautes 3D-Robotermodell als Kernidee umgesetzt — passend zum eigenen Beruf als Ingenieur. Der Roboterarm besteht aus echter WebGL-Geometrie (Three.js), nicht aus Bildern: Er fliegt beim Scrollen aus seinen Einzelteilen zusammen, bleibt danach als kleiner Begleiter in der Ecke sichtbar und baut beim Erreichen der Tabellen unten auf der Seite deren Zeilen sichtbar mit auf.</p>
       <p>Der nächste Schritt: die Seite lokal mit Claude Code weiter verfeinern, mit echten Projektbildern füllen und live schalten.</p>
     </div>
     <ul class="stack-list">
       <li><span>Konzept &amp; Copy</span><span>Claude</span></li>
       <li><span>Layout &amp; Prototyp</span><span>HTML / CSS / JS</span></li>
+      <li><span>3D-Robotermodell</span><span>Three.js (WebGL)</span></li>
       <li><span>Scroll-Animation</span><span>GSAP ScrollTrigger</span></li>
       <li><span>Weiterentwicklung</span><span>Claude Code</span></li>
       <li><span>Hosting</span><span>Vercel / GitHub Pages</span></li>
@@ -655,92 +605,269 @@
   updateCounters();
   setInterval(updateCounters, 1000);
 
-  // Explosionszeichnung: Teile starten versetzt (echte STL-Silhouetten), fliegen beim Scrollen zusammen
-  const explodeOffsets = {
-    base:    [-138.0, 58.8],
-    boom:    [-145.2, -23.7],
-    elbow:   [12.2, -103.4],
-    forearm: [108.1, -23.9],
-    wrist:   [96.0, -64.2],
-    gripper: [134.6, 66.2],
-  };
-  const explodeParts = Object.keys(explodeOffsets);
-  explodeParts.forEach((id) => {
-    gsap.set('#' + id, { x: explodeOffsets[id][0], y: explodeOffsets[id][1] });
-  });
+  // ---- 3D-Robotermodell (Three.js): baut sich im Hero zusammen und begleitet danach
+  // als kleiner Begleiter die ganze Seite, wo er die Tabellen "zusammenbaut" ----
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = window.matchMedia('(max-width:860px)').matches;
+  const robotCanvas = document.getElementById('robot-canvas');
 
-  // stroke-draw effect just for the dimension line + callouts (the parts themselves are fully rendered, they only travel)
-  const drawGroups = ['#dims', '#callouts'];
-  drawGroups.forEach((sel) => {
-    document.querySelectorAll(sel + ' .sch-line, ' + sel + ' .sch-line-dim, ' + sel + ' .sch-fill').forEach(el => {
-      const len = el.getTotalLength ? el.getTotalLength() : 0;
-      if(len){
-        el.style.strokeDasharray = len;
-        el.style.strokeDashoffset = len;
-      }
-    });
-    document.querySelectorAll(sel + ' .sch-dot, ' + sel + ' .sch-label').forEach(el => {
-      el.style.opacity = 0;
-    });
-  });
+  if(robotCanvas && !isMobile){
+  try {
+    const BLUE = 0x2C4A9E;
+    const FILL = 0xE6E3D5;
 
-  const tl = gsap.timeline({
-    scrollTrigger:{
-      trigger: '.hero',
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: 0.6,
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 8);
+    camera.updateMatrixWorld(true);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: robotCanvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // anchorGroup: WHERE the rig sits on screen (hero center -> small corner companion)
+    // swayGroup: gentle constant rotation, independent of the assembly animation
+    // robotGroup: the six parts that fly together into the assembled pose
+    const anchorGroup = new THREE.Group();
+    const swayGroup = new THREE.Group();
+    const robotGroup = new THREE.Group();
+    swayGroup.add(robotGroup);
+    anchorGroup.add(swayGroup);
+    scene.add(anchorGroup);
+
+    function edged(mesh, geometry){
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(geometry, 1),
+        new THREE.LineBasicMaterial({ color: BLUE, transparent: true, opacity: 1 })
+      );
+      mesh.add(edges);
+      return edges;
     }
-  });
+    function fillMat(){
+      return new THREE.MeshBasicMaterial({ color: FILL, transparent: true, opacity: 0.92 });
+    }
+    function makeGeom(id){
+      switch(id){
+        case 'base':    return new THREE.CylinderGeometry(1.0, 1.28, 0.55, 20);
+        case 'boom':    return new THREE.BoxGeometry(0.52, 2.3, 0.52);
+        case 'elbow':   return new THREE.SphereGeometry(0.4, 16, 12);
+        case 'forearm': return new THREE.BoxGeometry(1.9, 0.42, 0.42);
+        case 'wrist':   return new THREE.SphereGeometry(0.3, 16, 12);
+        default: return null;
+      }
+    }
 
-  // all six parts glide from their exploded position into the assembled pose at once
-  tl.to(explodeParts.map(id => '#' + id).join(','), {
-    x: 0, y: 0,
-    duration: 3,
-    ease: 'none',
-  }, 0)
-  .to('#explode-guides', {
-    opacity: 0,
-    duration: 2.2,
-    ease: 'none',
-  }, 0.4);
+    // assembled (rest) pose vs. scattered (exploded) pose per part
+    const partDefs = {
+      base:    { rest:[0,-1.7,0],    restRot:[0,0,0],     explode:[-3.4,1.3,-1.6], explodeRot:[0.3,0.6,0.2] },
+      boom:    { rest:[0.15,-0.6,0], restRot:[0,0,0.32],  explode:[-3.6,-0.7,1.9], explodeRot:[-0.5,0.7,-0.4] },
+      elbow:   { rest:[0.78,0.85,0], restRot:[0,0,0],     explode:[0.3,-2.6,-1.3], explodeRot:[0.6,-0.4,0.5] },
+      forearm: { rest:[1.85,0.95,0],restRot:[0,0,-0.14],  explode:[2.8,-0.7,2.1],  explodeRot:[-0.4,-0.6,0.3] },
+      wrist:   { rest:[2.82,0.75,0],restRot:[0,0,0],      explode:[2.5,-1.7,-1.9], explodeRot:[0.5,0.3,-0.6] },
+      gripper: { rest:[3.28,0.55,0],restRot:[0,0,0],      explode:[3.4,1.7,1.7],   explodeRot:[-0.6,0.5,0.6] },
+    };
 
-  // once assembled: the spec line draws in, then the callouts fade in
-  tl.to('#dims .sch-line, #dims .sch-line-dim, #dims .sch-fill', {
-    strokeDashoffset: 0,
-    duration: 1,
-    ease: 'none',
-  }, 3.0)
-  .to('#dims .sch-dot, #dims .sch-label', {
-    opacity: 1,
-    duration: 0.4,
-  }, 3.6)
-  .to('#callouts .sch-line, #callouts .sch-line-dim, #callouts .sch-fill', {
-    strokeDashoffset: 0,
-    duration: 0.8,
-    ease: 'none',
-  }, 4.0)
-  .to('#callouts .sch-dot, #callouts .sch-label', {
-    opacity: 1,
-    duration: 0.4,
-  }, 4.5);
+    const parts = {};
+    ['base','boom','elbow','forearm','wrist'].forEach(id => {
+      const geom = makeGeom(id);
+      const mesh = new THREE.Mesh(geom, fillMat());
+      edged(mesh, geom);
+      const def = partDefs[id];
+      mesh.position.set(def.explode[0], def.explode[1], def.explode[2]);
+      mesh.rotation.set(def.explodeRot[0], def.explodeRot[1], def.explodeRot[2]);
+      robotGroup.add(mesh);
+      parts[id] = { mesh, def };
+    });
 
-  // finale: zoom into the dimension line — it becomes the thread the timeline below picks up
-  const zoomStart = 5.2;
-  tl.to('#base, #boom, #elbow, #forearm, #wrist, #gripper, #callouts, #dims-deco', {
-    opacity: 0,
-    duration: 0.5,
-  }, zoomStart)
-  .to('#dims-line', {
-    stroke: '#2C4A9E',
-    duration: 0.4,
-  }, zoomStart)
-  .to('#schematic', {
-    scale: 24,
-    duration: 1.3,
-    ease: 'power2.in',
-    transformOrigin: '2.6% 49%',
-  }, zoomStart);
+    // gripper: palm + two fingers on pivots, so they can pinch open/closed
+    const gripperGroup = new THREE.Group();
+    const palmGeom = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    const palm = new THREE.Mesh(palmGeom, fillMat());
+    edged(palm, palmGeom);
+    gripperGroup.add(palm);
+
+    const fingerGeom = new THREE.BoxGeometry(0.14, 0.52, 0.2);
+    const fingerPivotL = new THREE.Group();
+    const fingerL = new THREE.Mesh(fingerGeom, fillMat());
+    fingerL.position.set(0, -0.34, 0);
+    edged(fingerL, fingerGeom);
+    fingerPivotL.add(fingerL);
+    fingerPivotL.position.set(0, -0.12, 0.12);
+    fingerPivotL.rotation.z = -0.32;
+    gripperGroup.add(fingerPivotL);
+
+    const fingerPivotR = new THREE.Group();
+    const fingerR = new THREE.Mesh(fingerGeom, fillMat());
+    fingerR.position.set(0, -0.34, 0);
+    edged(fingerR, fingerGeom);
+    fingerPivotR.add(fingerR);
+    fingerPivotR.position.set(0, -0.12, -0.12);
+    fingerPivotR.rotation.z = 0.32;
+    gripperGroup.add(fingerPivotR);
+
+    const gripperDef = partDefs.gripper;
+    gripperGroup.position.set(gripperDef.explode[0], gripperDef.explode[1], gripperDef.explode[2]);
+    gripperGroup.rotation.set(gripperDef.explodeRot[0], gripperDef.explodeRot[1], gripperDef.explodeRot[2]);
+    robotGroup.add(gripperGroup);
+    parts.gripper = { mesh: gripperGroup, def: gripperDef };
+
+    // ---- screen-space anchoring: convert a viewport point into a world position on z=0 ----
+    function ndcToWorld(nx, ny, z){
+      const vec = new THREE.Vector3(nx, ny, 0.5).unproject(camera);
+      const dir = vec.sub(camera.position).normalize();
+      const t = (z - camera.position.z) / dir.z;
+      return camera.position.clone().add(dir.multiplyScalar(t));
+    }
+    function elementCenterNDC(el, yBias){
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height * (yBias === undefined ? 0.5 : yBias);
+      return { nx: (cx / window.innerWidth) * 2 - 1, ny: -((cy / window.innerHeight) * 2 - 1) };
+    }
+
+    const IDLE_NDC = { nx: 0.86, ny: -0.78 };
+    const heroScale = 1;
+    const idleScale = 0.16;
+    let heroAnchorWorld = new THREE.Vector3();
+    let idleAnchorWorld = new THREE.Vector3();
+    let robotMode = 'hero';
+    const currentAnchor = new THREE.Vector3();
+    const targetAnchor = new THREE.Vector3();
+    let currentScale = heroScale, targetScale = heroScale;
+
+    function computeAnchors(){
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      const wrap = document.querySelector('.schematic-wrap');
+      if(wrap) {
+        const ndc = elementCenterNDC(wrap, 0.48);
+        heroAnchorWorld = ndcToWorld(ndc.nx, ndc.ny, 0);
+      }
+      idleAnchorWorld = ndcToWorld(IDLE_NDC.nx, IDLE_NDC.ny, 0);
+    }
+    function setRobotMode(mode){
+      robotMode = mode;
+      if(mode === 'hero'){ targetAnchor.copy(heroAnchorWorld); targetScale = heroScale; }
+      else { targetAnchor.copy(idleAnchorWorld); targetScale = idleScale; }
+    }
+
+    computeAnchors();
+    setRobotMode('hero');
+    currentAnchor.copy(targetAnchor);
+    currentScale = targetScale;
+    anchorGroup.position.copy(currentAnchor);
+    anchorGroup.scale.setScalar(currentScale);
+
+    // ---- scroll-driven assembly: parts glide from scattered to assembled while the hero is pinned ----
+    const partIds = ['base','boom','elbow','forearm','wrist','gripper'];
+    const tl = gsap.timeline({
+      scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom bottom', scrub: 0.6 }
+    });
+    partIds.forEach((id, i) => {
+      const p = parts[id];
+      const at = i * 0.12;
+      tl.to(p.mesh.position, { x: p.def.rest[0], y: p.def.rest[1], z: p.def.rest[2], duration: 2.6, ease: 'none' }, at);
+      tl.to(p.mesh.rotation, { x: p.def.restRot[0], y: p.def.restRot[1], z: p.def.restRot[2], duration: 2.6, ease: 'none' }, at);
+    });
+    // once assembled: the gripper grabs, then rests half-open, and the spec callouts fade in
+    tl.to(fingerPivotL.rotation, { z: -0.06, duration: 0.35, ease: 'power2.out' }, 3.0)
+      .to(fingerPivotR.rotation, { z: 0.06, duration: 0.35, ease: 'power2.out' }, 3.0)
+      .to(fingerPivotL.rotation, { z: -0.2, duration: 0.4, ease: 'power2.inOut' }, 3.5)
+      .to(fingerPivotR.rotation, { z: 0.2, duration: 0.4, ease: 'power2.inOut' }, 3.5)
+      .to('#callout-1, #callout-2, #callout-3', { opacity: 1, y: -4, duration: 0.5, stagger: 0.16 }, 3.3);
+
+    // hand off to the small corner companion exactly when the hero's scroll-pin
+    // releases (i.e. right as the assembly timeline above completes) — using the
+    // same 'bottom bottom' point as the scrub's own end avoids a dead zone where
+    // the still-huge hero-scale rig would hover over the section scrolling in under it
+    ScrollTrigger.create({
+      trigger: '.hero',
+      start: 'bottom bottom',
+      onEnter: () => setRobotMode('idle'),
+      onLeaveBack: () => setRobotMode('hero'),
+    });
+    const heroRect = document.querySelector('.hero').getBoundingClientRect();
+    setRobotMode((heroRect.bottom - window.innerHeight) <= 0 ? 'idle' : 'hero');
+
+    // fade the companion out near the footer so it doesn't sit over the footer text
+    ScrollTrigger.create({
+      trigger: 'footer',
+      start: 'top 92%',
+      onEnter: () => gsap.to(robotCanvas, { opacity: 0, duration: 0.4 }),
+      onLeaveBack: () => gsap.to(robotCanvas, { opacity: 1, duration: 0.4 }),
+    });
+
+    // ---- "table build" pulses: the robot glances at a section and its rows draw themselves in ----
+    function gripperSnap(){
+      gsap.to(fingerPivotL.rotation, { z: -0.36, duration: 0.18, yoyo: true, repeat: 1, ease: 'power1.inOut' });
+      gsap.to(fingerPivotR.rotation, { z: 0.36, duration: 0.18, yoyo: true, repeat: 1, ease: 'power1.inOut' });
+    }
+    function pulseRobotToward(el){
+      if(reduceMotion || robotMode !== 'idle') return;
+      const ndc = elementCenterNDC(el, 0.25);
+      const glance = ndcToWorld(ndc.nx, ndc.ny, 0);
+      const back = idleAnchorWorld.clone();
+      gsap.timeline()
+        .to(targetAnchor, { x: glance.x, y: glance.y, z: glance.z, duration: 0.55, ease: 'power2.out' })
+        .to(targetAnchor, { x: back.x, y: back.y, z: back.z, duration: 0.7, ease: 'power2.inOut' }, '+=0.55');
+      gripperSnap();
+    }
+    function wireTableBuild(selector, rowSelector){
+      document.querySelectorAll(selector).forEach(el => {
+        const rows = el.querySelectorAll(rowSelector);
+        if(!rows.length) return;
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top 78%',
+          once: true,
+          onEnter: () => {
+            pulseRobotToward(el);
+            gsap.from(rows, {
+              clipPath: 'inset(0 100% 0 0)',
+              webkitClipPath: 'inset(0 100% 0 0)',
+              duration: 0.55,
+              stagger: 0.09,
+              ease: 'power2.out',
+            });
+          }
+        });
+      });
+    }
+    wireTableBuild('.counter-grid', '.counter-cell');
+    wireTableBuild('.spec-list', '.spec-row');
+    wireTableBuild('.skill-grid', '.skill-cell');
+    wireTableBuild('.stack-list', 'li');
+
+    // ---- render loop: smoothly ease toward the current target anchor/scale, gentle idle sway ----
+    const followLerp = reduceMotion ? 1 : 0.07;
+    function tick(now){
+      requestAnimationFrame(tick);
+      currentAnchor.lerp(targetAnchor, followLerp);
+      currentScale += (targetScale - currentScale) * followLerp;
+      anchorGroup.position.copy(currentAnchor);
+      anchorGroup.scale.setScalar(currentScale);
+      if(!reduceMotion){
+        swayGroup.rotation.y = 0.28 + Math.sin(now * 0.00035) * 0.16;
+      }
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+
+    let robotResizeTimer;
+    window.addEventListener('resize', () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      clearTimeout(robotResizeTimer);
+      robotResizeTimer = setTimeout(() => { computeAnchors(); setRobotMode(robotMode); }, 200);
+    });
+  } catch(err) {
+    if(robotCanvas) robotCanvas.style.display = 'none';
+    document.querySelectorAll('.callout-chip').forEach(c => { c.style.opacity = 1; });
+  }
+  } else {
+    // no 3D rig (mobile / no WebGL): still show the callout content, just without the choreography
+    document.querySelectorAll('.callout-chip').forEach(c => { c.style.opacity = 1; });
+  }
+
 
   // Zeitstrahl: die Linie wächst mit, während man durch die Erfahrung scrollt
   gsap.to('.tl-line', {
@@ -908,7 +1035,7 @@
 
   // subtle fade-up for panels
   document.querySelectorAll('.panel').forEach(panel => {
-    gsap.from(panel.querySelectorAll('h2, .about-grid, .tl-item, .skill-cell, .meta-grid, .contact-links, .map-wrap'), {
+    gsap.from(panel.querySelectorAll('h2, .about-grid, .tl-item, .meta-grid, .contact-links, .map-wrap'), {
       opacity: 0,
       y: 24,
       duration: 0.8,

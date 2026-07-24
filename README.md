@@ -7,7 +7,8 @@ Die Seite ist gleichzeitig ein kleines Hobby-Projekt: ein reales Beispiel dafür
 ## Stack
 
 - Statisches HTML/CSS/JS, keine Build-Tools
-- [GSAP](https://gsap.com/) + ScrollTrigger für die scroll-gesteuerte Zeichnung im Hero
+- [Three.js](https://threejs.org/) für das 3D-Robotermodell im Hero (prozedurale Geometrie, kein externes Modell)
+- [GSAP](https://gsap.com/) + ScrollTrigger für die scroll-gesteuerte Montage im Hero und die "Tabellen-Bau"-Effekte auf der restlichen Seite
 - Fonts: Space Grotesk, Inter, JetBrains Mono (Google Fonts)
 
 ## Lokal ansehen
