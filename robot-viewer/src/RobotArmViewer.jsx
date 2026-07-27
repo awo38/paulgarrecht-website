@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, useAnimations, Environment, ContactShadows, Html } from '@react-three/drei';
@@ -26,7 +26,12 @@ const STRAY_NODE_NAME = 'Cube';
 // panel hit in the previous model version.
 const SCREEN_NODE_NAME = 'obj_2_2';
 
-function AssemblyRig({ progressRef, debugRectRef }) {
+// Nothing overlays the 3D scene until the camera has essentially arrived at
+// the screen — the career readout only ever appears ON the screen, never
+// earlier in the ride.
+const SCREEN_REVEAL_START = 0.85;
+
+function AssemblyRig({ progressRef, screenOverlayRef, cardRef }) {
   const groupRef = useRef(null);
   const { scene, animations, cameras } = useGLTF(MODEL_URL);
   const { actions, mixer } = useAnimations(animations, groupRef);
@@ -37,6 +42,7 @@ function AssemblyRig({ progressRef, debugRectRef }) {
   const cornerTmp = useRef(
     Array.from({ length: 8 }, () => new THREE.Vector3())
   );
+  const naturalSize = useRef(null);
 
   useEffect(() => {
     scene.traverse((obj) => {
@@ -79,7 +85,7 @@ function AssemblyRig({ progressRef, debugRectRef }) {
     mixer.update(0);
 
     const screenObj = screenObjRef.current;
-    if (!screenObj || !debugRectRef.current) return;
+    if (!screenObj || !screenOverlayRef.current) return;
 
     screenObj.updateWorldMatrix(true, false);
     const box = boxTmp.current.setFromObject(screenObj);
@@ -107,18 +113,127 @@ function AssemblyRig({ progressRef, debugRectRef }) {
       if (y > maxY) maxY = y;
     }
 
-    const el = debugRectRef.current;
+    const el = screenOverlayRef.current;
+    const rectW = Math.max(0, maxX - minX);
+    const rectH = Math.max(0, maxY - minY);
     el.style.left = `${minX}px`;
     el.style.top = `${minY}px`;
-    el.style.width = `${Math.max(0, maxX - minX)}px`;
-    el.style.height = `${Math.max(0, maxY - minY)}px`;
-    el.style.opacity = '1';
+    el.style.width = `${rectW}px`;
+    el.style.height = `${rectH}px`;
+
+    const revealT = progress <= SCREEN_REVEAL_START ? 0 : (progress - SCREEN_REVEAL_START) / (1 - SCREEN_REVEAL_START);
+    el.style.opacity = String(THREE.MathUtils.clamp(revealT, 0, 1));
+
+    // Scale the career card to fit whatever size the tracked screen rect
+    // currently is, instead of letting it clip/overflow while the rect is
+    // still small early in the reveal. Measured once, lazily, before any
+    // transform has ever been applied (so the measurement is the card's true
+    // untransformed size), then reused for the rest of the session.
+    if (cardRef.current) {
+      if (!naturalSize.current) {
+        const r = cardRef.current.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) naturalSize.current = { width: r.width, height: r.height };
+      }
+      if (naturalSize.current) {
+        const scale = Math.min(rectW / naturalSize.current.width, rectH / naturalSize.current.height, 1);
+        cardRef.current.style.transform = `scale(${Math.max(scale, 0.001)})`;
+      }
+    }
   });
 
   return (
     <group ref={groupRef}>
       <primitive object={scene} />
     </group>
+  );
+}
+
+function pad(n) {
+  return String(n).padStart(2, '0');
+}
+
+function diffBreakdown(from, to) {
+  let years = to.getFullYear() - from.getFullYear();
+  let months = to.getMonth() - from.getMonth();
+  let days = to.getDate() - from.getDate();
+  let hours = to.getHours() - from.getHours();
+  let minutes = to.getMinutes() - from.getMinutes();
+  let seconds = to.getSeconds() - from.getSeconds();
+
+  if (seconds < 0) {
+    seconds += 60;
+    minutes -= 1;
+  }
+  if (minutes < 0) {
+    minutes += 60;
+    hours -= 1;
+  }
+  if (hours < 0) {
+    hours += 24;
+    days -= 1;
+  }
+  if (days < 0) {
+    days += new Date(to.getFullYear(), to.getMonth(), 0).getDate();
+    months -= 1;
+  }
+  if (months < 0) {
+    months += 12;
+    years -= 1;
+  }
+  return { years, months, days, hours, minutes, seconds };
+}
+
+const MILESTONES = [
+  { label: 'B.Eng. Mechatronik', since: new Date(2019, 8, 1) },
+  { label: 'Int. Schweißfachingenieur (IWE)', since: new Date(2022, 2, 1) },
+  { label: 'Einsatzleitung KHG', since: new Date(2019, 8, 1) },
+];
+
+function CareerScreen() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div
+      style={{
+        width: 260,
+        fontFamily: "'IBM Plex Mono', Menlo, monospace",
+        background: 'rgba(11, 15, 20, 0.92)',
+        border: '1px solid rgba(148, 163, 184, 0.35)',
+        borderRadius: 6,
+        padding: '14px 16px',
+        boxShadow: '0 0 24px rgba(255, 122, 0, 0.15)',
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          color: '#FF7A00',
+          marginBottom: 10,
+        }}
+      >
+        Werdegang — Live
+      </div>
+      {MILESTONES.map((m) => {
+        const d = diffBreakdown(m.since, now);
+        return (
+          <div key={m.label} style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 10, color: '#94A3B8', marginBottom: 2 }}>
+              {m.label} · seit {pad(m.since.getDate())}.{pad(m.since.getMonth() + 1)}.{m.since.getFullYear()}
+            </div>
+            <div style={{ fontSize: 11, color: '#F8FAFC', letterSpacing: '0.02em' }}>
+              {d.years}J {d.months}M {d.days}T · {pad(d.hours)}:{pad(d.minutes)}:{pad(d.seconds)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -146,7 +261,8 @@ function Loader() {
 export default function RobotArmViewer({ style, className }) {
   const rootRef = useRef(null);
   const progressRef = useRef(0);
-  const debugRectRef = useRef(null);
+  const screenOverlayRef = useRef(null);
+  const cardRef = useRef(null);
 
   // Drive the whole sequence purely from scroll position (0..1 across the
   // pinned hero). Reuses the host page's existing GSAP ScrollTrigger (already
@@ -209,27 +325,36 @@ export default function RobotArmViewer({ style, className }) {
         />
 
         <Suspense fallback={<Loader />}>
-          <AssemblyRig progressRef={progressRef} debugRectRef={debugRectRef} />
+          <AssemblyRig progressRef={progressRef} screenOverlayRef={screenOverlayRef} cardRef={cardRef} />
           <Environment files={HDRI_URL} environmentIntensity={0.12} />
         </Suspense>
 
         <ContactShadows position={[0, -0.01, 0]} opacity={0.55} scale={12} blur={2.4} far={6} />
       </Canvas>
 
-      {/* DEBUG: proves the screen-tracking math (part B) before the real
-          crossfade is built on top of it — a visible rectangle following the
-          projected screen bounding box every frame. To remove once part C
-          replaces it with the real content reveal. */}
+      {/* Positioned/sized every frame (see AssemblyRig's useFrame) to match the
+          screen mesh's projected on-screen rect, so the career readout looks
+          embedded in the physical display rather than floating over the
+          scene. Stays fully transparent until the camera has essentially
+          arrived (see SCREEN_REVEAL_START) — nothing appears earlier in the ride. */}
       <div
-        ref={debugRectRef}
+        ref={screenOverlayRef}
         style={{
           position: 'absolute',
-          border: '2px dashed #FF7A00',
-          background: 'rgba(255, 122, 0, 0.12)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           pointerEvents: 'none',
           opacity: 0,
         }}
-      />
+      >
+        {/* Scaled (not clipped) to fit the tracked rect — see naturalSize in
+            AssemblyRig's useFrame. transform-origin center keeps it anchored
+            in the middle of the screen as it grows. */}
+        <div ref={cardRef} style={{ transformOrigin: 'center center' }}>
+          <CareerScreen />
+        </div>
+      </div>
     </div>
   );
 }

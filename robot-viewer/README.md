@@ -47,110 +47,112 @@ Rest der Seite (keine Drittanbieter-Requests, siehe Datenschutzhinweis in
 `impressum.html`), wird die HDRI-Datei stattdessen lokal vorgehalten und über
 `<Environment files="/hdri/studio_small_03_1k.hdr">` geladen.
 
-## Echte Multi-Part-Explosion (aktuelles Modell)
+## Echte Multi-Part-Explosion + gebackene Kamera-Fahrt (aktuelles Modell)
 
-Das aktuelle `robot-arm.glb` ist ein zweiter, vom Nutzer bereitgestellter
-Export und unterscheidet sich grundlegend vom ursprünglichen: **16 separate
+`robot-arm.glb` ist ein vom Nutzer bereitgestellter Export mit **16 separaten
 Nodes/Meshes** (Sockel, Achsen, Greifer-Segmente, Bedienpanel, …), von denen
 jedes seinen **eigenen, in Blender animierten** Explosions→Montage-Clip
 mitbringt (`obj_0Action` … `obj_14Action`, je 60 Keyframes, Zeitbereich
-`0.0417`–`2.5` Sekunden auf einer gemeinsamen Timeline — vor dem Einbau direkt
-gegen die glTF-Keyframe-Daten verifiziert, nicht angenommen). `t=0` ist die
-exploded Pose (identisch mit der statischen Node-`translation`, die ohne
-Animation angezeigt würde), `t=2.5` die vollständig montierte Pose.
+`0.0417`–`2.5` Sekunden). Eine spätere Export-Iteration hat zusätzlich einen
+**eigenen Kamera-Node samt Animation** hinzugefügt (`CameraAction.001`,
+`0`–`3.75` Sekunden, `gltf.cameras[0]`) — die komplette Kamerafahrt vom
+Weitwinkel-Establishing-Shot bis zum Nahaufnahme-Zoom aufs Bedienpanel ist
+also bereits im Modell enthalten, nicht mehr im Code gebaut. Alle Zeitbereiche
+wurden vor dem Einbau direkt gegen die glTF-Keyframe-Daten verifiziert, nicht
+angenommen.
 
-`RobotArmViewer.jsx` nutzt dafür `@react-three/drei`s `useAnimations`, aktiviert
+`t=0` ist jeweils die exploded/Weitwinkel-Pose (identisch mit der statischen
+Node-`translation`, die ohne Animation angezeigt würde), `t=Ende` die
+vollständig montierte Pose bzw. der Nahaufnahme-Zoom.
+
+### Scroll-Scrubbing beider Clip-Arten parallel
+
+`RobotArmViewer.jsx` nutzt `@react-three/drei`s `useAnimations`, aktiviert
 alle Clips einmalig (`action.play()` gefolgt von `action.paused = true`) und
-scrubbt danach pro Frame nur noch `action.time` + `mixer.update(0)` anhand des
-Scroll-Fortschritts (`[0, ASSEMBLE_END]` → `[0, DURATION]`) — kein
-`useFrame`-Lerp einzelner Transforms mehr wie beim vorherigen Modell, da die
-eigentliche Bewegung schon in den Clips steckt.
+scrubbt danach **pro Frame** nur noch:
+
+```js
+action.time = progress * action.getClip().duration;
+mixer.update(0);
+```
+
+— für *jeden* Clip (die 15 Objekt-Clips **und** den Kamera-Clip) mit demselben
+`progress` (0–1 über den gepinnten Hero-Bereich), aber jeweils gegen die
+**eigene** Clip-Dauer skaliert. Das bedeutet: Montage (2.5s) und Kamerafahrt
+(3.75s) laufen unterschiedlich schnell, aber beide erreichen ihr Ende exakt
+bei `progress = 1` — kein manuelles Phasen-Splitting (kein `ASSEMBLE_END`/
+`ZOOM_START` mehr wie in einer früheren, jetzt ersetzten Fassung) nötig.
+
+`gltf.cameras[0]` wird per `useThree().set({ camera: gltf.cameras[0] })` einmalig
+zur aktiven R3F-Kamera gemacht, sobald das GLB geladen ist. Es gibt **kein**
+`<OrbitControls>` und **kein** `<Bounds>` mehr — die komplette Kamerafahrt ist
+vollständig durch das Modell vorgegeben, keine Nutzerinteraktion während der
+Fahrt (siehe Anfrage: "kein OrbitControls während der gesamten gescripteten
+Fahrt").
 
 Modell ist bereits Y-up exportiert (visuell in einer eigenständigen Three.js-
-Testseite ohne R3F verifiziert, bevor auf einen Achsen-Fix verzichtet wurde) —
-anders als das ursprüngliche Modell ist hier **keine** `ZUP_TO_YUP`-Rotation
-nötig.
-
-Die Datei enthält außerdem einen einzelnen Node namens `Cube`: eine winzige
-24-Vertex-Box mit eigenem Platzhalter-Material, die abseits des Arms auf dem
-Boden sitzt — offensichtlich ein liegengebliebenes Blender-Default-Objekt,
-kein Teil des Roboters. Wird beim Laden per `scene.getObjectByName('Cube')`
-entfernt (Geometrie *und* zugehörige Animation werden nie abgespielt), damit
-er weder rendert noch die `<Bounds>`-Rahmung verfälscht.
-
-`<Bounds>` muss dabei die **montierte** Pose rahmen, nicht die (exploded)
-Ruhe-Transform der Nodes: Beim ersten Laden werden einmalig alle Actions auf
-`action.time = DURATION` gesetzt, der Mixer force-aktualisiert (`mixer.update(0)`),
-die resultierende `Box3` vermessen und erst dann an `bounds.refresh(box).fit().clip()`
-übergeben — exakt dieselbe "erst rendern/messen, dann zurück auf den
-Scroll-Wert"-Reihenfolge wie beim vorherigen Modell, nur jetzt gegen die
-Mixer-Zeit statt gegen eine Wrapper-Transform.
+Testseite ohne R3F verifiziert) — keine `ZUP_TO_YUP`-Rotation nötig. Die Datei
+enthält außerdem einen einzelnen Node namens `Cube`: eine winzige 24-Vertex-Box
+mit eigenem Platzhalter-Material, die abseits des Arms auf dem Boden sitzt —
+offensichtlich ein liegengebliebenes Blender-Default-Objekt, kein Teil des
+Roboters. Wird beim Laden per `scene.getObjectByName('Cube')` entfernt
+(Geometrie *und* zugehörige Animation werden nie abgespielt).
 
 Der gepinnte Hero-Bereich (`#hero`, 300vh, sticky-pin bei 100svh — siehe
-`index.html`) liefert die Scroll-Runway: Bei `scrollY = 0` ist das Modell
-exploded, bei Fortschritt `ASSEMBLE_END` (0.6) vollständig zusammengebaut;
-zurückscrollen fährt die Animation exakt rückwärts (voll bidirektional, kein
-Timer, keine feste Dauer, da direkt über `action.time` und nicht über
-`action.play()`/Echtzeit gesteuert).
-
-Technisch: Die Komponente erstellt einen `ScrollTrigger` (`scrub`) auf dem
-globalen `window.gsap`/`window.ScrollTrigger` der Host-Seite — dasselbe
-GSAP/Lenis-Setup, das der Rest der Seite für Scroll-Effekte nutzt, damit
-nichts gegeneinander läuft. Ohne diese Globals (Komponente in einem anderen
-Projekt ohne GSAP eingebettet) fällt sie auf einen einfachen
-`scroll`/`resize`-Listener mit derselben Fortschritts-Formel zurück, bleibt
-also auch eigenständig lauffähig. Der Fortschritt (0–1) wird zusätzlich als
-`assembly-progress`-`CustomEvent` auf dem Wurzel-Element ausgesendet, damit
-die statische Host-Seite z. B. die Info-Chips im Hero synchron dazu einblenden
-kann (siehe `index.html`), ohne eigene Scroll-Logik duplizieren zu müssen.
+`index.html`) liefert die Scroll-Runway. Technisch erstellt die Komponente
+einen `ScrollTrigger` (`scrub`) auf dem globalen `window.gsap`/
+`window.ScrollTrigger` der Host-Seite — dasselbe GSAP/Lenis-Setup, das der
+Rest der Seite für Scroll-Effekte nutzt. Ohne diese Globals fällt sie auf
+einen einfachen `scroll`/`resize`-Listener mit derselben Fortschritts-Formel
+zurück, bleibt also auch eigenständig lauffähig. Der Fortschritt (0–1) wird
+zusätzlich als `assembly-progress`-`CustomEvent` auf dem Wurzel-Element
+ausgesendet (für z. B. die Info-Chips im Hero, siehe `index.html`).
 
 ### Materialfarbe wirkte unter dem Studio-HDRI blass/pink
 
-Nach dem Modellwechsel erschien das rote Gehäusematerial unter dem
-Studio-HDRI (`<Environment>`) deutlich verwaschen/pink statt gesättigt rot.
-Verifiziert (in einer eigenständigen Three.js-Testseite, mit demselben
-HDRI + PMREM, ganz ohne R3F/drei), dass das **keine** R3F/drei-Eigenheit ist,
-sondern eine reine PBR-Lichtinteraktion: Die eher glänzigen Materialien
-(`roughness ≈ 0.5`, `metalness 0`) nehmen die hellen Studio-Reflexionen als
-IBL-Speculars auf, was die gesättigte Diffusfarbe aufhellt. Statt die
-Materialien selbst zu verändern (ausdrücklich nicht gewünscht), wird stattdessen
-die **Environment-Intensität** global gedämpft: `<Environment ... environmentIntensity={0.12}>`
-(drei-Prop, mappt auf `scene.environmentIntensity`, three.js ≥ r159) — reduziert
-nur den IBL-Beitrag, ohne `material.color`/`envMapIntensity` je Material
-anzufassen.
+Unter dem Studio-HDRI (`<Environment>`) erschien das rote Gehäusematerial
+deutlich verwaschen/pink statt gesättigt rot. Verifiziert (in einer
+eigenständigen Three.js-Testseite, mit demselben HDRI + PMREM, ganz ohne
+R3F/drei), dass das **keine** R3F/drei-Eigenheit ist, sondern eine reine
+PBR-Lichtinteraktion: Die eher glänzigen Materialien (`roughness ≈ 0.5`,
+`metalness 0`) nehmen die hellen Studio-Reflexionen als IBL-Speculars auf, was
+die gesättigte Diffusfarbe aufhellt. Statt die Materialien selbst zu verändern
+(ausdrücklich nicht gewünscht), wird stattdessen die **Environment-Intensität**
+global gedämpft: `<Environment ... environmentIntensity={0.12}>` (drei-Prop,
+mappt auf `scene.environmentIntensity`, three.js ≥ r159).
 
-## Zweiter Scroll-Akt: Kamera-Zoom auf das Bedienpanel + Werdegang-Overlay
+## Bildschirm-Tracking + Werdegang-Overlay
 
-Nach der Montage (Fortschritt `ASSEMBLE_END` = 0.6) folgt ein zweiter Akt
-(`ZOOM_START` = 0.6 bis `1`): die Kamera fährt aus der Übersichtsposition
-(der von `<Bounds>` einmalig berechneten Rahmung) nah an das kleine
-Anzeige-Panel an der Schulter des Arms heran. Dessen Weltkoordinate
-(`SCREEN_TARGET`) wurde nicht geraten, sondern durch einen Klick-Raycast auf
-das zusammengebaute Modell empirisch ermittelt (`event.point`, in einer
-eigenständigen Three.js-Testseite mit sichtbarem Raycast-Log) — die Nodes
-heißen generisch `obj_0` … `obj_14`, es gibt also keinen selbsterklärenden
-Namen, an dem sich das Panel automatisch finden ließe. `SCREEN_CAMERA_POS`
-ist ebenso eine feste, im Code verifizierte Konstante (kein
-Laufzeit-Trial-and-Error) — verifiziert per Screenshot-Vergleich über den
-vollen Scroll-Bereich.
+Das kleine Anzeige-Panel an der Schulter des Arms ist Node **`obj_2_2`**:
+`obj_2` ist die Schulter-Baugruppe, GLTFLoader zerlegt deren 4 Materialien in
+Kind-Meshes `obj_2_1`..`obj_2_4`, und `obj_2_2` trägt das hellblau-graue
+"Screen-Glas"-Material — per `scene.traverse()` gefunden und dessen
+Weltposition gegen einen früher per Klick-Raycast ermittelten Referenzpunkt
+verifiziert (siehe Git-Historie), nicht geraten.
 
-Sobald der Zoom-Akt beginnt, wird `<OrbitControls>` unmontiert (statt nur
-`enabled={false}` zu setzen): Die Komponente ruft pro Frame intern trotzdem
-`controls.update()` auf, was mit einer direkten `camera.position`/`lookAt`-
-Manipulation kollidieren und die Kamera zurückspringen lassen würde. Eine
-eigene `CameraZoomRig`-Komponente übernimmt die Kamera stattdessen komplett
-und interpoliert (smoothstep-geglättet) zwischen der einmalig beim
-Akt-Wechsel eingefangenen Ruhepose und `SCREEN_CAMERA_POS`/`SCREEN_TARGET`.
-Beim Zurückscrollen unter `ZOOM_START` wird `<OrbitControls>` wieder
-gemountet und explizit auf die gemerkte Ruhepose (`target`-Prop) gesetzt,
-damit der nächste manuelle Orbit nicht ruckartig zu einem falschen
-Drehpunkt zurückspringt.
+Pro Frame wird die Weltraum-Bounding-Box von `obj_2_2` (`Box3.setFromObject`)
+neu vermessen (der Node bewegt sich ja mit der Montage-Animation), alle 8
+Ecken werden per `Vector3.project(camera)` in Normalized-Device-Coordinates
+projiziert und in CSS-Pixel relativ zum Canvas-Container umgerechnet
+(`(ndc*0.5+0.5) * size.width/height`, Y invertiert). Das Ergebnis positioniert
+und skaliert einen absolut positionierten DOM-Container exakt über dem echten
+Bildschirm-Mesh, unabhängig davon, wo Montage-Animation und Kamera gerade
+stehen.
 
-Auf dem Panel selbst blendet ein `<Html>`-Overlay (`CareerScreen`) den
-beruflichen Werdegang mit live hochzählenden Countern ein (Jahre/Monate/
-Tage/Std/Min/Sek seit dem jeweiligen Datum, kalenderkorrekt berechnet in
-`diffBreakdown()` — kein einfaches Millisekunden-Delta, sondern echte
-Monats-/Jahresgrenzen inkl. Schaltjahren über `Date`-Arithmetik). Die
-Deckkraft des Overlays ist an den Zoom-Fortschritt gekoppelt (Fade-in ab
-`zoomT > 0.35`) und wird direkt per Ref/`style.opacity` pro Frame gesetzt,
-nicht über React-State, um keinen Re-Render pro Frame auszulösen.
+**Es erscheint nichts, bevor die Kamera am Bildschirm angekommen ist**: Der
+Container bleibt bis `progress = SCREEN_REVEAL_START` (0.85) komplett
+transparent und blendet erst danach ein (linear bis `progress = 1`). Das
+Werdegang-Overlay (`CareerScreen`) zeigt den beruflichen Werdegang mit live
+hochzählenden Countern (Jahre/Monate/Tage/Std/Min/Sek seit dem jeweiligen
+Datum, kalenderkorrekt berechnet in `diffBreakdown()` — echte
+Monats-/Jahresgrenzen über `Date`-Arithmetik, kein Millisekunden-Delta).
+
+Da der getrackte Bildschirm-Rect anfangs (kurz nach `SCREEN_REVEAL_START`)
+noch recht klein ist, aber `CareerScreen` eine feste Wunschgröße hat, wird die
+Karte per `transform: scale(...)` an den jeweils aktuellen Rect angepasst
+(nie größer als ihre natürliche Größe, aber beliebig kleiner) statt einfach
+abgeschnitten zu werden. Die natürliche Größe wird einmalig beim ersten Frame
+per `getBoundingClientRect()` gemessen (bevor je ein Transform angewendet
+wurde) und danach wiederverwendet. Alle Positions-/Größen-/Opacity-Updates
+laufen direkt per Ref/`style.*`-Zuweisung in `useFrame`, nicht über
+React-State, um keinen Re-Render pro Frame auszulösen.
