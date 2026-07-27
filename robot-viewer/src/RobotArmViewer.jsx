@@ -1,23 +1,34 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, Environment, ContactShadows, OrbitControls, Bounds, useBounds, Html } from '@react-three/drei';
+import {
+  useGLTF,
+  useAnimations,
+  Environment,
+  ContactShadows,
+  OrbitControls,
+  Bounds,
+  useBounds,
+  Html,
+} from '@react-three/drei';
 
 const MODEL_URL = '/models/robot-arm.glb';
 const HDRI_URL = '/hdri/studio_small_03_1k.hdr';
 
-// The source GLB is exported Z-up (common from Blender pipelines that skip the
-// usual Z-up -> Y-up conversion); rotating -90deg around X puts it back on its
-// feet in three.js's Y-up world. This lives on a static outer wrapper — fixed
-// once, no runtime trial-and-error — so it never fights the scroll-driven
-// assembly transform below, which operates purely in the now-correct local frame.
-const ZUP_TO_YUP = [-Math.PI / 2, 0, 0];
+// This GLB (unlike the earlier single-mesh export) ships 16 real parts, each
+// with its own baked Blender explosion->assembly clip running from t=0
+// (exploded) to t=DURATION (assembled) on the same shared timeline — verified
+// directly against the glTF's keyframe data before wiring this up. So the
+// scroll-scrub below just scrubs THREE.AnimationMixer time per part instead of
+// hand-lerping a single transform. Model is already Y-up as exported — no
+// axis-fix rotation needed here (checked visually before skipping it).
+const DURATION = 2.5;
 
-// Single-object "exploded" vs. "assembled" pose (see module comment in
-// AssemblyRig for why this isn't a multi-part explosion) — interpolated
-// directly from scroll progress, not animated on a timer.
-const EXPLODED = { position: [1.6, 2.6, -1.8], scale: 0.45, rotation: [0, -1.1, 0] };
-const ASSEMBLED = { position: [0, 0, 0], scale: 1, rotation: [0, 0, 0] };
+// The source file also contains a stray "Cube" node/clip: a tiny 24-vertex
+// box with its own placeholder material, sitting off to the side of the arm.
+// It's a leftover default object from the Blender scene, not a robot part —
+// dropped on load (see AssemblyRig) so it neither renders nor skews framing.
+const STRAY_NODE_NAME = 'Cube';
 
 // Scroll progress is split into two acts: [0, ASSEMBLE_END] drives the
 // explosion/assembly above, [ZOOM_START, 1] drives the camera push into the
@@ -27,76 +38,71 @@ const ASSEMBLE_END = 0.6;
 const ZOOM_START = 0.6;
 const ZOOM_END = 1;
 
-// World-space position of the small screen/control panel found by raycasting
-// a click onto the assembled mesh (see README). This is the only panel-like
-// surface on the model — there is no separate "screen" node to target by name,
-// since the whole arm is a single fused mesh (see AssemblyRig comment).
-const SCREEN_TARGET = new THREE.Vector3(-54.93, 81.13, 3.69);
+// World-space position of the small display panel on the shoulder module,
+// found by raycasting a click onto the assembled model (see README) — not
+// guessed, since there's no "screen" node name to go by.
+const SCREEN_TARGET = new THREE.Vector3(55.68, 78.82, 8.63);
 // Close-up camera position framing that panel head-on, offset outward from the
-// panel along the arm's shoulder column rather than from directly above it.
-const SCREEN_CAMERA_POS = new THREE.Vector3(-84.3, 84.1, 5.2);
-
-function lerp3(a, b, t) {
-  return [
-    THREE.MathUtils.lerp(a[0], b[0], t),
-    THREE.MathUtils.lerp(a[1], b[1], t),
-    THREE.MathUtils.lerp(a[2], b[2], t),
-  ];
-}
+// panel along the shoulder's normal.
+const SCREEN_CAMERA_POS = new THREE.Vector3(85.5, 80.3, 11.2);
 
 function AssemblyRig({ progressRef, screenOverlayRef }) {
-  const { scene } = useGLTF(MODEL_URL);
+  const groupRef = useRef(null);
+  const { scene, animations } = useGLTF(MODEL_URL);
+  const { actions, mixer } = useAnimations(animations, groupRef);
   const bounds = useBounds();
   const hasFitted = useRef(false);
-  const rigRef = useRef(null);
 
   useEffect(() => {
     scene.traverse((obj) => {
       if (obj.isMesh) {
-        // Render flags only — no material overrides.
+        // Render flags only — no material overrides (PBR materials as authored).
         obj.castShadow = true;
         obj.receiveShadow = true;
       }
     });
-  }, [scene]);
 
-  // Bounds must frame the ASSEMBLED pose, not whatever scroll position happens
-  // to be active when this mounts. So: compute a Box3 from the geometry in its
-  // rest transform (identity + the static Z-up fix only) and hand that to
-  // Bounds directly, once — never from the live, scroll-driven node.
-  const restBox = useMemo(() => {
-    const box = new THREE.Box3().setFromObject(scene);
-    box.applyMatrix4(new THREE.Matrix4().makeRotationX(ZUP_TO_YUP[0]));
-    return box;
-  }, [scene]);
+    const stray = scene.getObjectByName(STRAY_NODE_NAME);
+    if (stray && stray.parent) stray.parent.remove(stray);
 
-  useEffect(() => {
-    if (hasFitted.current) return;
-    hasFitted.current = true;
-    bounds.refresh(restBox).fit().clip();
-  }, [restBox, bounds]);
+    Object.entries(actions).forEach(([name, action]) => {
+      if (!action || name === `${STRAY_NODE_NAME}Action`) return;
+      // .play() activates the action inside the mixer; pausing immediately
+      // freezes it so we can scrub .time by hand every frame below instead of
+      // letting it advance with real elapsed time.
+      action.reset().play();
+      action.paused = true;
+    });
+
+    // Bounds must frame the ASSEMBLED pose, not whatever scroll position
+    // happens to be active when this mounts: push every action to the end of
+    // its clip once, force-evaluate the mixer, measure, then hand that box to
+    // Bounds directly — never derived from the live, scroll-driven pose.
+    if (!hasFitted.current) {
+      hasFitted.current = true;
+      Object.values(actions).forEach((action) => {
+        if (action) action.time = DURATION;
+      });
+      mixer.update(0);
+      const box = new THREE.Box3().setFromObject(scene);
+      bounds.refresh(box).fit().clip();
+    }
+  }, [scene, actions, mixer, bounds]);
 
   useFrame(() => {
-    const g = rigRef.current;
-    if (!g) return;
-    const t = THREE.MathUtils.clamp(progressRef.current / ASSEMBLE_END, 0, 1);
-    g.position.set(...lerp3(EXPLODED.position, ASSEMBLED.position, t));
-    g.rotation.set(...lerp3(EXPLODED.rotation, ASSEMBLED.rotation, t));
-    g.scale.setScalar(THREE.MathUtils.lerp(EXPLODED.scale, ASSEMBLED.scale, t));
+    const t = THREE.MathUtils.clamp(progressRef.current / ASSEMBLE_END, 0, 1) * DURATION;
+    Object.entries(actions).forEach(([name, action]) => {
+      if (!action || name === `${STRAY_NODE_NAME}Action`) return;
+      action.time = t;
+    });
+    mixer.update(0);
   });
 
   return (
     <>
-      <group rotation={ZUP_TO_YUP}>
-        <group ref={rigRef}>
-          <primitive object={scene} />
-        </group>
+      <group ref={groupRef}>
+        <primitive object={scene} />
       </group>
-      {/* Deliberately NOT nested inside the ZUP_TO_YUP group above: SCREEN_TARGET
-          was captured from a click's world-space e.point (which already has that
-          rotation baked in), so re-parenting it under that group would rotate it
-          a second time. It only needs to sit in the same frame the camera
-          rig below operates in, which is plain world space. */}
       <Html
         position={SCREEN_TARGET}
         center
@@ -345,7 +351,7 @@ export default function RobotArmViewer({ style, className }) {
           <Bounds margin={1.3}>
             <AssemblyRig progressRef={progressRef} screenOverlayRef={screenOverlayRef} />
           </Bounds>
-          <Environment files={HDRI_URL} />
+          <Environment files={HDRI_URL} environmentIntensity={0.12} />
         </Suspense>
 
         <ContactShadows position={[0, -0.01, 0]} opacity={0.55} scale={12} blur={2.4} far={6} />

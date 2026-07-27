@@ -47,32 +47,51 @@ Rest der Seite (keine Drittanbieter-Requests, siehe Datenschutzhinweis in
 `impressum.html`), wird die HDRI-Datei stattdessen lokal vorgehalten und über
 `<Environment files="/hdri/studio_small_03_1k.hdr">` geladen.
 
-## Achsen-Fix (Z-up → Y-up)
+## Echte Multi-Part-Explosion (aktuelles Modell)
 
-`robot-arm.glb` ist offenbar ohne die übliche Z-up→Y-up-Konvertierung
-exportiert worden — ungedreht schaut man von unten auf das Modell. Der Fix
-liegt als feste Konstante `ZUP_TO_YUP = [-Math.PI / 2, 0, 0]` auf einer
-statischen äußeren `<group>` in `RobotArmViewer.jsx`, nicht auf der Kamera —
-`<Bounds>` zentriert dadurch weiterhin korrekt, unabhängig von der
-ursprünglichen Achsausrichtung im Export.
+Das aktuelle `robot-arm.glb` ist ein zweiter, vom Nutzer bereitgestellter
+Export und unterscheidet sich grundlegend vom ursprünglichen: **16 separate
+Nodes/Meshes** (Sockel, Achsen, Greifer-Segmente, Bedienpanel, …), von denen
+jedes seinen **eigenen, in Blender animierten** Explosions→Montage-Clip
+mitbringt (`obj_0Action` … `obj_14Action`, je 60 Keyframes, Zeitbereich
+`0.0417`–`2.5` Sekunden auf einer gemeinsamen Timeline — vor dem Einbau direkt
+gegen die glTF-Keyframe-Daten verifiziert, nicht angenommen). `t=0` ist die
+exploded Pose (identisch mit der statischen Node-`translation`, die ohne
+Animation angezeigt würde), `t=2.5` die vollständig montierte Pose.
 
-## Warum keine Multi-Part-Explosion?
+`RobotArmViewer.jsx` nutzt dafür `@react-three/drei`s `useAnimations`, aktiviert
+alle Clips einmalig (`action.play()` gefolgt von `action.paused = true`) und
+scrubbt danach pro Frame nur noch `action.time` + `mixer.update(0)` anhand des
+Scroll-Fortschritts (`[0, ASSEMBLE_END]` → `[0, DURATION]`) — kein
+`useFrame`-Lerp einzelner Transforms mehr wie beim vorherigen Modell, da die
+eigentliche Bewegung schon in den Clips steckt.
 
-`robot-arm.glb` besteht laut `scene.traverse()` (wird beim Laden in die
-Konsole geloggt) aus **genau einem Node und einem Mesh** — die Geometrie ist
-zu einer einzigen, vollständig zusammenhängenden Fläche verschmolzen (siehe
-Union-Find-Analyse über den Index-Buffer: 1 zusammenhängende Komponente,
-28.763 Vertices). Es gibt keine separaten Objekte für Sockel/Achsen/Greifer,
-die man unabhängig voneinander explodieren und wieder zusammenfliegen lassen
-könnte, ohne die Geometrie künstlich (und unrealistisch) zu zerschneiden.
+Modell ist bereits Y-up exportiert (visuell in einer eigenständigen Three.js-
+Testseite ohne R3F verifiziert, bevor auf einen Achsen-Fix verzichtet wurde) —
+anders als das ursprüngliche Modell ist hier **keine** `ZUP_TO_YUP`-Rotation
+nötig.
 
-Stattdessen gibt es eine **scroll-gesteuerte Single-Object-Animation**: Das
-gesamte Modell interpoliert direkt zwischen einer "exploded" Pose (leicht
-verkleinert, versetzt, verdreht) und der Ruhepose, abhängig vom Scroll-
-Fortschritt durch den gepinnten Hero-Bereich (`#hero`, 300vh, sticky-pin bei
-100svh — siehe `index.html`). Bei `scrollY = 0` ist das Modell exploded, bei
-Fortschritt `ASSEMBLE_END` (0.6) vollständig zusammengebaut; zurückscrollen
-explodiert es wieder (voll bidirektional, kein Timer, keine feste Dauer).
+Die Datei enthält außerdem einen einzelnen Node namens `Cube`: eine winzige
+24-Vertex-Box mit eigenem Platzhalter-Material, die abseits des Arms auf dem
+Boden sitzt — offensichtlich ein liegengebliebenes Blender-Default-Objekt,
+kein Teil des Roboters. Wird beim Laden per `scene.getObjectByName('Cube')`
+entfernt (Geometrie *und* zugehörige Animation werden nie abgespielt), damit
+er weder rendert noch die `<Bounds>`-Rahmung verfälscht.
+
+`<Bounds>` muss dabei die **montierte** Pose rahmen, nicht die (exploded)
+Ruhe-Transform der Nodes: Beim ersten Laden werden einmalig alle Actions auf
+`action.time = DURATION` gesetzt, der Mixer force-aktualisiert (`mixer.update(0)`),
+die resultierende `Box3` vermessen und erst dann an `bounds.refresh(box).fit().clip()`
+übergeben — exakt dieselbe "erst rendern/messen, dann zurück auf den
+Scroll-Wert"-Reihenfolge wie beim vorherigen Modell, nur jetzt gegen die
+Mixer-Zeit statt gegen eine Wrapper-Transform.
+
+Der gepinnte Hero-Bereich (`#hero`, 300vh, sticky-pin bei 100svh — siehe
+`index.html`) liefert die Scroll-Runway: Bei `scrollY = 0` ist das Modell
+exploded, bei Fortschritt `ASSEMBLE_END` (0.6) vollständig zusammengebaut;
+zurückscrollen fährt die Animation exakt rückwärts (voll bidirektional, kein
+Timer, keine feste Dauer, da direkt über `action.time` und nicht über
+`action.play()`/Echtzeit gesteuert).
 
 Technisch: Die Komponente erstellt einen `ScrollTrigger` (`scrub`) auf dem
 globalen `window.gsap`/`window.ScrollTrigger` der Host-Seite — dasselbe
@@ -85,22 +104,35 @@ also auch eigenständig lauffähig. Der Fortschritt (0–1) wird zusätzlich als
 die statische Host-Seite z. B. die Info-Chips im Hero synchron dazu einblenden
 kann (siehe `index.html`), ohne eigene Scroll-Logik duplizieren zu müssen.
 
-Für eine echte Teile-Explosion müsste das Quellmodell mit erhaltener
-Objekt-/Node-Hierarchie neu exportiert werden (z. B. in Blender vor dem
-Export nicht alle Objekte zu einem Mesh vereinen/joinen).
+### Materialfarbe wirkte unter dem Studio-HDRI blass/pink
+
+Nach dem Modellwechsel erschien das rote Gehäusematerial unter dem
+Studio-HDRI (`<Environment>`) deutlich verwaschen/pink statt gesättigt rot.
+Verifiziert (in einer eigenständigen Three.js-Testseite, mit demselben
+HDRI + PMREM, ganz ohne R3F/drei), dass das **keine** R3F/drei-Eigenheit ist,
+sondern eine reine PBR-Lichtinteraktion: Die eher glänzigen Materialien
+(`roughness ≈ 0.5`, `metalness 0`) nehmen die hellen Studio-Reflexionen als
+IBL-Speculars auf, was die gesättigte Diffusfarbe aufhellt. Statt die
+Materialien selbst zu verändern (ausdrücklich nicht gewünscht), wird stattdessen
+die **Environment-Intensität** global gedämpft: `<Environment ... environmentIntensity={0.12}>`
+(drei-Prop, mappt auf `scene.environmentIntensity`, three.js ≥ r159) — reduziert
+nur den IBL-Beitrag, ohne `material.color`/`envMapIntensity` je Material
+anzufassen.
 
 ## Zweiter Scroll-Akt: Kamera-Zoom auf das Bedienpanel + Werdegang-Overlay
 
 Nach der Montage (Fortschritt `ASSEMBLE_END` = 0.6) folgt ein zweiter Akt
 (`ZOOM_START` = 0.6 bis `1`): die Kamera fährt aus der Übersichtsposition
 (der von `<Bounds>` einmalig berechneten Rahmung) nah an das kleine
-Bedienpanel an der Schulter des Arms heran. Dessen Weltkoordinate
+Anzeige-Panel an der Schulter des Arms heran. Dessen Weltkoordinate
 (`SCREEN_TARGET`) wurde nicht geraten, sondern durch einen Klick-Raycast auf
-das zusammengebaute Modell empirisch ermittelt (`event.point` aus R3F) — es
-gibt keinen benannten "Screen"-Node, da das ganze Modell ein einziges Mesh
-ist (siehe oben). `SCREEN_CAMERA_POS` ist ebenso eine feste, im Code
-verifizierte Konstante (kein Laufzeit-Trial-and-Error) — verifiziert per
-Screenshot-Vergleich über den vollen Scroll-Bereich.
+das zusammengebaute Modell empirisch ermittelt (`event.point`, in einer
+eigenständigen Three.js-Testseite mit sichtbarem Raycast-Log) — die Nodes
+heißen generisch `obj_0` … `obj_14`, es gibt also keinen selbsterklärenden
+Namen, an dem sich das Panel automatisch finden ließe. `SCREEN_CAMERA_POS`
+ist ebenso eine feste, im Code verifizierte Konstante (kein
+Laufzeit-Trial-and-Error) — verifiziert per Screenshot-Vergleich über den
+vollen Scroll-Bereich.
 
 Sobald der Zoom-Akt beginnt, wird `<OrbitControls>` unmontiert (statt nur
 `enabled={false}` zu setzen): Die Komponente ruft pro Frame intern trotzdem
