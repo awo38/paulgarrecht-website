@@ -69,10 +69,10 @@ könnte, ohne die Geometrie künstlich (und unrealistisch) zu zerschneiden.
 Stattdessen gibt es eine **scroll-gesteuerte Single-Object-Animation**: Das
 gesamte Modell interpoliert direkt zwischen einer "exploded" Pose (leicht
 verkleinert, versetzt, verdreht) und der Ruhepose, abhängig vom Scroll-
-Fortschritt durch den gepinnten Hero-Bereich (`#hero`, 220vh, sticky-pin bei
-100svh — siehe `index.html`). Bei `scrollY = 0` ist das Modell exploded, am
-Ende des Pin-Bereichs vollständig zusammengebaut; zurückscrollen explodiert
-es wieder (voll bidirektional, kein Timer, keine feste Dauer).
+Fortschritt durch den gepinnten Hero-Bereich (`#hero`, 300vh, sticky-pin bei
+100svh — siehe `index.html`). Bei `scrollY = 0` ist das Modell exploded, bei
+Fortschritt `ASSEMBLE_END` (0.6) vollständig zusammengebaut; zurückscrollen
+explodiert es wieder (voll bidirektional, kein Timer, keine feste Dauer).
 
 Technisch: Die Komponente erstellt einen `ScrollTrigger` (`scrub`) auf dem
 globalen `window.gsap`/`window.ScrollTrigger` der Host-Seite — dasselbe
@@ -87,7 +87,38 @@ kann (siehe `index.html`), ohne eigene Scroll-Logik duplizieren zu müssen.
 
 Für eine echte Teile-Explosion müsste das Quellmodell mit erhaltener
 Objekt-/Node-Hierarchie neu exportiert werden (z. B. in Blender vor dem
-Export nicht alle Objekte zu einem Mesh vereinen/joinen). Der
-`console.log`-Traversal in `RobotArmViewer.jsx` zeigt sofort, ob ein neu
-exportiertes GLB mehrere Nodes enthält — dann lässt sich die
-Per-Part-Staffelung entsprechend nachrüsten.
+Export nicht alle Objekte zu einem Mesh vereinen/joinen).
+
+## Zweiter Scroll-Akt: Kamera-Zoom auf das Bedienpanel + Werdegang-Overlay
+
+Nach der Montage (Fortschritt `ASSEMBLE_END` = 0.6) folgt ein zweiter Akt
+(`ZOOM_START` = 0.6 bis `1`): die Kamera fährt aus der Übersichtsposition
+(der von `<Bounds>` einmalig berechneten Rahmung) nah an das kleine
+Bedienpanel an der Schulter des Arms heran. Dessen Weltkoordinate
+(`SCREEN_TARGET`) wurde nicht geraten, sondern durch einen Klick-Raycast auf
+das zusammengebaute Modell empirisch ermittelt (`event.point` aus R3F) — es
+gibt keinen benannten "Screen"-Node, da das ganze Modell ein einziges Mesh
+ist (siehe oben). `SCREEN_CAMERA_POS` ist ebenso eine feste, im Code
+verifizierte Konstante (kein Laufzeit-Trial-and-Error) — verifiziert per
+Screenshot-Vergleich über den vollen Scroll-Bereich.
+
+Sobald der Zoom-Akt beginnt, wird `<OrbitControls>` unmontiert (statt nur
+`enabled={false}` zu setzen): Die Komponente ruft pro Frame intern trotzdem
+`controls.update()` auf, was mit einer direkten `camera.position`/`lookAt`-
+Manipulation kollidieren und die Kamera zurückspringen lassen würde. Eine
+eigene `CameraZoomRig`-Komponente übernimmt die Kamera stattdessen komplett
+und interpoliert (smoothstep-geglättet) zwischen der einmalig beim
+Akt-Wechsel eingefangenen Ruhepose und `SCREEN_CAMERA_POS`/`SCREEN_TARGET`.
+Beim Zurückscrollen unter `ZOOM_START` wird `<OrbitControls>` wieder
+gemountet und explizit auf die gemerkte Ruhepose (`target`-Prop) gesetzt,
+damit der nächste manuelle Orbit nicht ruckartig zu einem falschen
+Drehpunkt zurückspringt.
+
+Auf dem Panel selbst blendet ein `<Html>`-Overlay (`CareerScreen`) den
+beruflichen Werdegang mit live hochzählenden Countern ein (Jahre/Monate/
+Tage/Std/Min/Sek seit dem jeweiligen Datum, kalenderkorrekt berechnet in
+`diffBreakdown()` — kein einfaches Millisekunden-Delta, sondern echte
+Monats-/Jahresgrenzen inkl. Schaltjahren über `Date`-Arithmetik). Die
+Deckkraft des Overlays ist an den Zoom-Fortschritt gekoppelt (Fade-in ab
+`zoomT > 0.35`) und wird direkt per Ref/`style.opacity` pro Frame gesetzt,
+nicht über React-State, um keinen Re-Render pro Frame auszulösen.
