@@ -6,10 +6,22 @@ Die Seite ist gleichzeitig ein kleines Hobby-Projekt: ein reales Beispiel dafür
 
 ## Stack
 
-- Statisches HTML/CSS/JS, keine Build-Tools
-- [Three.js](https://threejs.org/) für das 3D-Robotermodell im Hero (prozedurale Geometrie, kein externes Modell)
-- [GSAP](https://gsap.com/) + ScrollTrigger für die scroll-gesteuerte Montage im Hero und die "Tabellen-Bau"-Effekte auf der restlichen Seite
-- Fonts: Space Grotesk, Inter, JetBrains Mono (Google Fonts)
+- Statisches HTML/JS, keine Build-Tools zum Ausliefern der Seite
+- [Tailwind CSS](https://tailwindcss.com/) — einmalig lokal zu `vendor/tailwind/tailwind.css` kompiliert (siehe `tailwind-src/`), im Browser läuft kein Build-Schritt
+- [Three.js](https://threejs.org/) für das 3D-Robotermodell im Hero (prozedurale Geometrie, kein externes Modell) inkl. Wireframe → CAD → Render-Materialübergang
+- [GSAP](https://gsap.com/) + ScrollTrigger für die scroll-gesteuerte Montage im Hero und die Reveal-Effekte auf der restlichen Seite
+- [Lenis](https://lenis.darkroom.engineering/) für butterweiches Smooth-Scrolling, synchronisiert mit GSAPs Ticker
+- Fonts: Space Grotesk, Inter, IBM Plex Mono (Google Fonts)
+
+### Tailwind neu kompilieren
+
+Nur nötig, wenn neue Utility-Klassen in `index.html` verwendet werden:
+
+```bash
+bash tailwind-src/build.sh
+```
+
+Schreibt das Ergebnis nach `vendor/tailwind/tailwind.css` (das ist die Datei, die die Seite tatsächlich lädt).
 
 ## Lokal ansehen
 
@@ -28,8 +40,7 @@ Gedacht für [Vercel](https://vercel.com) (Static-Site-Import, kein Framework n�
 ## Struktur
 
 - `index.html` — die eigentliche Website
+- `dokumente.html` — Zertifikate & Dokumente
 - `impressum.html` — Impressum & Datenschutzhinweise
-
-## Entstehungsprozess
-
-Siehe Abschnitt „Wie diese Seite entstand" auf der Website selbst (`index.html`, Sektion 05).
+- `tailwind-src/` — Tailwind-Quellkonfiguration (`tailwind.config.js`, `input.css`, `build.sh`); das kompilierte Ergebnis liegt in `vendor/tailwind/`
+- `vendor/` — lokal vorgehaltene Bibliotheken (Three.js, GSAP, Lenis, Tailwind-Output) statt Drittanbieter-CDNs

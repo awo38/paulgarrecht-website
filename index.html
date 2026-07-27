@@ -4,617 +4,711 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Paul Garrecht — Projektingenieur</title>
-<meta name="description" content="Paul Garrecht — Projektingenieur & Einsatzleiter im kerntechnischen Rückbau bei MHC Anlagentechnik. Mechatronik-Ingenieur, internationaler Schweißfachingenieur (IWE).">
+<meta name="description" content="Paul Garrecht — Projektingenieur &amp; Einsatzleiter im kerntechnischen Rückbau bei MHC Anlagentechnik. Mechatronik-Ingenieur, internationaler Schweißfachingenieur (IWE).">
+<meta name="theme-color" content="#0B0F14">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/tailwind/tailwind.css">
+<link rel="stylesheet" href="vendor/lenis/lenis.css">
 <script src="vendor/three/three.min.js"></script>
 <script src="vendor/gsap/gsap.min.js"></script>
 <script src="vendor/gsap/ScrollTrigger.min.js"></script>
+<script src="vendor/lenis/lenis.min.js"></script>
 <style>
-  :root{
-    --ink:#F3F1E8;
-    --ink-2:#EBE8DB;
-    --ink-3:#E6E3D5;
-    --line:#D9D5C4;
-    --blue:#2C4A9E;
-    --blue-dim:#7286BC;
-    --paper:#171A16;
-    --muted:#726C5C;
-    --amber:#A8620F;
+  html{ background:#0B0F14; }
+  body{ overflow-x:hidden; cursor:none; }
+  @media (max-width:860px), (hover:none){
+    body{ cursor:auto; }
   }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html{scroll-behavior:smooth;}
-  body{
-    background:var(--ink);
-    color:var(--paper);
-    font-family:'Inter', sans-serif;
-    overflow-x:hidden;
-  }
-  ::selection{ background:var(--blue); color:var(--ink); }
+  .font-display{ font-family:'Space Grotesk', sans-serif; }
+  .font-body{ font-family:'Inter', sans-serif; }
+  .font-mono{ font-family:'IBM Plex Mono', monospace; }
 
-  .mono{ font-family:'JetBrains Mono', monospace; }
-  .display{ font-family:'Space Grotesk', sans-serif; }
+  /* ---- custom scrollbar ---- */
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:#0B0F14; }
+  ::-webkit-scrollbar-thumb{ background:#1E2530; border-radius:6px; border:2px solid #0B0F14; }
+  ::-webkit-scrollbar-thumb:hover{ background:#FF7A00; }
+  html{ scrollbar-color:#1E2530 #0B0F14; scrollbar-width:thin; }
 
-  /* --- grid backdrop --- */
-  .grid-bg{
-    position:fixed; inset:0; z-index:0; pointer-events:none;
+  /* ---- blueprint grid backdrop ---- */
+  .blueprint-grid{
+    position:fixed; inset:-10% -10% -10% -10%; z-index:0; pointer-events:none;
     background-image:
-      linear-gradient(var(--line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size:64px 64px;
-    opacity:0.7;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, black 40%, transparent 90%);
+      linear-gradient(rgba(148,163,184,0.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,0.10) 1px, transparent 1px),
+      linear-gradient(rgba(148,163,184,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,0.045) 1px, transparent 1px);
+    background-size:120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    background-position:0 0;
+    animation:gridDrift 60s linear infinite;
+    mask-image:radial-gradient(ellipse 75% 65% at 60% 20%, black 0%, transparent 75%);
+  }
+  @keyframes gridDrift{
+    0%{ background-position:0 0, 0 0, 0 0, 0 0; }
+    100%{ background-position:120px 120px, 120px 120px, 24px 24px, 24px 24px; }
+  }
+  .vignette{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(ellipse 60% 50% at 50% 0%, rgba(59,130,246,0.08), transparent 60%),
+               radial-gradient(ellipse 50% 40% at 100% 100%, rgba(255,122,0,0.06), transparent 60%);
   }
 
-  header.nav{
-    position:fixed; top:0; left:0; right:0; z-index:50;
-    display:flex; justify-content:space-between; align-items:center;
-    padding:22px 6vw;
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px; letter-spacing:0.08em;
-    color:var(--muted);
-    backdrop-filter: blur(6px);
-    background:linear-gradient(180deg, rgba(243,241,232,0.82), transparent);
+  /* ---- floating technical labels ---- */
+  .float-label{
+    position:absolute; font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.08em;
+    color:rgba(148,163,184,0.5); white-space:nowrap; pointer-events:none;
+    animation:floatY 8s ease-in-out infinite;
   }
-  header.nav .id{ color:var(--paper); }
-  header.nav nav a{
-    color:var(--muted); text-decoration:none; margin-left:24px;
-    text-transform:uppercase;
-  }
-  header.nav nav a:hover{ color:var(--blue); }
+  @keyframes floatY{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-10px);} }
 
-  section{ position:relative; z-index:1; }
+  /* ---- custom cursor ---- */
+  #cursor-dot, #cursor-ring{
+    position:fixed; top:0; left:0; z-index:100; pointer-events:none;
+    transform:translate(-50%,-50%); will-change:transform;
+  }
+  #cursor-dot{ width:4px; height:4px; border-radius:50%; background:#FF7A00; }
+  #cursor-ring{
+    width:32px; height:32px; border:1px solid rgba(255,122,0,0.6);
+    transition:width .25s ease, height .25s ease, border-color .25s ease, background .25s ease;
+  }
+  #cursor-ring::before, #cursor-ring::after{ content:''; position:absolute; background:rgba(255,122,0,0.7); }
+  #cursor-ring::before{ left:50%; top:-6px; width:1px; height:6px; transform:translateX(-50%); }
+  #cursor-ring::after{ top:50%; left:-6px; height:1px; width:6px; transform:translateY(-50%); }
+  #cursor-ring.hover{ width:56px; height:56px; background:rgba(255,122,0,0.08); border-color:#FF7A00; }
+  @media (max-width:860px), (hover:none){
+    #cursor-dot, #cursor-ring{ display:none; }
+  }
 
-  /* --- HERO --- */
-  .hero{
-    height:340vh;
-    position:relative;
+  /* ---- glass sheen sweep on hover ---- */
+  .sheen{ position:relative; overflow:hidden; }
+  .sheen::after{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%);
+    transform:translateX(-120%); transition:transform .8s ease;
   }
-  .hero-pin{
-    position:sticky; top:0; height:100vh;
-    display:flex; align-items:center; justify-content:center;
-    overflow:hidden;
-  }
-  .hero-grid{
-    display:grid; grid-template-columns: 1fr 0.85fr;
-    align-items:center; gap:3vw;
-    width:100%; max-width:1280px; padding:0 6vw;
-  }
-  .portrait{
-    width:104px; height:104px; margin-bottom:28px;
-    border:1px dashed var(--muted); border-radius:4px;
-    background:var(--ink-2); color:var(--muted);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
-  }
-  .portrait svg{ width:38px; height:38px; opacity:0.55; }
-  .portrait-tag{
-    font-family:'JetBrains Mono', monospace; font-size:9px;
-    letter-spacing:0.08em; text-transform:uppercase;
-  }
-  .hero-copy .eyebrow{
-    font-size:12px; letter-spacing:0.18em; color:var(--blue);
-    text-transform:uppercase; margin-bottom:18px; display:block;
-  }
-  .hero-copy h1{
-    font-size:clamp(38px, 5.4vw, 68px);
-    line-height:1.04;
-    font-weight:600;
-    letter-spacing:-0.01em;
-  }
-  .hero-copy .role{
-    margin-top:20px; color:var(--muted); font-size:17px; line-height:1.6;
-    max-width:38ch;
-  }
-  .hero-copy .role b{ color:var(--paper); font-weight:500; }
-  .scroll-cue{
-    margin-top:48px; font-size:11px; color:var(--muted);
-    display:flex; align-items:center; gap:10px;
-    font-family:'JetBrains Mono', monospace; letter-spacing:0.1em;
-  }
-  .scroll-cue .bar{ width:1px; height:34px; background:var(--line); position:relative; overflow:hidden; }
-  .scroll-cue .bar::after{
-    content:''; position:absolute; top:0; left:0; width:100%; height:40%;
-    background:var(--blue); animation:scrolldown 1.6s ease-in-out infinite;
-  }
-  @keyframes scrolldown{ 0%{transform:translateY(-100%)} 100%{transform:translateY(250%)} }
+  .sheen:hover::after{ transform:translateX(120%); }
 
-  .schematic-wrap{
-    position:relative; width:100%; height:84vh;
+  /* ---- section rule ---- */
+  .rule{ border-top:1px solid rgba(255,255,255,0.08); }
+
+  /* ---- skill ring ---- */
+  .ring-track{ stroke:rgba(255,255,255,0.08); fill:none; }
+  .ring-value{ stroke:#FF7A00; fill:none; stroke-linecap:round; }
+
+  /* ---- timeline ---- */
+  .tl-line{ transform-origin:top; transform:scaleY(0); }
+
+  /* ---- nav link underline ---- */
+  .nav-link{ position:relative; }
+  .nav-link::after{
+    content:''; position:absolute; left:0; right:0; bottom:-4px; height:1px;
+    background:#FF7A00; transform:scaleX(0); transform-origin:left; transition:transform .3s ease;
   }
-  .sch-line-dim{ fill:none; stroke:var(--line); stroke-width:1; }
-  /* the 3D robot itself lives in a single fixed, viewport-covering canvas so it can
-     travel from full-size in the hero down to a small corner companion for the rest
-     of the page — schematic-wrap only reserves its layout slot and anchors the callouts */
+  .nav-link:hover::after{ transform:scaleX(1); }
+
+  .callout-chip{ opacity:0; }
+  @keyframes scrolldown{ 0%{ transform:translateY(-100%); } 100%{ transform:translateY(250%); } }
+
   #robot-canvas{
     position:fixed; inset:0; width:100vw; height:100vh;
-    z-index:40; pointer-events:none;
-    clip-path: inset(0 0 0 40%);
+    z-index:20; pointer-events:none;
+    clip-path: inset(0 0 0 48%);
   }
-  .rev-tag{
-    position:absolute; left:6px; top:50%; transform:translateY(-50%) rotate(-90deg);
-    transform-origin:left center;
-    font-size:9px; letter-spacing:0.12em; color:var(--muted); white-space:nowrap;
-  }
-  .callout-chip{
-    position:absolute; opacity:0;
-    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.06em;
-    color:var(--amber); text-transform:uppercase; white-space:nowrap;
-    display:flex; align-items:center; gap:8px;
-  }
-  .callout-chip::before{ content:''; width:22px; height:1px; background:var(--amber); flex:none; }
-  .callout-chip.align-right{ flex-direction:row-reverse; }
-  @media (max-width:860px){
+  @media (max-width:960px){
     #robot-canvas{ display:none; }
+    #hero{ height:auto !important; }
+    .hero-pin{ position:relative; height:auto; overflow:visible; }
     .schematic-wrap{ height:auto; padding:8px 0 8px 24px; }
-    .callout-chip, .callout-chip.align-right{ position:static; margin-top:12px; flex-direction:row; }
-  }
-
-  /* --- section shell --- */
-  .panel{
-    max-width:1280px; margin:0 auto; padding:160px 6vw;
-    border-top:1px solid var(--line);
-  }
-  .eyebrow-row{
-    display:flex; align-items:center; gap:14px; margin-bottom:28px;
-    font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.1em;
-    color:var(--muted); text-transform:uppercase;
-  }
-  .eyebrow-row .tick{ width:24px; height:1px; background:var(--blue); }
-  .panel h2{
-    font-family:'Space Grotesk', sans-serif; font-weight:600;
-    font-size:clamp(28px, 3.4vw, 42px); letter-spacing:-0.01em; margin-bottom:36px;
-    max-width:16ch;
-  }
-
-  /* --- About --- */
-  .about-grid{ display:grid; grid-template-columns: 1.3fr 1fr; gap:60px; }
-  .about-grid p{ color:var(--muted); font-size:17px; line-height:1.75; margin-bottom:18px; }
-  .about-grid p b{ color:var(--paper); font-weight:500; }
-  .spec-list{ border-top:1px solid var(--line); }
-  .spec-row{
-    display:flex; justify-content:space-between; padding:16px 0;
-    border-bottom:1px solid var(--line);
-    font-size:14px;
-  }
-  .spec-row .k{ color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; }
-  .spec-row .v{ color:var(--paper); text-align:right; }
-
-  /* --- live counters: seit wann --- */
-  .counter-grid{
-    display:grid; grid-template-columns:repeat(3, 1fr); gap:1px;
-    background:var(--line); border:1px solid var(--line); margin-top:56px;
-  }
-  .counter-cell{ background:var(--ink); padding:28px 26px; }
-  .counter-cell .c-label{
-    font-family:'Space Grotesk', sans-serif; font-size:16px; font-weight:600; margin-bottom:14px;
-  }
-  .counter-cell .c-value{
-    font-family:'JetBrains Mono', monospace; font-size:15px; color:var(--blue); line-height:1.5;
-  }
-  .counter-cell .c-since{
-    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted); margin-top:10px; display:block;
-  }
-  @media (max-width:860px){ .counter-grid{ grid-template-columns:1fr; } }
-
-  /* --- persistent thread: the hero's zoomed line keeps wandering down the page --- */
-  .thread-wrap{ position:relative; }
-  svg.thread{
-    position:absolute; top:0; left:0; width:100%; height:100%;
-    pointer-events:none; overflow:visible;
-  }
-  .thread-path{ fill:none; stroke:var(--blue); stroke-width:2; opacity:0.4; }
-  .thread-pulse{ fill:var(--blue); opacity:0; }
-  @media (max-width:860px){ svg.thread{ display:none; } }
-
-  /* --- Experience timeline --- */
-  .tl{ position:relative; }
-  .tl-line{ position:absolute; left:9px; top:8px; bottom:8px; width:1px; background:var(--blue); transform-origin:top; transform:scaleY(0); }
-  .tl-item{ position:relative; padding:0 0 56px 46px; }
-  .tl-item:last-child{ padding-bottom:0; }
-  .tl-dot{
-    position:absolute; left:0; top:4px; width:20px; height:20px; border-radius:50%;
-    border:1px solid var(--blue); background:var(--ink);
-    display:flex; align-items:center; justify-content:center;
-  }
-  .tl-dot::after{ content:''; width:6px; height:6px; border-radius:50%; background:var(--blue); }
-  .tl-item .period{
-    font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--blue); letter-spacing:0.05em;
-  }
-  .tl-item h3{ font-family:'Space Grotesk', sans-serif; font-size:22px; font-weight:600; margin:8px 0 6px; }
-  .tl-item .org{ color:var(--muted); font-size:15px; margin-bottom:10px; }
-  .tl-item .tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-  .tag{
-    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted);
-    border:1px solid var(--line); padding:4px 10px; border-radius:2px;
-  }
-
-  /* --- Skills --- */
-  .skill-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
-  .skill-cell{ background:var(--ink); padding:32px 28px; }
-  .skill-cell .num{ font-family:'JetBrains Mono', monospace; color:var(--blue-dim); font-size:12px; margin-bottom:16px; display:block; }
-  .skill-cell h4{ font-family:'Space Grotesk', sans-serif; font-size:18px; font-weight:600; margin-bottom:10px; }
-  .skill-cell p{ color:var(--muted); font-size:14px; line-height:1.6; }
-
-  /* --- Meta / About this site --- */
-  .meta-panel{ background:var(--ink-2); }
-  .meta-grid{ display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start; }
-  .meta-grid p{ color:var(--muted); font-size:16px; line-height:1.75; margin-bottom:16px; }
-  .meta-grid p b{ color:var(--paper); }
-  .stack-list{ list-style:none; }
-  .stack-list li{
-    display:flex; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--line);
-    font-family:'JetBrains Mono', monospace; font-size:13px;
-  }
-  .stack-list li span:first-child{ color:var(--paper); }
-  .stack-list li span:last-child{ color:var(--muted); }
-
-  /* --- Contact --- */
-  .contact{ text-align:left; }
-  .contact h2{ max-width:none; }
-  .contact-links{ display:flex; flex-wrap:wrap; gap:16px; margin-top:36px; }
-  .contact-links a{
-    color:var(--paper); text-decoration:none; font-family:'JetBrains Mono', monospace;
-    font-size:14px; border:1px solid var(--line); padding:14px 22px; border-radius:2px;
-    display:flex; align-items:center; gap:10px; transition:border-color .2s, color .2s;
-  }
-  .contact-links a:hover{ border-color:var(--blue); color:var(--blue); }
-
-  /* --- Fotografie: interaktive Weltkarte --- */
-  .map-wrap{ position:relative; margin-top:20px; }
-  svg.world-map{ width:100%; height:auto; display:block; overflow:visible; }
-  .map-zone{ fill:var(--ink-3); opacity:0.6; }
-  .map-grid{ stroke:var(--line); stroke-width:1; fill:none; }
-  .map-pin{ cursor:pointer; }
-  .map-pin circle{ fill:var(--amber); transition:r .2s ease; }
-  .map-pin:hover circle, .map-pin.active circle{ r:6; }
-  .map-pin text{ font-family:'JetBrains Mono', monospace; font-size:12px; fill:var(--muted); }
-  .map-pin:hover text, .map-pin.active text{ fill:var(--blue); }
-  .photo-card{
-    position:absolute; left:0; top:0; transform:translate(-50%,-125%);
-    background:var(--ink-2); border:1px dashed var(--muted); border-radius:4px;
-    padding:16px 18px; display:flex; flex-direction:column; align-items:center; gap:8px;
-    min-width:130px; text-align:center;
-    opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
-    z-index:3;
-  }
-  .photo-card.active{ opacity:1; transform:translate(-50%,-135%); pointer-events:auto; }
-  .photo-card svg{ width:24px; height:24px; color:var(--muted); opacity:0.6; }
-  .photo-card .photo-country{ font-family:'Space Grotesk', sans-serif; font-size:14px; font-weight:600; }
-  .photo-card .photo-tag{
-    font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
-    color:var(--muted);
-  }
-  .map-hint{
-    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted);
-    margin-top:18px; letter-spacing:0.04em;
-  }
-
-  footer{
-    padding:40px 6vw; color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:11px;
-    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
-    border-top:1px solid var(--line);
-  }
-  footer a{ color:var(--muted); text-decoration:none; }
-  footer a:hover{ color:var(--blue); }
-
-  @media (max-width:860px){
-    .hero-grid{ grid-template-columns:1fr; }
-    .schematic-wrap{ opacity:0.5; margin-top:20px; height:46vh; }
-    .about-grid, .meta-grid{ grid-template-columns:1fr; gap:32px; }
-    .skill-grid{ grid-template-columns:1fr; }
-    .panel{ padding:100px 6vw; }
-    header.nav nav{ display:none; }
+    .callout-chip, .callout-chip.align-right{ position:static; opacity:1; margin-top:12px; flex-direction:row; }
+    .scroll-cue{ display:none; }
   }
 
   @media (prefers-reduced-motion: reduce){
-    *{ animation:none !important; transition:none !important; }
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
     html{ scroll-behavior:auto; }
   }
 </style>
 </head>
-<body>
+<body class="bg-panel text-ink font-body antialiased selection:bg-accent-orange/30">
 
-<div class="grid-bg"></div>
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+<div class="blueprint-grid"></div>
+<div class="vignette"></div>
 <canvas id="robot-canvas" aria-hidden="true"></canvas>
 
-<header class="nav">
-  <span class="id">PG / 01</span>
-  <nav>
-    <a href="#about">Profil</a>
-    <a href="#experience">Erfahrung</a>
-    <a href="#skills">Kompetenzen</a>
-    <a href="#photography">Fotografie</a>
-    <a href="#contact">Kontakt</a>
-    <a href="dokumente.html">Dokumente</a>
+<span class="float-label hidden md:block" style="top:14%; left:4%; animation-delay:0s;">X: 128.402 · Y: 55.910</span>
+<span class="float-label hidden md:block" style="top:92%; left:4%; animation-delay:2s;">REV. 04 — MHC ANLAGENTECHNIK</span>
+<span class="float-label hidden md:block" style="top:80%; right:3%; animation-delay:1s;">LAYER: STRUCTURAL_01</span>
+<span class="float-label hidden md:block" style="top:32%; right:2%; animation-delay:3s;">Ø 1200 MM · DIN EN 13480</span>
+
+<header class="fixed top-0 inset-x-0 z-50">
+  <div class="max-w-content mx-auto px-6 md:px-10 lg:px-16 h-20 flex items-center justify-between backdrop-blur-md bg-panel/60 border-b border-edge">
+    <a href="#hero" class="font-display font-semibold text-lg tracking-tight" data-cursor-hover>
+      PG<span class="text-accent-orange">.</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-10 font-mono text-xs tracking-[0.12em] uppercase text-muted">
+      <a href="#about" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Profil</a>
+      <a href="#skills" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Kompetenzen</a>
+      <a href="#projects" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Schwerpunkte</a>
+      <a href="#timeline" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Werdegang</a>
+      <a href="#contact" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Kontakt</a>
+      <a href="dokumente.html" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Dokumente</a>
+    </nav>
+    <button id="nav-toggle" class="md:hidden text-ink w-9 h-9 flex flex-col items-center justify-center gap-1.5" aria-label="Menü öffnen" aria-expanded="false">
+      <span class="block w-6 h-px bg-ink"></span>
+      <span class="block w-6 h-px bg-ink"></span>
+    </button>
+  </div>
+  <nav id="mobile-nav" class="hidden md:hidden bg-panel/95 backdrop-blur-md border-b border-edge px-6 py-6 flex flex-col gap-5 font-mono text-sm uppercase tracking-widest text-muted">
+    <a href="#about" class="hover:text-ink">Profil</a>
+    <a href="#skills" class="hover:text-ink">Kompetenzen</a>
+    <a href="#projects" class="hover:text-ink">Schwerpunkte</a>
+    <a href="#timeline" class="hover:text-ink">Werdegang</a>
+    <a href="#contact" class="hover:text-ink">Kontakt</a>
+    <a href="dokumente.html" class="hover:text-ink">Dokumente</a>
   </nav>
 </header>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-pin">
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <div class="portrait" aria-label="Platzhalter für Porträtfoto">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+<main class="relative z-10">
+
+  <!-- ================= HERO ================= -->
+  <section id="hero" class="hero-section relative" style="height:300vh;">
+  <div class="hero-pin sticky top-0 h-[100svh] flex items-center overflow-hidden">
+    <div class="max-w-content w-full mx-auto px-6 md:px-10 lg:px-16 pt-28 pb-20 grid lg:grid-cols-[1.15fr_0.85fr] gap-16 items-center">
+      <div>
+        <span class="eyebrow mb-8">Projektingenieur — Kerntechnischer Rückbau</span>
+        <h1 class="heading-xl text-[13vw] leading-[0.92] sm:text-7xl md:text-8xl xl:text-[7.5rem]">
+          PROJECT<br><span class="text-accent-orange">ENGINEER</span>
+        </h1>
+        <div class="font-mono text-sm md:text-base text-muted mt-8 h-7 overflow-hidden relative" id="hero-rotator">
+          <span class="rotator-line block">Industrielle Anlagen gestalten.</span>
+          <span class="rotator-line block">Technische Lösungen entwickeln.</span>
+          <span class="rotator-line block">Ideen in Realität verwandeln.</span>
+        </div>
+        <p class="text-muted text-base md:text-lg leading-relaxed max-w-[46ch] mt-8">
+          Ich bin Paul Garrecht — Mechatronik-Ingenieur und internationaler Schweißfachingenieur (IWE), seit 2019 bei
+          <span class="text-ink font-medium"> MHC Anlagentechnik</span> verantwortlich für Planung und Einsatzleitung
+          im Betrieb, der Stilllegung und dem Rückbau kerntechnischer Anlagen.
+        </p>
+        <div class="flex flex-wrap items-center gap-5 mt-10">
+          <a href="#projects" class="btn-primary" data-cursor-hover data-magnetic>Meine Arbeit entdecken</a>
+          <a href="#contact" class="btn-outline" data-cursor-hover data-magnetic>Kontakt aufnehmen</a>
+        </div>
+      </div>
+
+      <div class="relative">
+        <div class="schematic-wrap relative w-full h-[58vh] lg:h-[70vh]">
+          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-orange flex items-center gap-2" id="callout-1" style="left:2%; top:4%;">
+            <span class="w-5 h-px bg-accent-orange"></span> B.Eng. Mechatronik
+          </div>
+          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-blue flex items-center gap-2 flex-row-reverse" id="callout-2" style="right:0%; top:4%;">
+            <span class="w-5 h-px bg-accent-blue"></span> IWE — Schweißfachingenieur
+          </div>
+          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-orange flex items-center gap-2" id="callout-3" style="left:2%; top:13%;">
+            <span class="w-5 h-px bg-accent-orange"></span> 7+ Jahre Projekterfahrung
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-cue absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 font-mono text-[11px] tracking-[0.15em] uppercase text-muted">
+      <span>Scrollen — Wireframe → CAD → Render</span>
+      <span class="w-px h-9 bg-edgehi relative overflow-hidden">
+        <span class="absolute inset-x-0 top-0 h-1/3 bg-accent-orange animate-[scrolldown_1.6s_ease-in-out_infinite]"></span>
+      </span>
+    </div>
+  </div>
+  </section>
+
+  <!-- ================= ABOUT ================= -->
+  <section id="about" class="section-pad rule">
+    <div class="grid lg:grid-cols-[0.85fr_1.15fr] gap-16">
+      <div>
+        <div class="glass sheen aspect-[4/5] w-full max-w-sm flex flex-col items-center justify-center gap-4 text-muted border-dashed" data-cursor-hover>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="w-14 h-14 opacity-50">
             <circle cx="12" cy="8" r="4"/>
             <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
           </svg>
-          <span class="portrait-tag">Foto folgt</span>
+          <span class="font-mono text-xs uppercase tracking-[0.15em]">Porträt folgt</span>
         </div>
-        <span class="eyebrow mono">Projektingenieur — Kerntechnik</span>
-        <h1 class="display">Paul<br>Garrecht</h1>
-        <p class="role">Projektingenieur &amp; Einsatzleiter im kerntechnischen Rückbau bei <b>MHC Anlagentechnik</b>. Mechatronik-Ingenieur, internationaler Schweißfachingenieur (IWE) — Präzision ist der Beruf, nicht nur der Anspruch.</p>
-        <div class="scroll-cue"><span class="bar"></span> SCROLLEN, UM ZUSAMMENZUBAUEN</div>
       </div>
-      <div class="schematic-wrap">
-        <span class="rev-tag mono">REV.03 · MHC-ANLAGENTECHNIK</span>
-        <div class="callout-chip" id="callout-1" style="left:8%; top:6%;">B.ENG MECHATRONIK</div>
-        <div class="callout-chip align-right" id="callout-2" style="left:56%; top:6%;">IWE — SCHWEISSFACHING.</div>
-        <div class="callout-chip" id="callout-3" style="left:8%; top:15%;">7 JAHRE PROJEKTERFAHRUNG</div>
+      <div>
+        <span class="eyebrow mb-6">01 — Profil</span>
+        <h2 class="heading-xl text-4xl md:text-5xl mb-8 max-w-[16ch]">Präzision ist der Beruf, nicht nur der Anspruch.</h2>
+        <p class="text-muted text-base md:text-lg leading-relaxed mb-5">
+          Ich bin Projektingenieur und Einsatzleiter im kerntechnischen Hilfsdienst bei der
+          <span class="text-ink font-medium">MHC Anlagentechnik GmbH</span> in Ladenburg. Mein Aufgabenfeld liegt im
+          Betrieb, der Stilllegung und dem Rückbau kerntechnischer Anlagen — ein Bereich, in dem Genauigkeit keine
+          Option, sondern Voraussetzung ist.
+        </p>
+        <p class="text-muted text-base md:text-lg leading-relaxed mb-10">
+          Nach meinem dualen Studium Mechatronik mit Schwerpunkt Project Engineering an der DHBW Mannheim — unter
+          anderem bei HeidelbergCement — bin ich seit 2019 bei MHC. Ergänzend habe ich die Qualifikation zum
+          internationalen Schweißfachingenieur (IWE) erworben, die technisches Tiefenwissen mit Projektverantwortung
+          verbindet.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4" id="about-cards">
+          <div class="glass glass-hover sheen p-6" data-cursor-hover>
+            <span class="font-mono text-xs text-accent-blue">01</span>
+            <div class="font-display text-2xl font-semibold mt-3">7+ Jahre</div>
+            <p class="text-muted text-sm mt-2">Praxiserfahrung im kerntechnischen Anlagenbau.</p>
+          </div>
+          <div class="glass glass-hover sheen p-6" data-cursor-hover>
+            <span class="font-mono text-xs text-accent-blue">02</span>
+            <div class="font-display text-2xl font-semibold mt-3">Rückbau &amp; Stilllegung</div>
+            <p class="text-muted text-sm mt-2">Begleitung kerntechnischer Anlagenprojekte.</p>
+          </div>
+          <div class="glass glass-hover sheen p-6" data-cursor-hover>
+            <span class="font-mono text-xs text-accent-blue">03</span>
+            <div class="font-display text-2xl font-semibold mt-3">IWE</div>
+            <p class="text-muted text-sm mt-2">Internationaler Schweißfachingenieur.</p>
+          </div>
+          <div class="glass glass-hover sheen p-6" data-cursor-hover>
+            <span class="font-mono text-xs text-accent-blue">04</span>
+            <div class="font-display text-2xl font-semibold mt-3">Einsatzleitung</div>
+            <p class="text-muted text-sm mt-2">Koordination technischer Teams vor Ort.</p>
+          </div>
+        </div>
       </div>
     </div>
+  </section>
+
+  <!-- ================= SKILLS ================= -->
+  <section id="skills" class="section-pad rule">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+      <div>
+        <span class="eyebrow mb-6">02 — Kompetenzen</span>
+        <h2 class="heading-xl text-4xl md:text-5xl max-w-[18ch]">Engineering Dashboard.</h2>
+      </div>
+      <p class="text-muted max-w-[42ch] font-mono text-sm leading-relaxed">Werkzeuge, Normen und Fachwissen aus sieben Jahren Projektingenieurwesen im kerntechnischen Rückbau.</p>
+    </div>
+    <div id="skills-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      <!-- skill cells injected via template below -->
+    </div>
+  </section>
+
+  <!-- ================= PROJECTS / FOCUS AREAS ================= -->
+  <section id="projects" class="section-pad rule">
+    <span class="eyebrow mb-6">03 — Schwerpunkte</span>
+    <h2 class="heading-xl text-4xl md:text-5xl max-w-[20ch] mb-16">Woran ich arbeite.</h2>
+    <div id="projects-grid" class="grid md:grid-cols-2 gap-6 md:gap-8">
+      <article class="glass glass-hover sheen overflow-hidden flex flex-col" data-cursor-hover>
+        <div class="aspect-video border-b border-edge flex items-center justify-center border-dashed text-muted">
+          <span class="font-mono text-xs uppercase tracking-[0.15em]">Bild folgt</span>
+        </div>
+        <div class="p-7 md:p-8 flex flex-col flex-1">
+          <h3 class="font-display text-xl font-semibold mb-2">Rückbau kerntechnischer Anlagen</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5 flex-1">Planung und technische Begleitung von Rückbau- und Stilllegungsmaßnahmen — von der Konzeption bis zur Umsetzung vor Ort.</p>
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Rückbau</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Stilllegung</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Genehmigungsverfahren</span>
+          </div>
+          <div class="flex gap-4">
+            <a href="#contact" class="text-accent-orange font-mono text-xs uppercase tracking-widest hover:underline" data-cursor-hover>Kontakt aufnehmen →</a>
+            <a href="#about" class="text-muted font-mono text-xs uppercase tracking-widest hover:text-ink" data-cursor-hover>Mehr zum Profil</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="glass glass-hover sheen overflow-hidden flex flex-col" data-cursor-hover>
+        <div class="aspect-video border-b border-edge flex items-center justify-center border-dashed text-muted">
+          <span class="font-mono text-xs uppercase tracking-[0.15em]">Bild folgt</span>
+        </div>
+        <div class="p-7 md:p-8 flex flex-col flex-1">
+          <h3 class="font-display text-xl font-semibold mb-2">Rohrleitungs- &amp; Druckgerätetechnik</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5 flex-1">Auslegung und Bewertung von Rohrleitungssystemen und Druckgeräten nach DIN EN 13480.</p>
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Piping</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">DIN EN 13480</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Druckgeräte</span>
+          </div>
+          <div class="flex gap-4">
+            <a href="#contact" class="text-accent-orange font-mono text-xs uppercase tracking-widest hover:underline" data-cursor-hover>Kontakt aufnehmen →</a>
+            <a href="#about" class="text-muted font-mono text-xs uppercase tracking-widest hover:text-ink" data-cursor-hover>Mehr zum Profil</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="glass glass-hover sheen overflow-hidden flex flex-col" data-cursor-hover>
+        <div class="aspect-video border-b border-edge flex items-center justify-center border-dashed text-muted">
+          <span class="font-mono text-xs uppercase tracking-[0.15em]">Bild folgt</span>
+        </div>
+        <div class="p-7 md:p-8 flex flex-col flex-1">
+          <h3 class="font-display text-xl font-semibold mb-2">Schweißtechnische Qualitätssicherung</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5 flex-1">Fachliche Bewertung schweißtechnischer Prozesse als internationaler Schweißfachingenieur (IWE).</p>
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">IWE</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Qualitätssicherung</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Schweißtechnik</span>
+          </div>
+          <div class="flex gap-4">
+            <a href="#contact" class="text-accent-orange font-mono text-xs uppercase tracking-widest hover:underline" data-cursor-hover>Kontakt aufnehmen →</a>
+            <a href="#about" class="text-muted font-mono text-xs uppercase tracking-widest hover:text-ink" data-cursor-hover>Mehr zum Profil</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="glass glass-hover sheen overflow-hidden flex flex-col" data-cursor-hover>
+        <div class="aspect-video border-b border-edge flex items-center justify-center border-dashed text-muted">
+          <span class="font-mono text-xs uppercase tracking-[0.15em]">Bild folgt</span>
+        </div>
+        <div class="p-7 md:p-8 flex flex-col flex-1">
+          <h3 class="font-display text-xl font-semibold mb-2">Einsatzleitung vor Ort</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5 flex-1">Koordination und Steuerung technischer Teams im laufenden Betrieb kerntechnischer Anlagen.</p>
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Einsatzleitung</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Projektsteuerung</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Koordination</span>
+          </div>
+          <div class="flex gap-4">
+            <a href="#contact" class="text-accent-orange font-mono text-xs uppercase tracking-widest hover:underline" data-cursor-hover>Kontakt aufnehmen →</a>
+            <a href="#about" class="text-muted font-mono text-xs uppercase tracking-widest hover:text-ink" data-cursor-hover>Mehr zum Profil</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= TIMELINE ================= -->
+  <section id="timeline" class="section-pad rule">
+    <span class="eyebrow mb-6">04 — Werdegang</span>
+    <h2 class="heading-xl text-4xl md:text-5xl max-w-[18ch] mb-16">Stationen im Werdegang.</h2>
+    <div class="relative max-w-3xl">
+      <div class="absolute left-[9px] top-2 bottom-2 w-px bg-edge">
+        <div class="tl-line absolute inset-0 bg-accent-orange"></div>
+      </div>
+      <div class="tl-items flex flex-col gap-14">
+        <div class="relative pl-12">
+          <div class="absolute left-0 top-1 w-5 h-5 rounded-full border border-accent-orange bg-panel flex items-center justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent-orange"></span>
+          </div>
+          <div class="font-mono text-xs text-accent-orange tracking-widest">2016 — 2019</div>
+          <h3 class="font-display text-xl md:text-2xl font-semibold mt-2">Bachelor of Engineering</h3>
+          <div class="text-muted text-sm mt-1">Duales Studium Mechatronik, DHBW Mannheim &amp; HeidelbergCement</div>
+        </div>
+        <div class="relative pl-12">
+          <div class="absolute left-0 top-1 w-5 h-5 rounded-full border border-accent-orange bg-panel flex items-center justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent-orange"></span>
+          </div>
+          <div class="font-mono text-xs text-accent-orange tracking-widest">SEIT 2019</div>
+          <h3 class="font-display text-xl md:text-2xl font-semibold mt-2">Projektingenieur</h3>
+          <div class="text-muted text-sm mt-1">MHC Anlagentechnik GmbH, Ladenburg</div>
+        </div>
+        <div class="relative pl-12">
+          <div class="absolute left-0 top-1 w-5 h-5 rounded-full border border-accent-orange bg-panel flex items-center justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent-orange"></span>
+          </div>
+          <div class="font-mono text-xs text-accent-orange tracking-widest">SEIT 2022</div>
+          <h3 class="font-display text-xl md:text-2xl font-semibold mt-2">IWE-Zertifizierung</h3>
+          <div class="text-muted text-sm mt-1">Internationaler Schweißfachingenieur</div>
+        </div>
+        <div class="relative pl-12">
+          <div class="absolute left-0 top-1 w-5 h-5 rounded-full border border-accent-orange bg-accent-orange flex items-center justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-panel"></span>
+          </div>
+          <div class="font-mono text-xs text-accent-orange tracking-widest">HEUTE</div>
+          <h3 class="font-display text-xl md:text-2xl font-semibold mt-2">Einsatzleiter im kerntechnischen Rückbau</h3>
+          <div class="text-muted text-sm mt-1">MHC Anlagentechnik GmbH</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NUMBERS ================= -->
+  <section id="numbers" class="section-pad rule">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-edge border border-edge rounded-2xl overflow-hidden" id="numbers-grid">
+      <div class="bg-panel p-8 md:p-10">
+        <div class="font-display text-4xl md:text-5xl font-semibold"><span data-count-to="7" data-suffix="+">0</span></div>
+        <div class="font-mono text-xs uppercase tracking-widest text-muted mt-3">Jahre Erfahrung</div>
+      </div>
+      <div class="bg-panel p-8 md:p-10">
+        <div class="font-display text-4xl md:text-5xl font-semibold"><span data-count-to="2019">0</span></div>
+        <div class="font-mono text-xs uppercase tracking-widest text-muted mt-3">Bei MHC seit</div>
+      </div>
+      <div class="bg-panel p-8 md:p-10">
+        <div class="font-display text-4xl md:text-5xl font-semibold"><span data-count-to="2022">0</span></div>
+        <div class="font-mono text-xs uppercase tracking-widest text-muted mt-3">IWE-zertifiziert seit</div>
+      </div>
+      <div class="bg-panel p-8 md:p-10">
+        <div class="font-display text-4xl md:text-5xl font-semibold"><span data-count-to="100" data-suffix="%">0</span></div>
+        <div class="font-mono text-xs uppercase tracking-widest text-muted mt-3">Fokus auf Sicherheit &amp; Präzision</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section id="contact" class="section-pad rule">
+    <div class="grid lg:grid-cols-[1fr_0.9fr] gap-16">
+      <div>
+        <span class="eyebrow mb-6">05 — Kontakt</span>
+        <h2 class="heading-xl text-4xl md:text-5xl max-w-[16ch] mb-6">Lassen Sie uns sprechen.</h2>
+        <p class="text-muted text-base md:text-lg leading-relaxed max-w-[46ch] mb-10">
+          Offen für Austausch rund um kerntechnischen Rückbau, Projektingenieurwesen oder technische Zusammenarbeit.
+        </p>
+        <form id="contact-form" class="flex flex-col gap-5 max-w-lg">
+          <div>
+            <label for="cf-name" class="font-mono text-xs uppercase tracking-widest text-muted mb-2 block">Name</label>
+            <input id="cf-name" name="name" type="text" required class="w-full bg-transparent border border-edge focus:border-accent-orange outline-none rounded-lg px-4 py-3 text-ink placeholder:text-muted/60 transition-colors" placeholder="Ihr Name">
+          </div>
+          <div>
+            <label for="cf-email" class="font-mono text-xs uppercase tracking-widest text-muted mb-2 block">E-Mail</label>
+            <input id="cf-email" name="email" type="email" required class="w-full bg-transparent border border-edge focus:border-accent-orange outline-none rounded-lg px-4 py-3 text-ink placeholder:text-muted/60 transition-colors" placeholder="ihre@email.de">
+          </div>
+          <div>
+            <label for="cf-message" class="font-mono text-xs uppercase tracking-widest text-muted mb-2 block">Nachricht</label>
+            <textarea id="cf-message" name="message" rows="4" required class="w-full bg-transparent border border-edge focus:border-accent-orange outline-none rounded-lg px-4 py-3 text-ink placeholder:text-muted/60 transition-colors resize-none" placeholder="Ihre Nachricht"></textarea>
+          </div>
+          <button type="submit" class="btn-primary w-fit" data-cursor-hover data-magnetic>Nachricht senden</button>
+          <p class="font-mono text-[11px] text-muted">Öffnet Ihr E-Mail-Programm mit vorausgefüllter Nachricht an hallo@paulgarrecht.de.</p>
+        </form>
+      </div>
+      <div class="flex flex-col gap-4">
+        <a href="https://www.linkedin.com/in/paulgarrecht/" target="_blank" rel="noopener" class="glass glass-hover sheen p-6 flex items-center justify-between" data-cursor-hover>
+          <span class="font-display font-medium">LinkedIn</span>
+          <span class="font-mono text-accent-orange text-sm">→</span>
+        </a>
+        <a href="mailto:hallo@paulgarrecht.de" class="glass glass-hover sheen p-6 flex items-center justify-between" data-cursor-hover>
+          <span class="font-display font-medium">E-Mail</span>
+          <span class="font-mono text-accent-orange text-sm">→</span>
+        </a>
+        <a href="dokumente.html" class="glass glass-hover sheen p-6 flex items-center justify-between" data-cursor-hover>
+          <span class="font-display font-medium">Dokumente</span>
+          <span class="font-mono text-accent-orange text-sm">→</span>
+        </a>
+        <a href="mailto:hallo@paulgarrecht.de?subject=Lebenslauf%20anfragen&body=Hallo%20Paul%2C%0A%0Ak%C3%B6nntest%20du%20mir%20bitte%20deinen%20aktuellen%20Lebenslauf%20zusenden%3F" class="btn-outline justify-center mt-2" data-cursor-hover data-magnetic>Lebenslauf anfragen</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="relative z-10 rule">
+  <div class="max-w-content mx-auto px-6 md:px-10 lg:px-16 py-14">
+    <p class="font-mono text-sm text-muted max-w-[48ch] mb-10">„Präzision ist kein Zufall — sie ist das Ergebnis sorgfältiger Planung.“</p>
+    <div class="flex flex-wrap items-center justify-between gap-4 font-mono text-xs text-muted uppercase tracking-widest">
+      <span>© 2026 Paul Garrecht</span>
+      <a href="impressum.html" class="hover:text-ink transition-colors">Impressum &amp; Datenschutz</a>
+      <span>Ladenburg, DE</span>
+    </div>
   </div>
-</section>
-
-    </div>
-  </div>
-</section>
-
-<div class="thread-wrap">
-<svg class="thread" id="thread-svg" preserveAspectRatio="none">
-  <path class="thread-path" id="thread-path" d=""/>
-  <circle class="thread-pulse" id="thread-pulse-1" r="4"/>
-  <circle class="thread-pulse" id="thread-pulse-2" r="4"/>
-</svg>
-
-<!-- ABOUT -->
-<section class="panel" id="about">
-  <div class="eyebrow-row"><span class="tick"></span> 02 — PROFIL</div>
-  <div class="about-grid">
-    <div>
-      <p><b>Ich bin Paul, Projektingenieur und Einsatzleiter im kerntechnischen Hilfsdienst</b> bei der MHC Anlagentechnik GmbH in Ladenburg. Mein Aufgabenfeld liegt im Betrieb, der Stilllegung und dem Rückbau kerntechnischer Anlagen — ein Bereich, in dem Genauigkeit keine Option, sondern Voraussetzung ist.</p>
-      <p>Nach meinem dualen Studium Mechatronik mit Schwerpunkt Project Engineering an der DHBW Mannheim — unter anderem bei HeidelbergCement — bin ich seit 2019 bei MHC. Ergänzend habe ich die Qualifikation zum internationalen Schweißfachingenieur (IWE) erworben, die technisches Tiefenwissen mit Projektverantwortung verbindet.</p>
-      <p>Was mich antreibt: komplexe technische Systeme so zu strukturieren, dass sie sicher, nachvollziehbar und termingerecht umgesetzt werden — im Projekt genauso wie, als kleines Hobby, beim Bauen dieser Seite mit KI.</p>
-    </div>
-    <div class="spec-list">
-      <div class="spec-row"><span class="k">Standort</span><span class="v">Ladenburg, Baden-Württemberg</span></div>
-      <div class="spec-row"><span class="k">Rolle</span><span class="v">Projektingenieur / Einsatzleiter</span></div>
-      <div class="spec-row"><span class="k">Branche</span><span class="v">Kerntechnischer Rückbau</span></div>
-      <div class="spec-row"><span class="k">Ausbildung</span><span class="v">B.Eng. Mechatronik, DHBW Mannheim</span></div>
-      <div class="spec-row"><span class="k">Zertifizierung</span><span class="v">Int. Schweißfachingenieur (IWE)</span></div>
-      <div class="spec-row"><span class="k">Bei MHC seit</span><span class="v">2019 · 7 Jahre</span></div>
-    </div>
-  </div>
-  <div class="counter-grid">
-    <div class="counter-cell">
-      <div class="c-label">B.Eng. Mechatronik</div>
-      <div class="c-value mono" data-since="2019-09-01T00:00:00" data-unit="Bachelor of Engineering">läuft…</div>
-      <span class="c-since">seit 01.09.2019</span>
-    </div>
-    <div class="counter-cell">
-      <div class="c-label">Projektingenieur</div>
-      <div class="c-value mono" data-since="2019-09-01T00:00:00" data-unit="Projektingenieur">läuft…</div>
-      <span class="c-since">seit 01.09.2019 · MHC Anlagentechnik</span>
-    </div>
-    <div class="counter-cell">
-      <div class="c-label">Int. Schweißfachingenieur (IWE)</div>
-      <div class="c-value mono" data-since="2022-03-01T00:00:00" data-unit="IWE">läuft…</div>
-      <span class="c-since">seit 01.03.2022</span>
-    </div>
-  </div>
-</section>
-
-<!-- EXPERIENCE -->
-<section class="panel" id="experience">
-  <div class="eyebrow-row"><span class="tick"></span> 03 — ERFAHRUNG</div>
-  <h2>Stationen im<br>Werdegang.</h2>
-  <div class="tl">
-    <div class="tl-line"></div>
-    <div class="tl-item">
-      <div class="tl-dot"></div>
-      <div class="period">DEZ. 2019 — HEUTE · 6 JAHRE 8 MONATE</div>
-      <h3>Projektingenieur</h3>
-      <div class="org">MHC Anlagentechnik GmbH</div>
-      <p style="color:var(--muted); font-size:15px; line-height:1.6;">Projektingenieur und Einsatzleitung im kerntechnischen Hilfsdienst — Verantwortung für Planung und Umsetzung im Bereich Betrieb, Stilllegung und Rückbau.</p>
-      <div class="tags"><span class="tag">SolidWorks</span><span class="tag">Projektmanagement</span><span class="tag">Einsatzleitung</span></div>
-    </div>
-    <div class="tl-item">
-      <div class="tl-dot"></div>
-      <div class="period">AUG. 2019 — NOV. 2019 · 4 MONATE</div>
-      <h3>Dualer Student Mechatronik, Project Engineering</h3>
-      <div class="org">MHC Anlagentechnik GmbH</div>
-      <div class="tags"><span class="tag">Projektmanagement</span></div>
-    </div>
-    <div class="tl-item">
-      <div class="tl-dot"></div>
-      <div class="period">SEPT. 2016 — JULI 2019 · 2 JAHRE 11 MONATE</div>
-      <h3>Dualer Student Mechatronik, Project Engineering</h3>
-      <div class="org">HeidelbergCement · Duales Studium</div>
-      <div class="tags"><span class="tag">Projektmanagement</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- SKILLS -->
-<section class="panel" id="skills">
-  <div class="eyebrow-row"><span class="tick"></span> 04 — KOMPETENZEN</div>
-  <h2>Werkzeuge &amp;<br>Fachwissen.</h2>
-  <div class="skill-grid">
-    <div class="skill-cell">
-      <span class="num mono">01</span>
-      <h4>SolidWorks &amp; CAD</h4>
-      <p>Konstruktion und technische Ausarbeitung von Anlagenkomponenten für Rückbau- und Stilllegungsprojekte.</p>
-    </div>
-    <div class="skill-cell">
-      <span class="num mono">02</span>
-      <h4>Projektmanagement</h4>
-      <p>Planung, Steuerung und Einsatzleitung technischer Projekte im kerntechnischen Umfeld.</p>
-    </div>
-    <div class="skill-cell">
-      <span class="num mono">03</span>
-      <h4>Schweißtechnik (IWE)</h4>
-      <p>Internationaler Schweißfachingenieur — Qualitätssicherung und fachliche Bewertung schweißtechnischer Prozesse.</p>
-    </div>
-  </div>
-</section>
-
-<!-- META: how the site was built -->
-<section class="panel meta-panel">
-  <div class="eyebrow-row"><span class="tick"></span> 05 — WIE DIESE SEITE ENTSTAND</div>
-  <div class="meta-grid">
-    <div>
-      <p><b>Diese Website ist selbst ein kleines Projekt</b> — mein Hobby, mit KI zu bauen, angewendet auf etwas Reales statt auf ein Spielzeug-Beispiel.</p>
-      <p>Der Ablauf: Inhalte und Struktur mit Claude erarbeitet, Design-Richtung bewusst vom generischen KI-Look abgegrenzt (kein Standard-Dunkelmodus-Template), und statt eines echten Videos ein prozedural gebautes 3D-Robotermodell als Kernidee umgesetzt — passend zum eigenen Beruf als Ingenieur. Der Roboterarm besteht aus echter WebGL-Geometrie (Three.js), nicht aus Bildern: Er fliegt beim Scrollen aus seinen Einzelteilen zusammen, bleibt danach als kleiner Begleiter in der Ecke sichtbar und baut beim Erreichen der Tabellen unten auf der Seite deren Zeilen sichtbar mit auf.</p>
-      <p>Der nächste Schritt: die Seite lokal mit Claude Code weiter verfeinern, mit echten Projektbildern füllen und live schalten.</p>
-    </div>
-    <ul class="stack-list">
-      <li><span>Konzept &amp; Copy</span><span>Claude</span></li>
-      <li><span>Layout &amp; Prototyp</span><span>HTML / CSS / JS</span></li>
-      <li><span>3D-Robotermodell</span><span>Three.js (WebGL)</span></li>
-      <li><span>Scroll-Animation</span><span>GSAP ScrollTrigger</span></li>
-      <li><span>Weiterentwicklung</span><span>Claude Code</span></li>
-      <li><span>Hosting</span><span>Vercel / GitHub Pages</span></li>
-    </ul>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section class="panel contact" id="contact">
-  <div class="eyebrow-row"><span class="tick"></span> 06 — KONTAKT</div>
-  <h2>Lassen Sie uns<br>sprechen.</h2>
-  <p style="color:var(--muted); max-width:48ch; font-size:16px; line-height:1.7;">Offen für Austausch rund um kerntechnischen Rückbau, Projektingenieurwesen oder auch dieses kleine KI-Nebenprojekt.</p>
-  <div class="contact-links">
-    <a href="https://www.linkedin.com/in/paulgarrecht/" target="_blank" rel="noopener">→ LinkedIn</a>
-    <a href="mailto:hallo@paulgarrecht.de">→ E-Mail</a>
-  </div>
-</section>
-
-<!-- PHOTOGRAPHY: interactive world map, the thread coils in here -->
-<section class="panel" id="photography">
-  <div class="eyebrow-row"><span class="tick"></span> 07 — FOTOGRAFIE</div>
-  <h2>Ein anderes<br>Hobby: unterwegs.</h2>
-  <p style="color:var(--muted); max-width:52ch; font-size:16px; line-height:1.7;">Neben KI und Technik: Fotografie auf Reisen. Eine kleine, unvollständige Auswahl der Orte — mit dem Cursor über die Punkte fahren, um Bilder zu sehen.</p>
-
-  <div class="map-wrap">
-    <svg class="world-map" viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg">
-      <!-- coordinate grid -->
-      <g class="map-grid">
-        <line x1="0" y1="130" x2="1000" y2="130"/>
-        <line x1="0" y1="260" x2="1000" y2="260"/>
-        <line x1="0" y1="390" x2="1000" y2="390"/>
-        <line x1="166" y1="0" x2="166" y2="520"/>
-        <line x1="333" y1="0" x2="333" y2="520"/>
-        <line x1="500" y1="0" x2="500" y2="520"/>
-        <line x1="666" y1="0" x2="666" y2="520"/>
-        <line x1="833" y1="0" x2="833" y2="520"/>
-      </g>
-
-      <!-- abstracted landmass zones (schematisch, keine exakten Küstenlinien) -->
-      <g>
-        <ellipse class="map-zone" cx="220" cy="160" rx="140" ry="100"/>
-        <ellipse class="map-zone" cx="290" cy="370" rx="70" ry="110"/>
-        <ellipse class="map-zone" cx="510" cy="120" rx="60" ry="50"/>
-        <ellipse class="map-zone" cx="520" cy="290" rx="75" ry="130"/>
-        <ellipse class="map-zone" cx="740" cy="160" rx="170" ry="110"/>
-        <ellipse class="map-zone" cx="860" cy="390" rx="70" ry="50"/>
-      </g>
-
-      <!-- pins -->
-      <g class="map-pin" data-country="usa">
-        <line class="sch-line-dim" x1="226" y1="136" x2="226" y2="100"/>
-        <circle cx="226" cy="136" r="4"/>
-        <text x="200" y="90">USA</text>
-      </g>
-      <g class="map-pin" data-country="spanien">
-        <line class="sch-line-dim" x1="490" y1="134" x2="470" y2="90"/>
-        <circle cx="490" cy="134" r="4"/>
-        <text x="418" y="86">SPANIEN</text>
-      </g>
-      <g class="map-pin" data-country="griechenland">
-        <line class="sch-line-dim" x1="561" y1="139" x2="590" y2="185"/>
-        <circle cx="561" cy="139" r="4"/>
-        <text x="596" y="190">GRIECHENLAND</text>
-      </g>
-      <g class="map-pin" data-country="japan">
-        <line class="sch-line-dim" x1="884" y1="149" x2="920" y2="110"/>
-        <circle cx="884" cy="149" r="4"/>
-        <text x="860" y="100">JAPAN</text>
-      </g>
-      <g class="map-pin" data-country="srilanka">
-        <line class="sch-line-dim" x1="724" y1="258" x2="700" y2="310"/>
-        <circle cx="724" cy="258" r="4"/>
-        <text x="618" y="325">SRI LANKA</text>
-      </g>
-    </svg>
-
-    <div class="photo-card" id="photo-usa" style="left:22.6%; top:26.2%;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span class="photo-country">USA</span>
-      <span class="photo-tag">Foto folgt</span>
-    </div>
-    <div class="photo-card" id="photo-spanien" style="left:49%; top:25.8%;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span class="photo-country">Spanien</span>
-      <span class="photo-tag">Foto folgt</span>
-    </div>
-    <div class="photo-card" id="photo-griechenland" style="left:56.1%; top:26.7%;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span class="photo-country">Griechenland</span>
-      <span class="photo-tag">Foto folgt</span>
-    </div>
-    <div class="photo-card" id="photo-japan" style="left:88.4%; top:28.7%;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span class="photo-country">Japan</span>
-      <span class="photo-tag">Foto folgt</span>
-    </div>
-    <div class="photo-card" id="photo-srilanka" style="left:72.4%; top:49.6%;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span class="photo-country">Sri Lanka</span>
-      <span class="photo-tag">Foto folgt</span>
-    </div>
-  </div>
-  <div class="map-hint mono">← Platzhalter — echte Fotos folgen in Kürze</div>
-</section>
-
-</div>
-
-<footer>
-  <span>© 2026 Paul Garrecht</span>
-  <span><a href="impressum.html">Impressum &amp; Datenschutz</a></span>
-  <span>LADENBURG, DE</span>
 </footer>
+
+<template id="skill-cell-template">
+  <div class="glass glass-hover sheen p-5 flex flex-col items-center text-center gap-3" data-cursor-hover>
+    <svg viewBox="0 0 100 100" class="w-20 h-20 -rotate-90">
+      <circle class="ring-track" cx="50" cy="50" r="42" stroke-width="7"/>
+      <circle class="ring-value" cx="50" cy="50" r="42" stroke-width="7" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+    </svg>
+    <div class="font-mono text-lg font-medium -mt-16 mb-8"><span class="ring-percent">0</span>%</div>
+    <div class="font-display text-sm font-medium leading-tight">Skill</div>
+  </div>
+</template>
+
+<script>
+  const SKILLS = [
+    ['Projektingenieurwesen', 95],
+    ['SolidWorks', 90],
+    ['AutoCAD', 82],
+    ['Anlagenplanung', 88],
+    ['Rohrleitungsbau', 90],
+    ['Druckgerätetechnik', 92],
+    ['Schweißtechnik (IWE)', 96],
+    ['DIN EN 13480', 90],
+    ['Excel VBA', 75],
+    ['3D-Scanning', 70],
+    ['Projektmanagement', 90],
+    ['Problemlösung', 93],
+  ];
+
+  const skillsGrid = document.getElementById('skills-grid');
+  const skillTpl = document.getElementById('skill-cell-template');
+  SKILLS.forEach(([label, value]) => {
+    const node = skillTpl.content.cloneNode(true);
+    node.querySelector('.font-display').textContent = label;
+    const circle = node.querySelector('.ring-value');
+    const circumference = 2 * Math.PI * 42;
+    circle.dataset.circumference = circumference;
+    circle.dataset.target = value;
+    skillsGrid.appendChild(node);
+  });
+</script>
 
 <script>
   gsap.registerPlugin(ScrollTrigger);
 
-  // live counters: "seit X Tagen, Y Std, Z Min"
-  function updateCounters(){
-    const now = Date.now();
-    document.querySelectorAll('.c-value[data-since]').forEach(el => {
-      const since = new Date(el.dataset.since).getTime();
-      let diff = Math.max(0, now - since);
-      const days = Math.floor(diff / 86400000);
-      diff -= days * 86400000;
-      const hours = Math.floor(diff / 3600000);
-      diff -= hours * 3600000;
-      const minutes = Math.floor(diff / 60000);
-      el.textContent = `seit ${days} Tagen, ${hours} Std, ${minutes} Min`;
+  /* ---------------------------------------------------------------- */
+  /* Lenis smooth scroll, synced with GSAP's ticker/ScrollTrigger      */
+  /* ---------------------------------------------------------------- */
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isTouch = window.matchMedia('(hover:none)').matches;
+  let lenis = null;
+  if(!reduceMotion){
+    lenis = new Lenis({ duration: 1.1, smoothWheel: true, autoRaf: false });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+    gsap.ticker.lagSmoothing(0);
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', (e) => {
+        const id = a.getAttribute('href');
+        if(id.length > 1 && document.querySelector(id)){
+          e.preventDefault();
+          lenis.scrollTo(id, { offset: -20 });
+        }
+      });
     });
   }
-  updateCounters();
-  setInterval(updateCounters, 1000);
 
-  // ---- 3D-Robotermodell (Three.js): baut sich im Hero zusammen und begleitet danach
-  // als kleiner Begleiter die ganze Seite, wo er die Tabellen "zusammenbaut" ----
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const isMobile = window.matchMedia('(max-width:860px)').matches;
+  /* ---------------------------------------------------------------- */
+  /* Mobile nav toggle                                                  */
+  /* ---------------------------------------------------------------- */
+  const navToggle = document.getElementById('nav-toggle');
+  const mobileNav = document.getElementById('mobile-nav');
+  navToggle.addEventListener('click', () => {
+    const open = mobileNav.classList.toggle('hidden') === false;
+    navToggle.setAttribute('aria-expanded', String(open));
+  });
+  mobileNav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    mobileNav.classList.add('hidden');
+    navToggle.setAttribute('aria-expanded', 'false');
+  }));
+
+  /* ---------------------------------------------------------------- */
+  /* Custom cursor + magnetic buttons                                   */
+  /* ---------------------------------------------------------------- */
+  if(!isTouch){
+    const dot = document.getElementById('cursor-dot');
+    const ring = document.getElementById('cursor-ring');
+    let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+    let rx = mx, ry = my;
+    window.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+    function cursorTick(){
+      requestAnimationFrame(cursorTick);
+      rx += (mx - rx) * 0.18;
+      ry += (my - ry) * 0.18;
+      dot.style.transform = `translate(${mx}px, ${my}px) translate(-50%, -50%)`;
+      ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%, -50%)`;
+    }
+    requestAnimationFrame(cursorTick);
+    document.querySelectorAll('[data-cursor-hover]').forEach(el => {
+      el.addEventListener('mouseenter', () => ring.classList.add('hover'));
+      el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
+    });
+
+    document.querySelectorAll('[data-magnetic]').forEach(el => {
+      el.addEventListener('mousemove', (e) => {
+        const r = el.getBoundingClientRect();
+        const relX = e.clientX - (r.left + r.width / 2);
+        const relY = e.clientY - (r.top + r.height / 2);
+        gsap.to(el, { x: relX * 0.35, y: relY * 0.45, duration: 0.4, ease: 'power2.out' });
+      });
+      el.addEventListener('mouseleave', () => {
+        gsap.to(el, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.4)' });
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Hero rotating subtitle                                             */
+  /* ---------------------------------------------------------------- */
+  (function rotator(){
+    const lines = document.querySelectorAll('#hero-rotator .rotator-line');
+    if(!lines.length) return;
+    gsap.set(lines, { position: 'absolute', top: 0, left: 0, opacity: 0, y: 12 });
+    gsap.set(lines[0], { opacity: 1, y: 0 });
+    let i = 0;
+    setInterval(() => {
+      const next = (i + 1) % lines.length;
+      gsap.to(lines[i], { opacity: 0, y: -12, duration: 0.5, ease: 'power2.in' });
+      gsap.to(lines[next], { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out', delay: 0.15 });
+      i = next;
+    }, 3200);
+  })();
+
+  /* ---------------------------------------------------------------- */
+  /* Section fade-ins                                                   */
+  /* ---------------------------------------------------------------- */
+  document.querySelectorAll('main > section').forEach(section => {
+    gsap.from(section.querySelectorAll('h2, p, form, .eyebrow'), {
+      opacity: 0, y: 24, duration: 0.8, ease: 'power2.out', stagger: 0.08,
+      scrollTrigger: { trigger: section, start: 'top 78%' },
+    });
+  });
+  gsap.utils.toArray('#about-cards > div, #projects-grid > article').forEach((card, i) => {
+    gsap.from(card, {
+      opacity: 0, y: 30, duration: 0.7, ease: 'power2.out',
+      scrollTrigger: { trigger: card, start: 'top 88%' },
+      delay: (i % 4) * 0.06,
+    });
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Skill rings                                                        */
+  /* ---------------------------------------------------------------- */
+  document.querySelectorAll('#skills-grid .glass').forEach((cell, i) => {
+    const circle = cell.querySelector('.ring-value');
+    const percentEl = cell.querySelector('.ring-percent');
+    const circumference = parseFloat(circle.dataset.circumference);
+    const target = parseFloat(circle.dataset.target);
+    gsap.from(cell, {
+      opacity: 0, y: 24, duration: 0.6, ease: 'power2.out',
+      scrollTrigger: { trigger: cell, start: 'top 90%' },
+      delay: (i % 4) * 0.05,
+    });
+    const counter = { v: 0 };
+    gsap.to(counter, {
+      v: target,
+      duration: 1.4,
+      ease: 'power2.out',
+      scrollTrigger: { trigger: cell, start: 'top 85%', once: true },
+      onUpdate: () => {
+        percentEl.textContent = Math.round(counter.v);
+        circle.setAttribute('stroke-dashoffset', circumference * (1 - counter.v / 100));
+      },
+    });
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Timeline connecting line                                           */
+  /* ---------------------------------------------------------------- */
+  gsap.to('.tl-line', {
+    scaleY: 1, ease: 'none',
+    scrollTrigger: { trigger: '#timeline .relative.max-w-3xl', start: 'top 70%', end: 'bottom 80%', scrub: 0.6 },
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Animated counters (Numbers section)                                */
+  /* ---------------------------------------------------------------- */
+  document.querySelectorAll('[data-count-to]').forEach(el => {
+    const target = parseFloat(el.dataset.countTo);
+    const suffix = el.dataset.suffix || '';
+    const counter = { v: 0 };
+    gsap.to(counter, {
+      v: target,
+      duration: 1.8,
+      ease: 'power2.out',
+      scrollTrigger: { trigger: el, start: 'top 85%', once: true },
+      onUpdate: () => { el.textContent = Math.round(counter.v) + suffix; },
+    });
+  });
+</script>
+
+<script>
+  /* ================================================================ */
+  /* 3D-Roboterarm (Three.js): Hero-Assembly mit Wireframe → CAD →     */
+  /* Render-Materialübergang, danach kleiner Begleiter durch die Seite */
+  /* ================================================================ */
+  const isMobile3D = window.matchMedia('(max-width:960px)').matches;
   const robotCanvas = document.getElementById('robot-canvas');
 
-  if(robotCanvas && !isMobile){
+  if(robotCanvas && !isMobile3D){
   try {
-    const BLUE = 0x2C4A9E;
-    const FILL = 0xE6E3D5;
+    const ORANGE = 0xFF7A00;
+    const BLUE = 0x3B82F6;
+    const STEEL = 0x8A94A3;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
@@ -624,10 +718,17 @@
     const renderer = new THREE.WebGLRenderer({ canvas: robotCanvas, alpha: true, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
 
-    // anchorGroup: WHERE the rig sits on screen (hero center -> small corner companion)
-    // swayGroup: gentle constant rotation, independent of the assembly animation
-    // robotGroup: the six parts that fly together into the assembled pose
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x0b0f14, 1.1);
+    const key = new THREE.DirectionalLight(0xffffff, 1.6);
+    key.position.set(4, 6, 6);
+    const rim = new THREE.PointLight(ORANGE, 60, 22, 2);
+    rim.position.set(3, 1, 3);
+    scene.add(hemi, key, rim);
+
     const anchorGroup = new THREE.Group();
     const swayGroup = new THREE.Group();
     const robotGroup = new THREE.Group();
@@ -635,16 +736,18 @@
     anchorGroup.add(swayGroup);
     scene.add(anchorGroup);
 
-    function edged(mesh, geometry){
+    function edged(mesh, geometry, color){
       const edges = new THREE.LineSegments(
         new THREE.EdgesGeometry(geometry, 1),
-        new THREE.LineBasicMaterial({ color: BLUE, transparent: true, opacity: 1 })
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 1 })
       );
       mesh.add(edges);
       return edges;
     }
     function fillMat(){
-      return new THREE.MeshBasicMaterial({ color: FILL, transparent: true, opacity: 0.92 });
+      return new THREE.MeshStandardMaterial({
+        color: 0xffffff, transparent: true, opacity: 0.04, metalness: 0, roughness: 1,
+      });
     }
     function makeGeom(id){
       switch(id){
@@ -657,7 +760,6 @@
       }
     }
 
-    // assembled (rest) pose vs. scattered (exploded) pose per part
     const partDefs = {
       base:    { rest:[0,-1.7,0],    restRot:[0,0,0],     explode:[-3.4,1.3,-1.6], explodeRot:[0.3,0.6,0.2] },
       boom:    { rest:[0.15,-0.6,0], restRot:[0,0,0.32],  explode:[-3.6,-0.7,1.9], explodeRot:[-0.5,0.7,-0.4] },
@@ -668,38 +770,48 @@
     };
 
     const parts = {};
+    const fillMats = [];
+    const edgeMats = [];
     ['base','boom','elbow','forearm','wrist'].forEach(id => {
       const geom = makeGeom(id);
-      const mesh = new THREE.Mesh(geom, fillMat());
-      edged(mesh, geom);
+      const mat = fillMat();
+      const mesh = new THREE.Mesh(geom, mat);
+      const edge = edged(mesh, geom, ORANGE);
       const def = partDefs[id];
       mesh.position.set(def.explode[0], def.explode[1], def.explode[2]);
       mesh.rotation.set(def.explodeRot[0], def.explodeRot[1], def.explodeRot[2]);
       robotGroup.add(mesh);
       parts[id] = { mesh, def };
+      fillMats.push(mat);
+      edgeMats.push(edge.material);
     });
 
-    // gripper: palm + two fingers on pivots, so they can pinch open/closed
     const gripperGroup = new THREE.Group();
     const palmGeom = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-    const palm = new THREE.Mesh(palmGeom, fillMat());
-    edged(palm, palmGeom);
+    const palmMat = fillMat();
+    const palm = new THREE.Mesh(palmGeom, palmMat);
+    edgeMats.push(edged(palm, palmGeom, ORANGE).material);
+    fillMats.push(palmMat);
     gripperGroup.add(palm);
 
     const fingerGeom = new THREE.BoxGeometry(0.14, 0.52, 0.2);
     const fingerPivotL = new THREE.Group();
-    const fingerL = new THREE.Mesh(fingerGeom, fillMat());
+    const fingerMatL = fillMat();
+    const fingerL = new THREE.Mesh(fingerGeom, fingerMatL);
     fingerL.position.set(0, -0.34, 0);
-    edged(fingerL, fingerGeom);
+    edgeMats.push(edged(fingerL, fingerGeom, ORANGE).material);
+    fillMats.push(fingerMatL);
     fingerPivotL.add(fingerL);
     fingerPivotL.position.set(0, -0.12, 0.12);
     fingerPivotL.rotation.z = -0.32;
     gripperGroup.add(fingerPivotL);
 
     const fingerPivotR = new THREE.Group();
-    const fingerR = new THREE.Mesh(fingerGeom, fillMat());
+    const fingerMatR = fillMat();
+    const fingerR = new THREE.Mesh(fingerGeom, fingerMatR);
     fingerR.position.set(0, -0.34, 0);
-    edged(fingerR, fingerGeom);
+    edgeMats.push(edged(fingerR, fingerGeom, ORANGE).material);
+    fillMats.push(fingerMatR);
     fingerPivotR.add(fingerR);
     fingerPivotR.position.set(0, -0.12, -0.12);
     fingerPivotR.rotation.z = 0.32;
@@ -711,7 +823,6 @@
     robotGroup.add(gripperGroup);
     parts.gripper = { mesh: gripperGroup, def: gripperDef };
 
-    // ---- screen-space anchoring: convert a viewport point into a world position on z=0 ----
     function ndcToWorld(nx, ny, z){
       const vec = new THREE.Vector3(nx, ny, 0.5).unproject(camera);
       const dir = vec.sub(camera.position).normalize();
@@ -739,7 +850,7 @@
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       const wrap = document.querySelector('.schematic-wrap');
-      if(wrap) {
+      if(wrap){
         const ndc = elementCenterNDC(wrap, 0.48);
         heroAnchorWorld = ndcToWorld(ndc.nx, ndc.ny, 0);
       }
@@ -758,10 +869,10 @@
     anchorGroup.position.copy(currentAnchor);
     anchorGroup.scale.setScalar(currentScale);
 
-    // ---- scroll-driven assembly: parts glide from scattered to assembled while the hero is pinned ----
+    /* ---- scroll-driven assembly + material stage progression ---- */
     const partIds = ['base','boom','elbow','forearm','wrist','gripper'];
     const tl = gsap.timeline({
-      scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom bottom', scrub: 0.6 }
+      scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 0.6 }
     });
     partIds.forEach((id, i) => {
       const p = parts[id];
@@ -769,27 +880,32 @@
       tl.to(p.mesh.position, { x: p.def.rest[0], y: p.def.rest[1], z: p.def.rest[2], duration: 2.6, ease: 'none' }, at);
       tl.to(p.mesh.rotation, { x: p.def.restRot[0], y: p.def.restRot[1], z: p.def.restRot[2], duration: 2.6, ease: 'none' }, at);
     });
-    // once assembled: the gripper grabs, then rests half-open, and the spec callouts fade in
+
+    // Stage 2 — "CAD": translucent glass fill + blue edges, right as assembly completes
+    tl.to(fillMats, { opacity: 0.5, duration: 0.8, ease: 'none' }, 2.8)
+      .to(edgeMats.map(m => m.color), { r: (BLUE >> 16 & 255) / 255, g: (BLUE >> 8 & 255) / 255, b: (BLUE & 255) / 255, duration: 0.8, ease: 'none' }, 2.8);
+
+    // gripper grabs, then rests half-open
     tl.to(fingerPivotL.rotation, { z: -0.06, duration: 0.35, ease: 'power2.out' }, 3.0)
       .to(fingerPivotR.rotation, { z: 0.06, duration: 0.35, ease: 'power2.out' }, 3.0)
       .to(fingerPivotL.rotation, { z: -0.2, duration: 0.4, ease: 'power2.inOut' }, 3.5)
-      .to(fingerPivotR.rotation, { z: 0.2, duration: 0.4, ease: 'power2.inOut' }, 3.5)
-      .to('#callout-1, #callout-2, #callout-3', { opacity: 1, y: -4, duration: 0.5, stagger: 0.16 }, 3.3);
+      .to(fingerPivotR.rotation, { z: 0.2, duration: 0.4, ease: 'power2.inOut' }, 3.5);
 
-    // hand off to the small corner companion exactly when the hero's scroll-pin
-    // releases (i.e. right as the assembly timeline above completes) — using the
-    // same 'bottom bottom' point as the scrub's own end avoids a dead zone where
-    // the still-huge hero-scale rig would hover over the section scrolling in under it
+    // Stage 3 — "Render": lit metal material, edges fade down
+    tl.to(fillMats, { opacity: 1, metalness: 0.55, roughness: 0.3, duration: 1.0, ease: 'none' }, 4.0)
+      .to(fillMats.map(m => m.color), { r: (STEEL >> 16 & 255) / 255, g: (STEEL >> 8 & 255) / 255, b: (STEEL & 255) / 255, duration: 1.0, ease: 'none' }, 4.0)
+      .to(edgeMats.map(m => m), { opacity: 0.18, duration: 1.0, ease: 'none' }, 4.0)
+      .to('#callout-1, #callout-2, #callout-3', { opacity: 1, y: -4, duration: 0.5, stagger: 0.16 }, 4.6);
+
     ScrollTrigger.create({
-      trigger: '.hero',
+      trigger: '#hero',
       start: 'bottom bottom',
       onEnter: () => setRobotMode('idle'),
       onLeaveBack: () => setRobotMode('hero'),
     });
-    const heroRect = document.querySelector('.hero').getBoundingClientRect();
+    const heroRect = document.querySelector('#hero').getBoundingClientRect();
     setRobotMode((heroRect.bottom - window.innerHeight) <= 0 ? 'idle' : 'hero');
 
-    // fade the companion out near the footer so it doesn't sit over the footer text
     ScrollTrigger.create({
       trigger: 'footer',
       start: 'top 92%',
@@ -797,14 +913,13 @@
       onLeaveBack: () => gsap.to(robotCanvas, { opacity: 1, duration: 0.4 }),
     });
 
-    // ---- "table build" pulses: the robot glances at a section and its rows draw themselves in ----
     function gripperSnap(){
       gsap.to(fingerPivotL.rotation, { z: -0.36, duration: 0.18, yoyo: true, repeat: 1, ease: 'power1.inOut' });
       gsap.to(fingerPivotR.rotation, { z: 0.36, duration: 0.18, yoyo: true, repeat: 1, ease: 'power1.inOut' });
     }
     function pulseRobotToward(el){
       if(reduceMotion || robotMode !== 'idle') return;
-      const ndc = elementCenterNDC(el, 0.25);
+      const ndc = elementCenterNDC(el, 0.2);
       const glance = ndcToWorld(ndc.nx, ndc.ny, 0);
       const back = idleAnchorWorld.clone();
       gsap.timeline()
@@ -812,33 +927,15 @@
         .to(targetAnchor, { x: back.x, y: back.y, z: back.z, duration: 0.7, ease: 'power2.inOut' }, '+=0.55');
       gripperSnap();
     }
-    function wireTableBuild(selector, rowSelector){
-      document.querySelectorAll(selector).forEach(el => {
-        const rows = el.querySelectorAll(rowSelector);
-        if(!rows.length) return;
-        ScrollTrigger.create({
-          trigger: el,
-          start: 'top 78%',
-          once: true,
-          onEnter: () => {
-            pulseRobotToward(el);
-            gsap.from(rows, {
-              clipPath: 'inset(0 100% 0 0)',
-              webkitClipPath: 'inset(0 100% 0 0)',
-              duration: 0.55,
-              stagger: 0.09,
-              ease: 'power2.out',
-            });
-          }
-        });
+    ['#skills', '#projects', '#timeline', '#numbers'].forEach(sel => {
+      const el = document.querySelector(sel);
+      if(!el) return;
+      ScrollTrigger.create({
+        trigger: el, start: 'top 70%', once: true,
+        onEnter: () => pulseRobotToward(el),
       });
-    }
-    wireTableBuild('.counter-grid', '.counter-cell');
-    wireTableBuild('.spec-list', '.spec-row');
-    wireTableBuild('.skill-grid', '.skill-cell');
-    wireTableBuild('.stack-list', 'li');
+    });
 
-    // ---- render loop: smoothly ease toward the current target anchor/scale, gentle idle sway ----
     const followLerp = reduceMotion ? 1 : 0.07;
     function tick(now){
       requestAnimationFrame(tick);
@@ -864,189 +961,27 @@
     document.querySelectorAll('.callout-chip').forEach(c => { c.style.opacity = 1; });
   }
   } else {
-    // no 3D rig (mobile / no WebGL): still show the callout content, just without the choreography
     document.querySelectorAll('.callout-chip').forEach(c => { c.style.opacity = 1; });
   }
-
-
-  // Zeitstrahl: die Linie wächst mit, während man durch die Erfahrung scrollt
-  gsap.to('.tl-line', {
-    scaleY: 1,
-    ease: 'none',
-    scrollTrigger:{
-      trigger: '.tl',
-      start: 'top 70%',
-      end: 'bottom 80%',
-      scrub: 0.6,
-    }
-  });
-
-  // persistent thread: the zoomed hero line keeps wandering left/right down the whole page
-  function catmullRomPath(pts){
-    let d = `M${pts[0][0]},${pts[0][1]}`;
-    for(let i=0;i<pts.length-1;i++){
-      const p0 = pts[i-1] || pts[i];
-      const p1 = pts[i];
-      const p2 = pts[i+1];
-      const p3 = pts[i+2] || p2;
-      const c1x = p1[0] + (p2[0]-p0[0])/6;
-      const c1y = p1[1] + (p2[1]-p0[1])/6;
-      const c2x = p2[0] - (p3[0]-p1[0])/6;
-      const c2y = p2[1] - (p3[1]-p1[1])/6;
-      d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
-    }
-    return d;
-  }
-
-  const threadWaypoints = [
-    [0.62, 0.000], [0.50, 0.045], [0.16, 0.150], [0.16, 0.300],
-    [0.58, 0.400], [0.58, 0.480], [0.30, 0.600], [0.50, 0.700],
-    [0.50, 0.780], [0.20, 0.860],
-  ];
-  const pulseAt = [2, 6]; // indices into threadWaypoints that get a zoom-pulse marker
-
-  let threadTween = null;
-  function buildThread(){
-    const wrap = document.querySelector('.thread-wrap');
-    const svg = document.getElementById('thread-svg');
-    const path = document.getElementById('thread-path');
-    const W = wrap.clientWidth, H = wrap.scrollHeight;
-    if(!W || !H) return;
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    const pts = threadWaypoints.map(([fx,fy]) => [fx*W, fy*H]);
-
-    // finale: the thread coils into the world map at the very bottom of the page
-    const mapEl = document.querySelector('.map-wrap');
-    if(mapEl){
-      const mapRect = mapEl.getBoundingClientRect();
-      const wrapRect = wrap.getBoundingClientRect();
-      const cx = mapRect.left - wrapRect.left + mapRect.width * 0.5;
-      const cy = mapRect.top - wrapRect.top + mapRect.height * 0.42;
-      const turns = 2.75, steps = 48, maxR = Math.min(90, mapRect.width * 0.12);
-      const last = pts[pts.length - 1];
-      const startAngle = Math.atan2(last[1] - cy, last[0] - cx);
-      for(let i = 0; i <= steps; i++){
-        const t = i / steps;
-        const angle = startAngle + t * turns * Math.PI * 2;
-        const r = maxR * (1 - t);
-        pts.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
-      }
-    }
-
-    // "Part 2": the thread dissolves into the spec-list table, then re-forms and continues
-    let d;
-    const specEl = document.querySelector('.spec-list');
-    if(specEl){
-      const specRect = specEl.getBoundingClientRect();
-      const wrapRect = wrap.getBoundingClientRect();
-      const left = specRect.left - wrapRect.left;
-      const right = specRect.right - wrapRect.left;
-      const top = specRect.top - wrapRect.top;
-      const bottom = specRect.bottom - wrapRect.top;
-
-      let k = 0;
-      while(k < pts.length - 2 && pts[k + 1][1] < top) k++;
-      const before = pts.slice(0, k + 1);
-      const after = pts.slice(k + 1);
-
-      let tableTrace = `M${left.toFixed(1)},${top.toFixed(1)} L${right.toFixed(1)},${top.toFixed(1)} L${right.toFixed(1)},${bottom.toFixed(1)} L${left.toFixed(1)},${bottom.toFixed(1)} L${left.toFixed(1)},${top.toFixed(1)}`;
-      const rows = specEl.querySelectorAll('.spec-row');
-      rows.forEach((row, i) => {
-        if(i === rows.length - 1) return;
-        const rowRect = row.getBoundingClientRect();
-        const y = rowRect.bottom - wrapRect.top;
-        tableTrace += ` M${left.toFixed(1)},${y.toFixed(1)} L${right.toFixed(1)},${y.toFixed(1)}`;
-      });
-
-      d = catmullRomPath(before) + ' ' + tableTrace + ' ' + catmullRomPath([[left, bottom], ...after]);
-    } else {
-      d = catmullRomPath(pts);
-    }
-
-    path.setAttribute('d', d);
-    const len = path.getTotalLength();
-    path.style.strokeDasharray = len;
-    path.style.strokeDashoffset = len;
-
-    pulseAt.forEach((idx, i) => {
-      const el = document.getElementById(`thread-pulse-${i+1}`);
-      el.setAttribute('cx', pts[idx][0]);
-      el.setAttribute('cy', pts[idx][1]);
-    });
-
-    if(threadTween) threadTween.scrollTrigger.kill();
-    threadTween = gsap.to(path, {
-      strokeDashoffset: 0,
-      ease: 'none',
-      scrollTrigger:{
-        trigger: '.thread-wrap',
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 0.6,
-      }
-    });
-    ScrollTrigger.refresh();
-  }
-
-  buildThread();
-  let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(buildThread, 250);
-  });
-
-  // zoom-pulse markers: the thread briefly "zooms in" as you scroll past
-  [1, 2].forEach(i => {
-    const el = document.getElementById(`thread-pulse-${i}`);
-    gsap.timeline({
-      scrollTrigger:{
-        trigger: el,
-        start: 'top 70%',
-        end: 'top 30%',
-        scrub: 0.4,
-      }
-    })
-    .fromTo(el, { scale: 0.4, opacity: 0, transformOrigin: '50% 50%' }, { scale: 2.6, opacity: 0.9, duration: 0.5, ease: 'power1.out' })
-    .to(el, { scale: 0.8, opacity: 0.3, duration: 0.5, ease: 'power1.in' });
-  });
-
-  // Weltkarte: Pins zeigen Platzhalter-Fotokarten bei Hover/Tap
-  document.querySelectorAll('.map-pin').forEach(pin => {
-    const country = pin.dataset.country;
-    const card = document.getElementById('photo-' + country);
-    if(!card) return;
-    function closeAll(){
-      document.querySelectorAll('.photo-card.active').forEach(c => c.classList.remove('active'));
-      document.querySelectorAll('.map-pin.active').forEach(p => p.classList.remove('active'));
-    }
-    function show(){ closeAll(); card.classList.add('active'); pin.classList.add('active'); }
-    function hide(){ card.classList.remove('active'); pin.classList.remove('active'); }
-    pin.addEventListener('mouseenter', show);
-    pin.addEventListener('mouseleave', hide);
-    pin.addEventListener('click', (e) => {
-      e.stopPropagation();
-      card.classList.contains('active') ? hide() : show();
-    });
-  });
-  document.addEventListener('click', () => {
-    document.querySelectorAll('.photo-card.active').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.map-pin.active').forEach(p => p.classList.remove('active'));
-  });
-
-  // subtle fade-up for panels
-  document.querySelectorAll('.panel').forEach(panel => {
-    gsap.from(panel.querySelectorAll('h2, .about-grid, .tl-item, .meta-grid, .contact-links, .map-wrap'), {
-      opacity: 0,
-      y: 24,
-      duration: 0.8,
-      ease: 'power2.out',
-      stagger: 0.08,
-      scrollTrigger:{
-        trigger: panel,
-        start: 'top 75%',
-      }
-    });
-  });
 </script>
+
+<script>
+  /* ---------------------------------------------------------------- */
+  /* Contact form → mailto fallback (static site, no backend)          */
+  /* ---------------------------------------------------------------- */
+  const contactForm = document.getElementById('contact-form');
+  if(contactForm){
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('cf-name').value;
+      const email = document.getElementById('cf-email').value;
+      const message = document.getElementById('cf-message').value;
+      const subject = encodeURIComponent(`Kontaktanfrage von ${name}`);
+      const body = encodeURIComponent(`${message}\n\n— ${name} (${email})`);
+      window.location.href = `mailto:hallo@paulgarrecht.de?subject=${subject}&body=${body}`;
+    });
+  }
+</script>
+
 </body>
 </html>
