@@ -66,11 +66,24 @@ Union-Find-Analyse über den Index-Buffer: 1 zusammenhängende Komponente,
 die man unabhängig voneinander explodieren und wieder zusammenfliegen lassen
 könnte, ohne die Geometrie künstlich (und unrealistisch) zu zerschneiden.
 
-Stattdessen gibt es eine **Single-Object-Entrance-Animation**: Das gesamte
-Modell startet leicht verkleinert, versetzt und verdreht und fliegt beim
-ersten Sichtbarwerden des Hero-Bereichs (IntersectionObserver) mit
-`@react-spring/three` und einem `easeOutBack`-Overshoot in ~2s in seine
-Ruhepose. Ein Klick auf das Modell spielt die Animation erneut ab.
+Stattdessen gibt es eine **scroll-gesteuerte Single-Object-Animation**: Das
+gesamte Modell interpoliert direkt zwischen einer "exploded" Pose (leicht
+verkleinert, versetzt, verdreht) und der Ruhepose, abhängig vom Scroll-
+Fortschritt durch den gepinnten Hero-Bereich (`#hero`, 220vh, sticky-pin bei
+100svh — siehe `index.html`). Bei `scrollY = 0` ist das Modell exploded, am
+Ende des Pin-Bereichs vollständig zusammengebaut; zurückscrollen explodiert
+es wieder (voll bidirektional, kein Timer, keine feste Dauer).
+
+Technisch: Die Komponente erstellt einen `ScrollTrigger` (`scrub`) auf dem
+globalen `window.gsap`/`window.ScrollTrigger` der Host-Seite — dasselbe
+GSAP/Lenis-Setup, das der Rest der Seite für Scroll-Effekte nutzt, damit
+nichts gegeneinander läuft. Ohne diese Globals (Komponente in einem anderen
+Projekt ohne GSAP eingebettet) fällt sie auf einen einfachen
+`scroll`/`resize`-Listener mit derselben Fortschritts-Formel zurück, bleibt
+also auch eigenständig lauffähig. Der Fortschritt (0–1) wird zusätzlich als
+`assembly-progress`-`CustomEvent` auf dem Wurzel-Element ausgesendet, damit
+die statische Host-Seite z. B. die Info-Chips im Hero synchron dazu einblenden
+kann (siehe `index.html`), ohne eigene Scroll-Logik duplizieren zu müssen.
 
 Für eine echte Teile-Explosion müsste das Quellmodell mit erhaltener
 Objekt-/Node-Hierarchie neu exportiert werden (z. B. in Blender vor dem

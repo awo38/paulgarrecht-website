@@ -9,7 +9,6 @@
     "build:embed": "vite build --config vite.config.embed.js"
   },
   "dependencies": {
-    "@react-spring/three": "^10.1.2",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
     "react": "^18.3.1",
