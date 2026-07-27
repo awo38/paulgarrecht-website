@@ -31,6 +31,14 @@ const SCREEN_NODE_NAME = 'obj_2_2';
 // earlier in the ride.
 const SCREEN_REVEAL_START = 0.85;
 
+// Over the same final stretch, the whole viewer grows from its docked side
+// position (see index.html's .viewer-wrap) to fill the entire viewport, so
+// the screen the camera is zooming into ends up filling the whole page —
+// "the site rebuilds itself in the screen's window". Scroll-scrubbed like
+// everything else here (no autoplay): the box size/position at any given
+// scroll position is a pure function of progress, fully reversible.
+const EXPAND_START = 0.85;
+
 function AssemblyRig({ progressRef, screenOverlayRef, cardRef }) {
   const groupRef = useRef(null);
   const { scene, animations, cameras } = useGLTF(MODEL_URL);
@@ -263,6 +271,9 @@ export default function RobotArmViewer({ style, className }) {
   const progressRef = useRef(0);
   const screenOverlayRef = useRef(null);
   const cardRef = useRef(null);
+  const dockedRectRef = useRef(null);
+  const isExpandedRef = useRef(false);
+  const pastEndRef = useRef(false);
 
   // Drive the whole sequence purely from scroll position (0..1 across the
   // pinned hero). Reuses the host page's existing GSAP ScrollTrigger (already
@@ -275,10 +286,89 @@ export default function RobotArmViewer({ style, className }) {
     if (!el) return;
     const heroEl = document.getElementById('hero') || el;
 
+    // Fades the whole viewer out (and disables its pointer-events) once the
+    // user has scrolled past the hero sequence entirely, handing off to the
+    // real page underneath. Deliberately NOT derived from GSAP's ScrollTrigger
+    // state: a scrub-driven onUpdate only fires while there's something new to
+    // report about ITS OWN progress, so once progress is pinned at 1 it stops
+    // firing altogether — scrolling further past the end never reaches it.
+    // GSAP's onLeave/onEnterBack looked like the fix but turned out to have
+    // the same boundary-ambiguity problem `isActive` had earlier (verified:
+    // onLeave already fired exactly AT progress=1, before scrolling any
+    // further) — so this runs as a fully independent raw-scroll check with
+    // its own buffer, not tied to GSAP's trigger semantics at all.
+    const PAST_END_BUFFER_PX = 24;
+    function setPastEnd(pastEnd) {
+      if (pastEnd === pastEndRef.current) return;
+      pastEndRef.current = pastEnd;
+      el.style.opacity = pastEnd ? '0' : '1';
+      el.style.pointerEvents = pastEnd ? 'none' : '';
+    }
+    function checkPastEnd() {
+      const total = heroEl.offsetHeight - window.innerHeight;
+      const scrolled = -heroEl.getBoundingClientRect().top;
+      setPastEnd(total > 0 && scrolled > total + PAST_END_BUFFER_PX);
+    }
+
+    // Grows the (frameless, see index.html) viewer from its docked side-panel
+    // rect to a full-viewport fixed overlay as progress passes EXPAND_START,
+    // and reverses cleanly on scroll-up.
+    function updateExpansion(p) {
+      if (p <= EXPAND_START) {
+        if (isExpandedRef.current) {
+          isExpandedRef.current = false;
+          el.style.position = '';
+          el.style.top = '';
+          el.style.left = '';
+          el.style.width = '';
+          el.style.height = '';
+          el.style.zIndex = '';
+        }
+        // Keep the docked rect fresh while at rest, so a resize (or layout
+        // shift) before the next expansion is picked up.
+        const r = el.getBoundingClientRect();
+        dockedRectRef.current = { top: r.top, left: r.left, width: r.width, height: r.height };
+        return;
+      }
+
+      if (!isExpandedRef.current) {
+        isExpandedRef.current = true;
+        if (!dockedRectRef.current) {
+          const r = el.getBoundingClientRect();
+          dockedRectRef.current = { top: r.top, left: r.left, width: r.width, height: r.height };
+        }
+        el.style.position = 'fixed';
+        el.style.zIndex = '100';
+      }
+
+      const t = (p - EXPAND_START) / (1 - EXPAND_START);
+      const docked = dockedRectRef.current;
+      el.style.top = `${THREE.MathUtils.lerp(docked.top, 0, t)}px`;
+      el.style.left = `${THREE.MathUtils.lerp(docked.left, 0, t)}px`;
+      el.style.width = `${THREE.MathUtils.lerp(docked.width, window.innerWidth, t)}px`;
+      el.style.height = `${THREE.MathUtils.lerp(docked.height, window.innerHeight, t)}px`;
+    }
+
     function emitProgress(p) {
       progressRef.current = p;
       el.dispatchEvent(new CustomEvent('assembly-progress', { detail: { progress: p }, bubbles: true }));
+      updateExpansion(p);
     }
+
+    // Runs unconditionally alongside whichever branch below drives `progress`
+    // — see setPastEnd's comment for why this can't just reuse GSAP's state.
+    let queuedPastEnd = false;
+    function onScrollForPastEnd() {
+      if (queuedPastEnd) return;
+      queuedPastEnd = true;
+      requestAnimationFrame(() => {
+        queuedPastEnd = false;
+        checkPastEnd();
+      });
+    }
+    checkPastEnd();
+    window.addEventListener('scroll', onScrollForPastEnd, { passive: true });
+    window.addEventListener('resize', onScrollForPastEnd);
 
     if (window.gsap && window.ScrollTrigger) {
       const st = window.ScrollTrigger.create({
@@ -288,7 +378,11 @@ export default function RobotArmViewer({ style, className }) {
         scrub: 0.6,
         onUpdate: (self) => emitProgress(self.progress),
       });
-      return () => st.kill();
+      return () => {
+        st.kill();
+        window.removeEventListener('scroll', onScrollForPastEnd);
+        window.removeEventListener('resize', onScrollForPastEnd);
+      };
     }
 
     let queued = false;
@@ -296,7 +390,8 @@ export default function RobotArmViewer({ style, className }) {
       queued = false;
       const total = heroEl.offsetHeight - window.innerHeight;
       const scrolled = -heroEl.getBoundingClientRect().top;
-      emitProgress(total > 0 ? THREE.MathUtils.clamp(scrolled / total, 0, 1) : 1);
+      const p = total > 0 ? THREE.MathUtils.clamp(scrolled / total, 0, 1) : 1;
+      emitProgress(p);
     }
     function onScroll() {
       if (queued) return;
@@ -309,11 +404,17 @@ export default function RobotArmViewer({ style, className }) {
     return () => {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      window.removeEventListener('scroll', onScrollForPastEnd);
+      window.removeEventListener('resize', onScrollForPastEnd);
     };
   }, []);
 
   return (
-    <div ref={rootRef} className={className} style={{ width: '100%', height: '100%', position: 'relative', ...style }}>
+    <div
+      ref={rootRef}
+      className={className}
+      style={{ width: '100%', height: '100%', position: 'relative', transition: 'opacity 0.3s ease', ...style }}
+    >
       <Canvas shadows dpr={[1, 2]}>
         <ambientLight intensity={0.35} />
         <directionalLight

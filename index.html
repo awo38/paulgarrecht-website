@@ -111,10 +111,10 @@
   .callout-chip{ pointer-events:none; }
   @keyframes scrolldown{ 0%{ transform:translateY(-100%); } 100%{ transform:translateY(250%); } }
 
-  /* ---- 3D viewer (React/R3F island mounted at #robot-arm-root) ---- */
-  .viewer-wrap{ border-radius:1rem; }
-  .viewer-hint{ opacity:0; transition:opacity .3s ease; }
-  .viewer-wrap:hover .viewer-hint{ opacity:1; }
+  /* ---- 3D viewer (React/R3F island mounted at #robot-arm-root) ----
+     No frame/border by design: the scene should read as part of the page
+     itself, not a boxed-in widget — important once it expands to fill the
+     whole viewport at the end of the scroll sequence (see RobotArmViewer.jsx). */
 
   @media (max-width:640px){
     .viewer-wrap{ height:52vh; }
@@ -197,9 +197,8 @@
       </div>
 
       <div class="relative">
-        <div class="viewer-wrap relative w-full h-[50vh] lg:h-[62vh] glass overflow-hidden">
+        <div class="viewer-wrap relative w-full h-[50vh] lg:h-[62vh] overflow-hidden">
           <div id="robot-arm-root" class="w-full h-full"></div>
-          <span class="viewer-hint absolute bottom-4 left-1/2 -translate-x-1/2 font-mono text-[10px] tracking-[0.12em] uppercase text-muted pointer-events-none">Ziehen zum Drehen · Scrollen zum Zoomen</span>
           <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-orange flex items-center gap-2" id="callout-1" style="left:4%; top:5%;">
             <span class="w-5 h-px bg-accent-orange"></span> B.Eng. Mechatronik
           </div>
