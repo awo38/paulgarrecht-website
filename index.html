@@ -11,10 +11,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="vendor/tailwind/tailwind.css">
 <link rel="stylesheet" href="vendor/lenis/lenis.css">
-<script src="vendor/three/three.min.js"></script>
 <script src="vendor/gsap/gsap.min.js"></script>
 <script src="vendor/gsap/ScrollTrigger.min.js"></script>
 <script src="vendor/lenis/lenis.min.js"></script>
+<script src="vendor/robot-viewer/robot-viewer.js" defer></script>
 <style>
   html{ background:#0B0F14; }
   body{ overflow-x:hidden; cursor:none; }
@@ -108,21 +108,19 @@
   }
   .nav-link:hover::after{ transform:scaleX(1); }
 
-  .callout-chip{ opacity:0; }
+  .callout-chip{ pointer-events:none; }
   @keyframes scrolldown{ 0%{ transform:translateY(-100%); } 100%{ transform:translateY(250%); } }
 
-  #robot-canvas{
-    position:fixed; inset:0; width:100vw; height:100vh;
-    z-index:20; pointer-events:none;
-    clip-path: inset(0 0 0 48%);
-  }
-  @media (max-width:960px){
-    #robot-canvas{ display:none; }
-    #hero{ height:auto !important; }
-    .hero-pin{ position:relative; height:auto; overflow:visible; }
-    .schematic-wrap{ height:auto; padding:8px 0 8px 24px; }
-    .callout-chip, .callout-chip.align-right{ position:static; opacity:1; margin-top:12px; flex-direction:row; }
-    .scroll-cue{ display:none; }
+  /* ---- 3D viewer (React/R3F island mounted at #robot-arm-root) ---- */
+  .viewer-wrap{ border-radius:1rem; }
+  .viewer-hint{ opacity:0; transition:opacity .3s ease; }
+  .viewer-wrap:hover .viewer-hint{ opacity:1; }
+
+  @media (max-width:640px){
+    .viewer-wrap{ height:52vh; }
+    #callout-1{ top:4% !important; left:4% !important; }
+    #callout-2{ top:11% !important; left:4% !important; right:auto !important; flex-direction:row !important; }
+    #callout-3{ top:18% !important; left:4% !important; }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -137,7 +135,6 @@
 <div id="cursor-ring"></div>
 <div class="blueprint-grid"></div>
 <div class="vignette"></div>
-<canvas id="robot-canvas" aria-hidden="true"></canvas>
 
 <span class="float-label hidden md:block" style="top:14%; left:4%; animation-delay:0s;">X: 128.402 · Y: 55.910</span>
 <span class="float-label hidden md:block" style="top:92%; left:4%; animation-delay:2s;">REV. 04 — MHC ANLAGENTECHNIK</span>
@@ -175,8 +172,7 @@
 <main class="relative z-10">
 
   <!-- ================= HERO ================= -->
-  <section id="hero" class="hero-section relative" style="height:300vh;">
-  <div class="hero-pin sticky top-0 h-[100svh] flex items-center overflow-hidden">
+  <section id="hero" class="hero-section relative min-h-[100svh] flex items-center overflow-hidden">
     <div class="max-w-content w-full mx-auto px-6 md:px-10 lg:px-16 pt-28 pb-20 grid lg:grid-cols-[1.15fr_0.85fr] gap-16 items-center">
       <div>
         <span class="eyebrow mb-8">Projektingenieur — Kerntechnischer Rückbau</span>
@@ -200,14 +196,16 @@
       </div>
 
       <div class="relative">
-        <div class="schematic-wrap relative w-full h-[58vh] lg:h-[70vh]">
-          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-orange flex items-center gap-2" id="callout-1" style="left:2%; top:4%;">
+        <div class="viewer-wrap relative w-full h-[50vh] lg:h-[62vh] glass overflow-hidden">
+          <div id="robot-arm-root" class="w-full h-full"></div>
+          <span class="viewer-hint absolute bottom-4 left-1/2 -translate-x-1/2 font-mono text-[10px] tracking-[0.12em] uppercase text-muted pointer-events-none">Ziehen zum Drehen · Scrollen zum Zoomen</span>
+          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-orange flex items-center gap-2" id="callout-1" style="left:4%; top:5%;">
             <span class="w-5 h-px bg-accent-orange"></span> B.Eng. Mechatronik
           </div>
-          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-blue flex items-center gap-2 flex-row-reverse" id="callout-2" style="right:0%; top:4%;">
+          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-blue flex items-center gap-2 flex-row-reverse" id="callout-2" style="right:4%; top:5%;">
             <span class="w-5 h-px bg-accent-blue"></span> IWE — Schweißfachingenieur
           </div>
-          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-orange flex items-center gap-2" id="callout-3" style="left:2%; top:13%;">
+          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-orange flex items-center gap-2" id="callout-3" style="left:4%; top:13%;">
             <span class="w-5 h-px bg-accent-orange"></span> 7+ Jahre Projekterfahrung
           </div>
         </div>
@@ -215,12 +213,11 @@
     </div>
 
     <div class="scroll-cue absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 font-mono text-[11px] tracking-[0.15em] uppercase text-muted">
-      <span>Scrollen — Wireframe → CAD → Render</span>
+      <span>Scrollen, um mehr zu erfahren</span>
       <span class="w-px h-9 bg-edgehi relative overflow-hidden">
         <span class="absolute inset-x-0 top-0 h-1/3 bg-accent-orange animate-[scrolldown_1.6s_ease-in-out_infinite]"></span>
       </span>
     </div>
-  </div>
   </section>
 
   <!-- ================= ABOUT ================= -->
@@ -697,272 +694,13 @@
 </script>
 
 <script>
-  /* ================================================================ */
-  /* 3D-Roboterarm (Three.js): Hero-Assembly mit Wireframe → CAD →     */
-  /* Render-Materialübergang, danach kleiner Begleiter durch die Seite */
-  /* ================================================================ */
-  const isMobile3D = window.matchMedia('(max-width:960px)').matches;
-  const robotCanvas = document.getElementById('robot-canvas');
-
-  if(robotCanvas && !isMobile3D){
-  try {
-    const ORANGE = 0xFF7A00;
-    const BLUE = 0x3B82F6;
-    const STEEL = 0x8A94A3;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 0, 8);
-    camera.updateMatrixWorld(true);
-
-    const renderer = new THREE.WebGLRenderer({ canvas: robotCanvas, alpha: true, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
-
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x0b0f14, 1.1);
-    const key = new THREE.DirectionalLight(0xffffff, 1.6);
-    key.position.set(4, 6, 6);
-    const rim = new THREE.PointLight(ORANGE, 60, 22, 2);
-    rim.position.set(3, 1, 3);
-    scene.add(hemi, key, rim);
-
-    const anchorGroup = new THREE.Group();
-    const swayGroup = new THREE.Group();
-    const robotGroup = new THREE.Group();
-    swayGroup.add(robotGroup);
-    anchorGroup.add(swayGroup);
-    scene.add(anchorGroup);
-
-    function edged(mesh, geometry, color){
-      const edges = new THREE.LineSegments(
-        new THREE.EdgesGeometry(geometry, 1),
-        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 1 })
-      );
-      mesh.add(edges);
-      return edges;
-    }
-    function fillMat(){
-      return new THREE.MeshStandardMaterial({
-        color: 0xffffff, transparent: true, opacity: 0.04, metalness: 0, roughness: 1,
-      });
-    }
-    function makeGeom(id){
-      switch(id){
-        case 'base':    return new THREE.CylinderGeometry(1.0, 1.28, 0.55, 20);
-        case 'boom':    return new THREE.BoxGeometry(0.52, 2.3, 0.52);
-        case 'elbow':   return new THREE.SphereGeometry(0.4, 16, 12);
-        case 'forearm': return new THREE.BoxGeometry(1.9, 0.42, 0.42);
-        case 'wrist':   return new THREE.SphereGeometry(0.3, 16, 12);
-        default: return null;
-      }
-    }
-
-    const partDefs = {
-      base:    { rest:[0,-1.7,0],    restRot:[0,0,0],     explode:[-3.4,1.3,-1.6], explodeRot:[0.3,0.6,0.2] },
-      boom:    { rest:[0.15,-0.6,0], restRot:[0,0,0.32],  explode:[-3.6,-0.7,1.9], explodeRot:[-0.5,0.7,-0.4] },
-      elbow:   { rest:[0.78,0.85,0], restRot:[0,0,0],     explode:[0.3,-2.6,-1.3], explodeRot:[0.6,-0.4,0.5] },
-      forearm: { rest:[1.85,0.95,0],restRot:[0,0,-0.14],  explode:[2.8,-0.7,2.1],  explodeRot:[-0.4,-0.6,0.3] },
-      wrist:   { rest:[2.82,0.75,0],restRot:[0,0,0],      explode:[2.5,-1.7,-1.9], explodeRot:[0.5,0.3,-0.6] },
-      gripper: { rest:[3.28,0.55,0],restRot:[0,0,0],      explode:[3.4,1.7,1.7],   explodeRot:[-0.6,0.5,0.6] },
-    };
-
-    const parts = {};
-    const fillMats = [];
-    const edgeMats = [];
-    ['base','boom','elbow','forearm','wrist'].forEach(id => {
-      const geom = makeGeom(id);
-      const mat = fillMat();
-      const mesh = new THREE.Mesh(geom, mat);
-      const edge = edged(mesh, geom, ORANGE);
-      const def = partDefs[id];
-      mesh.position.set(def.explode[0], def.explode[1], def.explode[2]);
-      mesh.rotation.set(def.explodeRot[0], def.explodeRot[1], def.explodeRot[2]);
-      robotGroup.add(mesh);
-      parts[id] = { mesh, def };
-      fillMats.push(mat);
-      edgeMats.push(edge.material);
-    });
-
-    const gripperGroup = new THREE.Group();
-    const palmGeom = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-    const palmMat = fillMat();
-    const palm = new THREE.Mesh(palmGeom, palmMat);
-    edgeMats.push(edged(palm, palmGeom, ORANGE).material);
-    fillMats.push(palmMat);
-    gripperGroup.add(palm);
-
-    const fingerGeom = new THREE.BoxGeometry(0.14, 0.52, 0.2);
-    const fingerPivotL = new THREE.Group();
-    const fingerMatL = fillMat();
-    const fingerL = new THREE.Mesh(fingerGeom, fingerMatL);
-    fingerL.position.set(0, -0.34, 0);
-    edgeMats.push(edged(fingerL, fingerGeom, ORANGE).material);
-    fillMats.push(fingerMatL);
-    fingerPivotL.add(fingerL);
-    fingerPivotL.position.set(0, -0.12, 0.12);
-    fingerPivotL.rotation.z = -0.32;
-    gripperGroup.add(fingerPivotL);
-
-    const fingerPivotR = new THREE.Group();
-    const fingerMatR = fillMat();
-    const fingerR = new THREE.Mesh(fingerGeom, fingerMatR);
-    fingerR.position.set(0, -0.34, 0);
-    edgeMats.push(edged(fingerR, fingerGeom, ORANGE).material);
-    fillMats.push(fingerMatR);
-    fingerPivotR.add(fingerR);
-    fingerPivotR.position.set(0, -0.12, -0.12);
-    fingerPivotR.rotation.z = 0.32;
-    gripperGroup.add(fingerPivotR);
-
-    const gripperDef = partDefs.gripper;
-    gripperGroup.position.set(gripperDef.explode[0], gripperDef.explode[1], gripperDef.explode[2]);
-    gripperGroup.rotation.set(gripperDef.explodeRot[0], gripperDef.explodeRot[1], gripperDef.explodeRot[2]);
-    robotGroup.add(gripperGroup);
-    parts.gripper = { mesh: gripperGroup, def: gripperDef };
-
-    function ndcToWorld(nx, ny, z){
-      const vec = new THREE.Vector3(nx, ny, 0.5).unproject(camera);
-      const dir = vec.sub(camera.position).normalize();
-      const t = (z - camera.position.z) / dir.z;
-      return camera.position.clone().add(dir.multiplyScalar(t));
-    }
-    function elementCenterNDC(el, yBias){
-      const r = el.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height * (yBias === undefined ? 0.5 : yBias);
-      return { nx: (cx / window.innerWidth) * 2 - 1, ny: -((cy / window.innerHeight) * 2 - 1) };
-    }
-
-    const IDLE_NDC = { nx: 0.86, ny: -0.78 };
-    const heroScale = 1;
-    const idleScale = 0.16;
-    let heroAnchorWorld = new THREE.Vector3();
-    let idleAnchorWorld = new THREE.Vector3();
-    let robotMode = 'hero';
-    const currentAnchor = new THREE.Vector3();
-    const targetAnchor = new THREE.Vector3();
-    let currentScale = heroScale, targetScale = heroScale;
-
-    function computeAnchors(){
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      const wrap = document.querySelector('.schematic-wrap');
-      if(wrap){
-        const ndc = elementCenterNDC(wrap, 0.48);
-        heroAnchorWorld = ndcToWorld(ndc.nx, ndc.ny, 0);
-      }
-      idleAnchorWorld = ndcToWorld(IDLE_NDC.nx, IDLE_NDC.ny, 0);
-    }
-    function setRobotMode(mode){
-      robotMode = mode;
-      if(mode === 'hero'){ targetAnchor.copy(heroAnchorWorld); targetScale = heroScale; }
-      else { targetAnchor.copy(idleAnchorWorld); targetScale = idleScale; }
-    }
-
-    computeAnchors();
-    setRobotMode('hero');
-    currentAnchor.copy(targetAnchor);
-    currentScale = targetScale;
-    anchorGroup.position.copy(currentAnchor);
-    anchorGroup.scale.setScalar(currentScale);
-
-    /* ---- scroll-driven assembly + material stage progression ---- */
-    const partIds = ['base','boom','elbow','forearm','wrist','gripper'];
-    const tl = gsap.timeline({
-      scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 0.6 }
-    });
-    partIds.forEach((id, i) => {
-      const p = parts[id];
-      const at = i * 0.12;
-      tl.to(p.mesh.position, { x: p.def.rest[0], y: p.def.rest[1], z: p.def.rest[2], duration: 2.6, ease: 'none' }, at);
-      tl.to(p.mesh.rotation, { x: p.def.restRot[0], y: p.def.restRot[1], z: p.def.restRot[2], duration: 2.6, ease: 'none' }, at);
-    });
-
-    // Stage 2 — "CAD": translucent glass fill + blue edges, right as assembly completes
-    tl.to(fillMats, { opacity: 0.5, duration: 0.8, ease: 'none' }, 2.8)
-      .to(edgeMats.map(m => m.color), { r: (BLUE >> 16 & 255) / 255, g: (BLUE >> 8 & 255) / 255, b: (BLUE & 255) / 255, duration: 0.8, ease: 'none' }, 2.8);
-
-    // gripper grabs, then rests half-open
-    tl.to(fingerPivotL.rotation, { z: -0.06, duration: 0.35, ease: 'power2.out' }, 3.0)
-      .to(fingerPivotR.rotation, { z: 0.06, duration: 0.35, ease: 'power2.out' }, 3.0)
-      .to(fingerPivotL.rotation, { z: -0.2, duration: 0.4, ease: 'power2.inOut' }, 3.5)
-      .to(fingerPivotR.rotation, { z: 0.2, duration: 0.4, ease: 'power2.inOut' }, 3.5);
-
-    // Stage 3 — "Render": lit metal material, edges fade down
-    tl.to(fillMats, { opacity: 1, metalness: 0.55, roughness: 0.3, duration: 1.0, ease: 'none' }, 4.0)
-      .to(fillMats.map(m => m.color), { r: (STEEL >> 16 & 255) / 255, g: (STEEL >> 8 & 255) / 255, b: (STEEL & 255) / 255, duration: 1.0, ease: 'none' }, 4.0)
-      .to(edgeMats.map(m => m), { opacity: 0.18, duration: 1.0, ease: 'none' }, 4.0)
-      .to('#callout-1, #callout-2, #callout-3', { opacity: 1, y: -4, duration: 0.5, stagger: 0.16 }, 4.6);
-
-    ScrollTrigger.create({
-      trigger: '#hero',
-      start: 'bottom bottom',
-      onEnter: () => setRobotMode('idle'),
-      onLeaveBack: () => setRobotMode('hero'),
-    });
-    const heroRect = document.querySelector('#hero').getBoundingClientRect();
-    setRobotMode((heroRect.bottom - window.innerHeight) <= 0 ? 'idle' : 'hero');
-
-    ScrollTrigger.create({
-      trigger: 'footer',
-      start: 'top 92%',
-      onEnter: () => gsap.to(robotCanvas, { opacity: 0, duration: 0.4 }),
-      onLeaveBack: () => gsap.to(robotCanvas, { opacity: 1, duration: 0.4 }),
-    });
-
-    function gripperSnap(){
-      gsap.to(fingerPivotL.rotation, { z: -0.36, duration: 0.18, yoyo: true, repeat: 1, ease: 'power1.inOut' });
-      gsap.to(fingerPivotR.rotation, { z: 0.36, duration: 0.18, yoyo: true, repeat: 1, ease: 'power1.inOut' });
-    }
-    function pulseRobotToward(el){
-      if(reduceMotion || robotMode !== 'idle') return;
-      const ndc = elementCenterNDC(el, 0.2);
-      const glance = ndcToWorld(ndc.nx, ndc.ny, 0);
-      const back = idleAnchorWorld.clone();
-      gsap.timeline()
-        .to(targetAnchor, { x: glance.x, y: glance.y, z: glance.z, duration: 0.55, ease: 'power2.out' })
-        .to(targetAnchor, { x: back.x, y: back.y, z: back.z, duration: 0.7, ease: 'power2.inOut' }, '+=0.55');
-      gripperSnap();
-    }
-    ['#skills', '#projects', '#timeline', '#numbers'].forEach(sel => {
-      const el = document.querySelector(sel);
-      if(!el) return;
-      ScrollTrigger.create({
-        trigger: el, start: 'top 70%', once: true,
-        onEnter: () => pulseRobotToward(el),
-      });
-    });
-
-    const followLerp = reduceMotion ? 1 : 0.07;
-    function tick(now){
-      requestAnimationFrame(tick);
-      currentAnchor.lerp(targetAnchor, followLerp);
-      currentScale += (targetScale - currentScale) * followLerp;
-      anchorGroup.position.copy(currentAnchor);
-      anchorGroup.scale.setScalar(currentScale);
-      if(!reduceMotion){
-        swayGroup.rotation.y = 0.28 + Math.sin(now * 0.00035) * 0.16;
-      }
-      renderer.render(scene, camera);
-    }
-    requestAnimationFrame(tick);
-
-    let robotResizeTimer;
-    window.addEventListener('resize', () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      clearTimeout(robotResizeTimer);
-      robotResizeTimer = setTimeout(() => { computeAnchors(); setRobotMode(robotMode); }, 200);
-    });
-  } catch(err) {
-    if(robotCanvas) robotCanvas.style.display = 'none';
-    document.querySelectorAll('.callout-chip').forEach(c => { c.style.opacity = 1; });
-  }
-  } else {
-    document.querySelectorAll('.callout-chip').forEach(c => { c.style.opacity = 1; });
-  }
+  /* ---------------------------------------------------------------- */
+  /* Hero callouts: simple on-load reveal (the 3D model itself is a    */
+  /* React/R3F island mounted at #robot-arm-root, see robot-viewer/)   */
+  /* ---------------------------------------------------------------- */
+  gsap.from('#callout-1, #callout-2, #callout-3', {
+    opacity: 0, y: 8, duration: 0.6, ease: 'power2.out', stagger: 0.15, delay: 0.5,
+  });
 </script>
 
 <script>
