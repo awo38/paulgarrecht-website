@@ -2,10 +2,12 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
-// A handful of wireframe "planets" floating in the hero. Mouse contact
-// bounces them away (spring-damped impulse); scrolling migrates each one
-// from its idle float onto a specific bullet-list marker further down the
-// hero content, where it settles as that item's actual marker dot.
+// A handful of wireframe "planets" floating in the hero, like balloons on a
+// string: mouse proximity pushes them away with a soft, continuous force,
+// and a loose spring pulls them back. Scrolling migrates each one from its
+// idle float onto a specific bullet-list marker further down the hero
+// content, where it settles as that item's actual marker dot — uniform in
+// size and color there, so the list reads cleanly instead of looking messy.
 //
 // Positions live directly in CSS-pixel world units: the Canvas uses R3F's
 // orthographic-camera default sizing (frustum = +-canvasWidth/2 x
@@ -20,10 +22,29 @@ const PLANETS = [
   { markerId: 'bullet-marker-4', radius: 30, color: '#3B82F6', biasX: 0.40, biasY: 0.30, speed: 0.48, phase: 2.2, ampX: 20, ampY: 18 },
 ];
 
-const DOCK_SCALE = 0.22;
-const BOUNCE_STRENGTH = 900;
-const SPRING_STIFFNESS = 130;
-const SPRING_DAMPING = 11;
+// All docked markers end up this exact pixel radius and this exact color,
+// regardless of each planet's own floating radius/color — otherwise the
+// bullet list reads as a messy mismatch of sizes and colors once docked.
+const DOCKED_RADIUS_PX = 7;
+const DOCKED_COLOR = new THREE.Color('#FF7A00');
+
+// Continuous "personal space" repulsion, not a one-shot impulse from a
+// raycast hit point: for a straight-on orthographic camera, the raycast hit
+// point on a sphere is always wherever the cursor pixel is, so "direction
+// from hit point to center" carries no real signal (worst right at dead
+// center, which is the single most common hit location) — that's what made
+// the old approach feel random and miss some planets. Comparing the mouse's
+// own world position to each planet's center instead gives a well-defined
+// push direction every time, for every planet, continuously as long as the
+// cursor is nearby — like a hand approaching a balloon.
+const INFLUENCE_PAD = 70;
+const REPULSE_STRENGTH = 2200;
+// Loose, under-damped spring (balloon-on-a-string): lower stiffness and
+// lighter damping than a snappy UI spring, so a touched planet drifts out,
+// overshoots a little on the way back, and settles gradually instead of
+// snapping back instantly.
+const SPRING_STIFFNESS = 45;
+const SPRING_DAMPING = 5.5;
 
 function easeSmoothstep(t) {
   return t * t * (3 - 2 * t);
@@ -38,14 +59,16 @@ function markerWorldPos(markerEl, rootEl, out) {
   return out;
 }
 
-function Planet({ config, progressRef, rootRef, idleLayoutRef }) {
+function Planet({ config, progressRef, rootRef, idleLayoutRef, mouseWorldRef }) {
   const meshRef = useRef(null);
   const velocity = useRef(new THREE.Vector3());
   const offset = useRef(new THREE.Vector3());
   const dockedPos = useRef(new THREE.Vector3());
   const fromPos = useRef(new THREE.Vector3());
   const tmpTarget = useRef(new THREE.Vector3());
+  const pushDir = useRef(new THREE.Vector2());
   const markerElRef = useRef(null);
+  const startColor = useRef(new THREE.Color(config.color));
 
   useEffect(() => {
     markerElRef.current = document.getElementById(config.markerId);
@@ -57,15 +80,7 @@ function Planet({ config, progressRef, rootRef, idleLayoutRef }) {
     const dt = Math.min(delta, 0.05);
     const t = state.clock.elapsedTime;
     const layout = idleLayoutRef.current;
-
-    // Critically-damped-ish spring pulling the bounce offset back to zero —
-    // this is what makes a touched planet "bounce away" and settle back.
-    const springAccel = offset.current
-      .clone()
-      .multiplyScalar(-SPRING_STIFFNESS)
-      .addScaledVector(velocity.current, -SPRING_DAMPING);
-    velocity.current.addScaledVector(springAccel, dt);
-    offset.current.addScaledVector(velocity.current, dt);
+    const progress = progressRef.current;
 
     const floatX = Math.sin(t * config.speed + config.phase) * config.ampX;
     const floatY = Math.cos(t * config.speed * 0.85 + config.phase) * config.ampY;
@@ -75,7 +90,31 @@ function Planet({ config, progressRef, rootRef, idleLayoutRef }) {
       0
     );
 
-    const progress = progressRef.current;
+    // Mouse-proximity repulsion — only while still floating (docked markers
+    // shouldn't get bumped around by the cursor moving over the text).
+    if (progress <= 0.01 && mouseWorldRef.current) {
+      pushDir.current.set(
+        fromPos.current.x + offset.current.x - mouseWorldRef.current.x,
+        fromPos.current.y + offset.current.y - mouseWorldRef.current.y
+      );
+      const dist = pushDir.current.length();
+      const influenceRadius = config.radius + INFLUENCE_PAD;
+      if (dist < influenceRadius) {
+        const falloff = 1 - dist / influenceRadius;
+        pushDir.current.normalize();
+        velocity.current.x += pushDir.current.x * falloff * REPULSE_STRENGTH * dt;
+        velocity.current.y += pushDir.current.y * falloff * REPULSE_STRENGTH * dt;
+      }
+    }
+
+    // Loose spring pulling the displacement back to zero.
+    const springAccel = offset.current
+      .clone()
+      .multiplyScalar(-SPRING_STIFFNESS)
+      .addScaledVector(velocity.current, -SPRING_DAMPING);
+    velocity.current.addScaledVector(springAccel, dt);
+    offset.current.addScaledVector(velocity.current, dt);
+
     let scale = 1;
     if (progress <= 0 || !markerElRef.current || !rootRef.current) {
       tmpTarget.current.copy(fromPos.current);
@@ -83,7 +122,8 @@ function Planet({ config, progressRef, rootRef, idleLayoutRef }) {
       markerWorldPos(markerElRef.current, rootRef.current, dockedPos.current);
       const eased = easeSmoothstep(progress);
       tmpTarget.current.lerpVectors(fromPos.current, dockedPos.current, eased);
-      scale = THREE.MathUtils.lerp(1, DOCK_SCALE, eased);
+      scale = THREE.MathUtils.lerp(1, DOCKED_RADIUS_PX / config.radius, eased);
+      mesh.material.color.lerpColors(startColor.current, DOCKED_COLOR, eased);
     }
 
     mesh.position.set(
@@ -92,21 +132,12 @@ function Planet({ config, progressRef, rootRef, idleLayoutRef }) {
       0
     );
     mesh.scale.setScalar(scale);
-    mesh.rotation.x += dt * 0.3;
-    mesh.rotation.y += dt * 0.45;
+    mesh.rotation.x += dt * 0.25;
+    mesh.rotation.y += dt * 0.35;
   });
 
-  function handlePointerEnter(e) {
-    e.stopPropagation();
-    const dir = meshRef.current.position.clone().sub(e.point);
-    dir.z = 0;
-    if (dir.lengthSq() < 1) dir.set(Math.random() - 0.5, Math.random() - 0.5, 0);
-    dir.normalize();
-    velocity.current.addScaledVector(dir, BOUNCE_STRENGTH);
-  }
-
   return (
-    <mesh ref={meshRef} onPointerEnter={handlePointerEnter}>
+    <mesh ref={meshRef}>
       <icosahedronGeometry args={[config.radius, 1]} />
       <meshBasicMaterial wireframe color={config.color} transparent opacity={0.8} />
     </mesh>
@@ -116,15 +147,29 @@ function Planet({ config, progressRef, rootRef, idleLayoutRef }) {
 function Planets({ progressRef, rootRef }) {
   const { size } = useThree();
   const idleLayoutRef = useRef({ originX: 0, originY: 0, width: size.width, height: size.height });
+  const mouseWorldRef = useRef(new THREE.Vector2(-99999, -99999));
 
   useEffect(() => {
     idleLayoutRef.current = { originX: 0, originY: 0, width: size.width, height: size.height };
   }, [size.width, size.height]);
 
+  // Tracked once per frame at the parent level (not per-planet) from R3F's
+  // own normalized pointer state — no manual DOM listeners needed.
+  useFrame((state) => {
+    mouseWorldRef.current.set((state.pointer.x * size.width) / 2, (state.pointer.y * size.height) / 2);
+  });
+
   return (
     <>
       {PLANETS.map((config) => (
-        <Planet key={config.markerId} config={config} progressRef={progressRef} rootRef={rootRef} idleLayoutRef={idleLayoutRef} />
+        <Planet
+          key={config.markerId}
+          config={config}
+          progressRef={progressRef}
+          rootRef={rootRef}
+          idleLayoutRef={idleLayoutRef}
+          mouseWorldRef={mouseWorldRef}
+        />
       ))}
     </>
   );
