@@ -62,29 +62,41 @@ worldY = canvasHeight / 2 - domY_relativeToCanvas; // Y invertiert
 
 ## Bewegungslogik (alles in `useFrame`, kein React-State pro Frame)
 
-Jeder Planet hat drei überlagerte Bewegungsanteile:
+Jeder Planet ist ein freies Partikel (`pos`/`velocity`, keine feste
+Ankerposition mit Rückstell-Feder) mit drei überlagerten Kräften:
 
-1. **Idle-Floating**: zwei phasenverschobene Sinuskurven (`ampX`/`ampY`,
-   `speed`, `phase` pro Planet) um eine feste, aus dem Canvas-Seitenverhältnis
-   abgeleitete Ruheposition (`biasX`/`biasY`, als Anteil von Canvas-Breite/
-   -Höhe, damit es bei Resize proportional bleibt).
-2. **Bounce-Feder**: Berührt der Mauszeiger einen Planeten
-   (`onPointerEnter`), bekommt `velocity` einen Impuls von der Zeiger- weg in
-   Richtung Planet. Ein einfacher gedämpfter Feder-Integrator
-   (`SPRING_STIFFNESS`/`SPRING_DAMPING`) zieht `offset` danach wieder auf
-   Null — das ist das "Wegbouncen und Einpendeln".
-3. **Scroll-Migration**: `progress` (0–1, aus GSAP `ScrollTrigger.scrub` auf
-   `#hero`, mit Fallback auf einen einfachen `scroll`-Listener, exakt das
-   gleiche Reuse-Pattern wie in früheren Versionen dieser Komponente) lerpt
-   (smoothstep-geglättet) zwischen der Idle-Position und der live pro Frame
-   berechneten Marker-Weltposition, während gleichzeitig auf `DOCK_SCALE`
-   herunterskaliert wird. Rein scroll-gesteuert, kein Autoplay, jederzeit
-   durch Zurückscrollen umkehrbar.
+1. **Ambientes Wandern**: eine langsam rotierende Beschleunigung
+   (`WANDER_STRENGTH`, aus `speed`/`phase` pro Planet abgeleitet) sorgt
+   dafür, dass ein unberührter Planet trotzdem stetig meandert, statt
+   still zu stehen.
+2. **Maus-Abstoßung**: pro Frame wird die Weltposition des Mauszeigers
+   (`state.pointer` von R3F, keine manuellen DOM-Listener) mit der
+   tatsächlichen Planetenposition verglichen. Innerhalb eines
+   Einflussradius (`config.radius + INFLUENCE_PAD`) bekommt `velocity`
+   einen kontinuierlichen, falloff-skalierten Schubs weg vom Zeiger
+   (`REPULSE_STRENGTH`). Kein Feder-Rückzug — der Planet treibt danach
+   frei weiter und verliert Tempo nur durch Reibung
+   (`FRICTION`, exponentieller Geschwindigkeits-Abbau pro Sekunde), wie ein
+   Ballon, der angestoßen wird und langsam ausrollt statt zurückzuschnappen.
+3. **Weiche Eingrenzung**: jeder Planet bewegt sich frei innerhalb eines
+   eigenen Bereichs um seine aus dem Canvas-Seitenverhältnis abgeleitete
+   Ruheposition (`biasX`/`biasY` × Canvas-Breite/-Höhe, proportional bei
+   Resize) mit individuellem Halbmaß (`roamX`/`roamY`). Erreicht er den Rand
+   dieses Bereichs, wird die Geschwindigkeitskomponente reflektiert und
+   gedämpft (`BOUNCE_RESTITUTION`) — ein sanftes Abprallen, kein hartes Klemmen,
+   das ihn aber aus der Textspalte und dem Revier der anderen Planeten
+   heraushält.
+4. **Scroll-Migration**: `progress` (0–1, aus GSAP `ScrollTrigger.scrub` auf
+   `#hero`, mit Fallback auf einen einfachen `scroll`-Listener) lerpt
+   (smoothstep-geglättet) zwischen der aktuellen, live simulierten Position
+   und der pro Frame berechneten Marker-Weltposition, während gleichzeitig
+   auf `DOCKED_RADIUS_PX` und `DOCKED_COLOR` interpoliert wird. Rein
+   scroll-gesteuert, kein Autoplay, jederzeit durch Zurückscrollen umkehrbar.
 
-Es gibt bewusst keine Planet-zu-Planet-Kollisionsvermeidung — bei einem
-Bounce können sich zwei Planeten kurzzeitig visuell überlappen. Für die
-aktuelle "Handvoll Planeten"-Größenordnung akzeptabel; bei Bedarf ließe sich
-eine einfache paarweise Abstandsfeder ergänzen.
+Es gibt bewusst keine Planet-zu-Planet-Kollisionsvermeidung — beim freien
+Wandern oder einem Bounce können sich zwei Planeten kurzzeitig visuell
+überlappen. Für die aktuelle "Handvoll Planeten"-Größenordnung akzeptabel;
+bei Bedarf ließe sich eine einfache paarweise Abstandsfeder ergänzen.
 
 ## Mobile / `prefers-reduced-motion`-Fallback
 

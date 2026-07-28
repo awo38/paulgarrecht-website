@@ -2,10 +2,15 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
-// A handful of wireframe "planets" floating in the hero, like balloons on a
-// string: mouse proximity pushes them away with a soft, continuous force,
-// and a loose spring pulls them back. Scrolling migrates each one from its
-// idle float onto a specific bullet-list marker further down the hero
+// A handful of wireframe "planets" floating freely in the hero, like
+// balloons adrift in still air: each one is a free particle with its own
+// gentle ambient wander, no anchor point holding it in place. Mouse
+// proximity pushes it away with a soft, continuous impulse, and it coasts
+// on that push — losing speed gradually to air-resistance-style damping,
+// not snapping back. It roams within its own patch of the hero (bouncing
+// softly off that patch's edges) so it stays clear of the text column and
+// the other planets' territory. Scrolling migrates each one from wherever
+// it currently is onto a specific bullet-list marker further down the hero
 // content, where it settles as that item's actual marker dot — uniform in
 // size and color there, so the list reads cleanly instead of looking messy.
 //
@@ -15,11 +20,11 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 // on-screen position converts to a world position with plain subtraction —
 // no perspective project/unproject needed.
 const PLANETS = [
-  { markerId: 'bullet-marker-0', radius: 34, color: '#FF7A00', biasX: 0.10, biasY: -0.22, speed: 0.55, phase: 0.0, ampX: 22, ampY: 16 },
-  { markerId: 'bullet-marker-1', radius: 26, color: '#3B82F6', biasX: 0.32, biasY: -0.02, speed: 0.42, phase: 1.4, ampX: 16, ampY: 24 },
-  { markerId: 'bullet-marker-2', radius: 40, color: '#FF7A00', biasX: 0.44, biasY: -0.30, speed: 0.35, phase: 3.1, ampX: 26, ampY: 14 },
-  { markerId: 'bullet-marker-3', radius: 22, color: '#94A3B8', biasX: 0.20, biasY: 0.22, speed: 0.6, phase: 4.6, ampX: 14, ampY: 20 },
-  { markerId: 'bullet-marker-4', radius: 30, color: '#3B82F6', biasX: 0.40, biasY: 0.30, speed: 0.48, phase: 2.2, ampX: 20, ampY: 18 },
+  { markerId: 'bullet-marker-0', radius: 34, color: '#FF7A00', biasX: 0.10, biasY: -0.22, speed: 0.5, phase: 0.0, roamX: 130, roamY: 95 },
+  { markerId: 'bullet-marker-1', radius: 26, color: '#3B82F6', biasX: 0.32, biasY: -0.02, speed: 0.4, phase: 1.4, roamX: 110, roamY: 120 },
+  { markerId: 'bullet-marker-2', radius: 40, color: '#FF7A00', biasX: 0.44, biasY: -0.30, speed: 0.33, phase: 3.1, roamX: 140, roamY: 85 },
+  { markerId: 'bullet-marker-3', radius: 22, color: '#94A3B8', biasX: 0.20, biasY: 0.22, speed: 0.6, phase: 4.6, roamX: 95, roamY: 110 },
+  { markerId: 'bullet-marker-4', radius: 30, color: '#3B82F6', biasX: 0.40, biasY: 0.30, speed: 0.45, phase: 2.2, roamX: 120, roamY: 100 },
 ];
 
 // All docked markers end up this exact pixel radius and this exact color,
@@ -38,13 +43,15 @@ const DOCKED_COLOR = new THREE.Color('#FF7A00');
 // push direction every time, for every planet, continuously as long as the
 // cursor is nearby — like a hand approaching a balloon.
 const INFLUENCE_PAD = 70;
-const REPULSE_STRENGTH = 2200;
-// Loose, under-damped spring (balloon-on-a-string): lower stiffness and
-// lighter damping than a snappy UI spring, so a touched planet drifts out,
-// overshoots a little on the way back, and settles gradually instead of
-// snapping back instantly.
-const SPRING_STIFFNESS = 45;
-const SPRING_DAMPING = 5.5;
+const REPULSE_STRENGTH = 1500;
+// Slow, low-amplitude ambient drift so an undisturbed planet still meanders
+// instead of sitting dead still.
+const WANDER_STRENGTH = 26;
+// Air-resistance-style exponential velocity decay (per second) — a pushed
+// planet coasts and gradually loses speed rather than rubber-banding back.
+const FRICTION = 0.9;
+// Energy kept when bouncing off the edge of a planet's roam patch.
+const BOUNCE_RESTITUTION = 0.55;
 
 function easeSmoothstep(t) {
   return t * t * (3 - 2 * t);
@@ -61,14 +68,15 @@ function markerWorldPos(markerEl, rootEl, out) {
 
 function Planet({ config, progressRef, rootRef, idleLayoutRef, mouseWorldRef }) {
   const meshRef = useRef(null);
+  const pos = useRef(new THREE.Vector3());
   const velocity = useRef(new THREE.Vector3());
-  const offset = useRef(new THREE.Vector3());
+  const accel = useRef(new THREE.Vector3());
   const dockedPos = useRef(new THREE.Vector3());
-  const fromPos = useRef(new THREE.Vector3());
   const tmpTarget = useRef(new THREE.Vector3());
   const pushDir = useRef(new THREE.Vector2());
   const markerElRef = useRef(null);
   const startColor = useRef(new THREE.Color(config.color));
+  const initialized = useRef(false);
 
   useEffect(() => {
     markerElRef.current = document.getElementById(config.markerId);
@@ -82,21 +90,27 @@ function Planet({ config, progressRef, rootRef, idleLayoutRef, mouseWorldRef }) 
     const layout = idleLayoutRef.current;
     const progress = progressRef.current;
 
-    const floatX = Math.sin(t * config.speed + config.phase) * config.ampX;
-    const floatY = Math.cos(t * config.speed * 0.85 + config.phase) * config.ampY;
-    fromPos.current.set(
-      layout.originX + layout.width * config.biasX + floatX,
-      layout.originY + layout.height * config.biasY + floatY,
+    const homeX = layout.originX + layout.width * config.biasX;
+    const homeY = layout.originY + layout.height * config.biasY;
+
+    if (!initialized.current) {
+      pos.current.set(homeX, homeY, 0);
+      initialized.current = true;
+    }
+
+    // Gentle ambient wander — a slowly rotating push so an undisturbed
+    // planet still meanders instead of sitting frozen.
+    const wanderAngle = t * config.speed * 0.6 + config.phase;
+    accel.current.set(
+      Math.cos(wanderAngle) * WANDER_STRENGTH,
+      Math.sin(wanderAngle * 1.3 + config.phase) * WANDER_STRENGTH,
       0
     );
 
     // Mouse-proximity repulsion — only while still floating (docked markers
     // shouldn't get bumped around by the cursor moving over the text).
     if (progress <= 0.01 && mouseWorldRef.current) {
-      pushDir.current.set(
-        fromPos.current.x + offset.current.x - mouseWorldRef.current.x,
-        fromPos.current.y + offset.current.y - mouseWorldRef.current.y
-      );
+      pushDir.current.set(pos.current.x - mouseWorldRef.current.x, pos.current.y - mouseWorldRef.current.y);
       const dist = pushDir.current.length();
       const influenceRadius = config.radius + INFLUENCE_PAD;
       if (dist < influenceRadius) {
@@ -107,30 +121,42 @@ function Planet({ config, progressRef, rootRef, idleLayoutRef, mouseWorldRef }) 
       }
     }
 
-    // Loose spring pulling the displacement back to zero.
-    const springAccel = offset.current
-      .clone()
-      .multiplyScalar(-SPRING_STIFFNESS)
-      .addScaledVector(velocity.current, -SPRING_DAMPING);
-    velocity.current.addScaledVector(springAccel, dt);
-    offset.current.addScaledVector(velocity.current, dt);
+    velocity.current.addScaledVector(accel.current, dt);
+    velocity.current.multiplyScalar(Math.exp(-FRICTION * dt));
+    pos.current.addScaledVector(velocity.current, dt);
+
+    // Soft containment: each planet roams freely within its own patch of the
+    // hero, bouncing gently off that patch's edges rather than the whole
+    // canvas, so it stays clear of the text column and the other planets.
+    const dx = pos.current.x - homeX;
+    if (dx > config.roamX) {
+      pos.current.x = homeX + config.roamX;
+      velocity.current.x = -Math.abs(velocity.current.x) * BOUNCE_RESTITUTION;
+    } else if (dx < -config.roamX) {
+      pos.current.x = homeX - config.roamX;
+      velocity.current.x = Math.abs(velocity.current.x) * BOUNCE_RESTITUTION;
+    }
+    const dy = pos.current.y - homeY;
+    if (dy > config.roamY) {
+      pos.current.y = homeY + config.roamY;
+      velocity.current.y = -Math.abs(velocity.current.y) * BOUNCE_RESTITUTION;
+    } else if (dy < -config.roamY) {
+      pos.current.y = homeY - config.roamY;
+      velocity.current.y = Math.abs(velocity.current.y) * BOUNCE_RESTITUTION;
+    }
 
     let scale = 1;
     if (progress <= 0 || !markerElRef.current || !rootRef.current) {
-      tmpTarget.current.copy(fromPos.current);
+      tmpTarget.current.copy(pos.current);
     } else {
       markerWorldPos(markerElRef.current, rootRef.current, dockedPos.current);
       const eased = easeSmoothstep(progress);
-      tmpTarget.current.lerpVectors(fromPos.current, dockedPos.current, eased);
+      tmpTarget.current.lerpVectors(pos.current, dockedPos.current, eased);
       scale = THREE.MathUtils.lerp(1, DOCKED_RADIUS_PX / config.radius, eased);
       mesh.material.color.lerpColors(startColor.current, DOCKED_COLOR, eased);
     }
 
-    mesh.position.set(
-      tmpTarget.current.x + offset.current.x * (1 - progress),
-      tmpTarget.current.y + offset.current.y * (1 - progress),
-      0
-    );
+    mesh.position.copy(tmpTarget.current);
     mesh.scale.setScalar(scale);
     mesh.rotation.x += dt * 0.25;
     mesh.rotation.y += dt * 0.35;
