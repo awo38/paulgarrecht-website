@@ -65,27 +65,31 @@ worldY = canvasHeight / 2 - domY_relativeToCanvas; // Y invertiert
 Jeder Planet ist ein freies Partikel (`pos`/`velocity`, keine feste
 Ankerposition mit Rückstell-Feder) mit drei überlagerten Kräften:
 
-1. **Ambientes Wandern**: eine langsam rotierende Beschleunigung
-   (`WANDER_STRENGTH`, aus `speed`/`phase` pro Planet abgeleitet) sorgt
-   dafür, dass ein unberührter Planet trotzdem stetig meandert, statt
-   still zu stehen.
+1. **Ambientes Wandern**: alle fünf Planeten teilen sich einen Bereich
+   (`computeBounds()` — der rechte, textfreie Teil des Hero, proportional
+   zur Canvas-Größe). Jeder Planet wählt fortlaufend einen zufälligen
+   Punkt irgendwo in diesem gesamten Bereich (`pickWanderTarget()`) und
+   steuert mit einer schwachen proportionalen Kraft (`WANDER_GAIN`) darauf
+   zu; nach 3.5–8s (skaliert von `speed`) wird ein neues Ziel gewählt. So
+   durchqueren alle Planeten mit der Zeit die ganze Fläche, statt nur um
+   ihren Startpunkt zu kreisen — eine frühere Version nutzte stattdessen
+   zwei zeitversetzte Sinuskurven pro Planet, was unter Reibung nur zu
+   einer kleinen, ortsfesten Pendelbewegung führte (der gemeldete Bug:
+   "nur 2 die sich in einem ganz kleinen Fenster bewegen").
 2. **Maus-Abstoßung**: pro Frame wird die Weltposition des Mauszeigers
    (`state.pointer` von R3F, keine manuellen DOM-Listener) mit der
    tatsächlichen Planetenposition verglichen. Innerhalb eines
    Einflussradius (`config.radius + INFLUENCE_PAD`) bekommt `velocity`
    einen kontinuierlichen, falloff-skalierten Schubs weg vom Zeiger
    (`REPULSE_STRENGTH`). Kein Feder-Rückzug — der Planet treibt danach
-   frei weiter und verliert Tempo nur durch Reibung
-   (`FRICTION`, exponentieller Geschwindigkeits-Abbau pro Sekunde), wie ein
-   Ballon, der angestoßen wird und langsam ausrollt statt zurückzuschnappen.
-3. **Weiche Eingrenzung**: jeder Planet bewegt sich frei innerhalb eines
-   eigenen Bereichs um seine aus dem Canvas-Seitenverhältnis abgeleitete
-   Ruheposition (`biasX`/`biasY` × Canvas-Breite/-Höhe, proportional bei
-   Resize) mit individuellem Halbmaß (`roamX`/`roamY`). Erreicht er den Rand
-   dieses Bereichs, wird die Geschwindigkeitskomponente reflektiert und
-   gedämpft (`BOUNCE_RESTITUTION`) — ein sanftes Abprallen, kein hartes Klemmen,
-   das ihn aber aus der Textspalte und dem Revier der anderen Planeten
-   heraushält.
+   frei weiter (samt seinem Wander-Ziel) und verliert Tempo nur durch
+   Reibung (`FRICTION`, exponentieller Geschwindigkeits-Abbau pro Sekunde),
+   wie ein Ballon, der angestoßen wird und langsam ausrollt statt
+   zurückzuschnappen.
+3. **Weiche Eingrenzung**: nur ein Sicherheitsnetz an den Rändern des
+   gemeinsamen Bereichs (relevant direkt nach einem harten Maus-Stoß nahe
+   der Kante) — Geschwindigkeitskomponente wird reflektiert und gedämpft
+   (`BOUNCE_RESTITUTION`), kein hartes Klemmen.
 4. **Scroll-Migration**: `progress` (0–1, aus GSAP `ScrollTrigger.scrub` auf
    `#hero`, mit Fallback auf einen einfachen `scroll`-Listener) lerpt
    (smoothstep-geglättet) zwischen der aktuellen, live simulierten Position

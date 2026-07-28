@@ -2,17 +2,18 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
-// A handful of wireframe "planets" floating freely in the hero, like
-// balloons adrift in still air: each one is a free particle with its own
-// gentle ambient wander, no anchor point holding it in place. Mouse
-// proximity pushes it away with a soft, continuous impulse, and it coasts
-// on that push — losing speed gradually to air-resistance-style damping,
-// not snapping back. It roams within its own patch of the hero (bouncing
-// softly off that patch's edges) so it stays clear of the text column and
-// the other planets' territory. Scrolling migrates each one from wherever
-// it currently is onto a specific bullet-list marker further down the hero
-// content, where it settles as that item's actual marker dot — uniform in
-// size and color there, so the list reads cleanly instead of looking messy.
+// A handful of wireframe "planets" floating freely across the whole open
+// area of the hero, like balloons adrift in a room: each one is a free
+// particle that continually picks a new random point somewhere in that
+// shared area and ambles toward it, so over time every planet visits the
+// entire space rather than orbiting near where it started. Mouse proximity
+// pushes it away with a soft, continuous impulse, and it coasts on that
+// push — losing speed gradually to air-resistance-style damping, not
+// snapping back — before ambling onward. Scrolling migrates each one from
+// wherever it currently is onto a specific bullet-list marker further down
+// the hero content, where it settles as that item's actual marker dot —
+// uniform in size and color there, so the list reads cleanly instead of
+// looking messy.
 //
 // Positions live directly in CSS-pixel world units: the Canvas uses R3F's
 // orthographic-camera default sizing (frustum = +-canvasWidth/2 x
@@ -20,11 +21,11 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 // on-screen position converts to a world position with plain subtraction —
 // no perspective project/unproject needed.
 const PLANETS = [
-  { markerId: 'bullet-marker-0', radius: 34, color: '#FF7A00', biasX: 0.10, biasY: -0.22, speed: 0.5, phase: 0.0, roamX: 130, roamY: 95 },
-  { markerId: 'bullet-marker-1', radius: 26, color: '#3B82F6', biasX: 0.32, biasY: -0.02, speed: 0.4, phase: 1.4, roamX: 110, roamY: 120 },
-  { markerId: 'bullet-marker-2', radius: 40, color: '#FF7A00', biasX: 0.44, biasY: -0.30, speed: 0.33, phase: 3.1, roamX: 140, roamY: 85 },
-  { markerId: 'bullet-marker-3', radius: 22, color: '#94A3B8', biasX: 0.20, biasY: 0.22, speed: 0.6, phase: 4.6, roamX: 95, roamY: 110 },
-  { markerId: 'bullet-marker-4', radius: 30, color: '#3B82F6', biasX: 0.40, biasY: 0.30, speed: 0.45, phase: 2.2, roamX: 120, roamY: 100 },
+  { markerId: 'bullet-marker-0', radius: 34, color: '#FF7A00', speed: 0.9, phase: 0.3 },
+  { markerId: 'bullet-marker-1', radius: 26, color: '#3B82F6', speed: 1.15, phase: 2.1 },
+  { markerId: 'bullet-marker-2', radius: 40, color: '#FF7A00', speed: 0.75, phase: 4.4 },
+  { markerId: 'bullet-marker-3', radius: 22, color: '#94A3B8', speed: 1.3, phase: 1.0 },
+  { markerId: 'bullet-marker-4', radius: 30, color: '#3B82F6', speed: 1.0, phase: 3.2 },
 ];
 
 // All docked markers end up this exact pixel radius and this exact color,
@@ -44,14 +45,32 @@ const DOCKED_COLOR = new THREE.Color('#FF7A00');
 // cursor is nearby — like a hand approaching a balloon.
 const INFLUENCE_PAD = 70;
 const REPULSE_STRENGTH = 1500;
-// Slow, low-amplitude ambient drift so an undisturbed planet still meanders
-// instead of sitting dead still.
-const WANDER_STRENGTH = 26;
+// Gentle proportional steering toward the current wander waypoint — low
+// enough that the path curves smoothly across the whole area over several
+// seconds instead of snapping toward it like a spring.
+const WANDER_GAIN = 0.35;
+// How long a planet ambles toward one waypoint before picking a new one,
+// randomized per-leg and scaled by each planet's own `speed`.
+const WANDER_RETARGET_MIN = 3.5;
+const WANDER_RETARGET_MAX = 8;
 // Air-resistance-style exponential velocity decay (per second) — a pushed
 // planet coasts and gradually loses speed rather than rubber-banding back.
-const FRICTION = 0.9;
-// Energy kept when bouncing off the edge of a planet's roam patch.
+const FRICTION = 0.7;
+// Energy kept when bouncing off the edge of the shared free-roam area.
 const BOUNCE_RESTITUTION = 0.55;
+
+function pickWanderTarget(bounds, radius, out) {
+  const xMin = bounds.xMin + radius;
+  const xMax = Math.max(xMin, bounds.xMax - radius);
+  const yMin = bounds.yMin + radius;
+  const yMax = Math.max(yMin, bounds.yMax - radius);
+  out.set(
+    THREE.MathUtils.lerp(xMin, xMax, Math.random()),
+    THREE.MathUtils.lerp(yMin, yMax, Math.random()),
+    0
+  );
+  return out;
+}
 
 function easeSmoothstep(t) {
   return t * t * (3 - 2 * t);
@@ -66,11 +85,13 @@ function markerWorldPos(markerEl, rootEl, out) {
   return out;
 }
 
-function Planet({ config, progressRef, rootRef, idleLayoutRef, mouseWorldRef }) {
+function Planet({ config, progressRef, rootRef, boundsRef, mouseWorldRef }) {
   const meshRef = useRef(null);
   const pos = useRef(new THREE.Vector3());
   const velocity = useRef(new THREE.Vector3());
   const accel = useRef(new THREE.Vector3());
+  const wanderTarget = useRef(new THREE.Vector3());
+  const wanderTimer = useRef((config.phase % 2) + 0.2);
   const dockedPos = useRef(new THREE.Vector3());
   const tmpTarget = useRef(new THREE.Vector3());
   const pushDir = useRef(new THREE.Vector2());
@@ -86,24 +107,26 @@ function Planet({ config, progressRef, rootRef, idleLayoutRef, mouseWorldRef }) 
     const mesh = meshRef.current;
     if (!mesh) return;
     const dt = Math.min(delta, 0.05);
-    const t = state.clock.elapsedTime;
-    const layout = idleLayoutRef.current;
+    const bounds = boundsRef.current;
     const progress = progressRef.current;
 
-    const homeX = layout.originX + layout.width * config.biasX;
-    const homeY = layout.originY + layout.height * config.biasY;
-
     if (!initialized.current) {
-      pos.current.set(homeX, homeY, 0);
+      pickWanderTarget(bounds, config.radius, pos.current);
+      pickWanderTarget(bounds, config.radius, wanderTarget.current);
       initialized.current = true;
     }
 
-    // Gentle ambient wander — a slowly rotating push so an undisturbed
-    // planet still meanders instead of sitting frozen.
-    const wanderAngle = t * config.speed * 0.6 + config.phase;
+    // Amble toward a randomly (re-)chosen point somewhere in the whole
+    // shared free-roam area, so over time every planet visits the entire
+    // space instead of circling near where it started.
+    wanderTimer.current -= dt;
+    if (wanderTimer.current <= 0) {
+      pickWanderTarget(bounds, config.radius, wanderTarget.current);
+      wanderTimer.current = THREE.MathUtils.lerp(WANDER_RETARGET_MIN, WANDER_RETARGET_MAX, Math.random()) / config.speed;
+    }
     accel.current.set(
-      Math.cos(wanderAngle) * WANDER_STRENGTH,
-      Math.sin(wanderAngle * 1.3 + config.phase) * WANDER_STRENGTH,
+      (wanderTarget.current.x - pos.current.x) * WANDER_GAIN * config.speed,
+      (wanderTarget.current.y - pos.current.y) * WANDER_GAIN * config.speed,
       0
     );
 
@@ -125,23 +148,25 @@ function Planet({ config, progressRef, rootRef, idleLayoutRef, mouseWorldRef }) 
     velocity.current.multiplyScalar(Math.exp(-FRICTION * dt));
     pos.current.addScaledVector(velocity.current, dt);
 
-    // Soft containment: each planet roams freely within its own patch of the
-    // hero, bouncing gently off that patch's edges rather than the whole
-    // canvas, so it stays clear of the text column and the other planets.
-    const dx = pos.current.x - homeX;
-    if (dx > config.roamX) {
-      pos.current.x = homeX + config.roamX;
+    // Safety containment against the shared free-roam area's edges (mostly
+    // relevant right after a hard mouse push near the boundary) — a soft
+    // bounce, not a hard clamp.
+    const xMin = bounds.xMin + config.radius;
+    const xMax = bounds.xMax - config.radius;
+    const yMin = bounds.yMin + config.radius;
+    const yMax = bounds.yMax - config.radius;
+    if (pos.current.x > xMax) {
+      pos.current.x = xMax;
       velocity.current.x = -Math.abs(velocity.current.x) * BOUNCE_RESTITUTION;
-    } else if (dx < -config.roamX) {
-      pos.current.x = homeX - config.roamX;
+    } else if (pos.current.x < xMin) {
+      pos.current.x = xMin;
       velocity.current.x = Math.abs(velocity.current.x) * BOUNCE_RESTITUTION;
     }
-    const dy = pos.current.y - homeY;
-    if (dy > config.roamY) {
-      pos.current.y = homeY + config.roamY;
+    if (pos.current.y > yMax) {
+      pos.current.y = yMax;
       velocity.current.y = -Math.abs(velocity.current.y) * BOUNCE_RESTITUTION;
-    } else if (dy < -config.roamY) {
-      pos.current.y = homeY - config.roamY;
+    } else if (pos.current.y < yMin) {
+      pos.current.y = yMin;
       velocity.current.y = Math.abs(velocity.current.y) * BOUNCE_RESTITUTION;
     }
 
@@ -170,13 +195,27 @@ function Planet({ config, progressRef, rootRef, idleLayoutRef, mouseWorldRef }) 
   );
 }
 
+// One shared free-roam area for every planet — the right-hand portion of
+// the hero, clear of the text column on the left and the header/scroll-cue
+// margins top and bottom — rather than a small personal patch per planet.
+// World x=0 is the canvas's horizontal center, so a positive xMin already
+// keeps the whole area clear of the text block on the left half.
+function computeBounds(size) {
+  return {
+    xMin: size.width * 0.03,
+    xMax: size.width * 0.49,
+    yMin: -size.height * 0.38,
+    yMax: size.height * 0.38,
+  };
+}
+
 function Planets({ progressRef, rootRef }) {
   const { size } = useThree();
-  const idleLayoutRef = useRef({ originX: 0, originY: 0, width: size.width, height: size.height });
+  const boundsRef = useRef(computeBounds(size));
   const mouseWorldRef = useRef(new THREE.Vector2(-99999, -99999));
 
   useEffect(() => {
-    idleLayoutRef.current = { originX: 0, originY: 0, width: size.width, height: size.height };
+    boundsRef.current = computeBounds(size);
   }, [size.width, size.height]);
 
   // Tracked once per frame at the parent level (not per-planet) from R3F's
@@ -193,7 +232,7 @@ function Planets({ progressRef, rootRef }) {
           config={config}
           progressRef={progressRef}
           rootRef={rootRef}
-          idleLayoutRef={idleLayoutRef}
+          boundsRef={boundsRef}
           mouseWorldRef={mouseWorldRef}
         />
       ))}
