@@ -108,24 +108,34 @@
   }
   .nav-link:hover::after{ transform:scaleX(1); }
 
-  .callout-chip{ pointer-events:none; }
   @keyframes scrolldown{ 0%{ transform:translateY(-100%); } 100%{ transform:translateY(250%); } }
 
-  /* ---- 3D viewer (React/R3F island mounted at #robot-arm-root) ----
-     No frame/border by design: the scene should read as part of the page
-     itself, not a boxed-in widget — important once it expands to fill the
-     whole viewport at the end of the scroll sequence (see RobotArmViewer.jsx). */
+  /* ---- 3D scene (React/R3F island mounted at #hero-scene-root) ----
+     Covers the full hero, behind the text (z-0) — no frame/border, so the
+     floating planets read as part of the page rather than a boxed widget,
+     and can visually roam/migrate across the whole hero on scroll. */
+  #hero-scene-root{ pointer-events:auto; }
 
-  @media (max-width:640px){
-    .viewer-wrap{ height:52vh; }
-    #callout-1{ top:4% !important; left:4% !important; }
-    #callout-2{ top:11% !important; left:4% !important; right:auto !important; flex-direction:row !important; }
-    #callout-3{ top:18% !important; left:4% !important; }
+  /* Empty slots the 3D planets settle into as bullet markers once scrolled
+     (see PlanetsHero.jsx) — sized to match a docked planet's on-screen size.
+     Below 768px and under prefers-reduced-motion, mount-embed.jsx skips the
+     scene entirely, so these get a plain static dot instead (next rules). */
+  .bullet-marker{ width:1.5rem; height:1.5rem; flex-shrink:0; }
+
+  @media (max-width:767px){
+    .bullet-marker{
+      width:0.5rem; height:0.5rem; border-radius:9999px;
+      background:hsla(0,0%,100%,.35); margin:0 0.5rem;
+    }
   }
 
   @media (prefers-reduced-motion: reduce){
     *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
     html{ scroll-behavior:auto; }
+    .bullet-marker{
+      width:0.5rem; height:0.5rem; border-radius:9999px;
+      background:hsla(0,0%,100%,.35); margin:0 0.5rem;
+    }
   }
 </style>
 </head>
@@ -172,10 +182,12 @@
 <main class="relative z-10">
 
   <!-- ================= HERO ================= -->
-  <section id="hero" class="hero-section relative" style="height:300vh;">
+  <section id="hero" class="hero-section relative" style="height:180vh;">
   <div class="hero-pin sticky top-0 h-[100svh] flex items-center overflow-hidden">
-    <div class="max-w-content w-full mx-auto px-6 md:px-10 lg:px-16 pt-28 pb-20 grid lg:grid-cols-[1.15fr_0.85fr] gap-16 items-center">
-      <div>
+    <div id="hero-scene-root" class="absolute inset-0 z-0"></div>
+
+    <div class="max-w-content w-full mx-auto px-6 md:px-10 lg:px-16 pt-28 pb-20 relative z-10">
+      <div class="max-w-[60ch]">
         <span class="eyebrow mb-8">Projektingenieur — Kerntechnischer Rückbau</span>
         <h1 class="heading-xl text-[13vw] leading-[0.92] sm:text-7xl md:text-8xl xl:text-[7.5rem]">
           PROJECT<br><span class="text-accent-orange">ENGINEER</span>
@@ -190,30 +202,34 @@
           <span class="text-ink font-medium"> MHC Anlagentechnik</span> verantwortlich für Planung und Einsatzleitung
           im Betrieb, der Stilllegung und dem Rückbau kerntechnischer Anlagen.
         </p>
+
+        <ul class="mt-8 space-y-3">
+          <li class="flex items-center gap-4 font-mono text-sm text-muted">
+            <span class="bullet-marker" id="bullet-marker-0"></span> B.Eng. Mechatronik
+          </li>
+          <li class="flex items-center gap-4 font-mono text-sm text-muted">
+            <span class="bullet-marker" id="bullet-marker-1"></span> IWE — Internationaler Schweißfachingenieur
+          </li>
+          <li class="flex items-center gap-4 font-mono text-sm text-muted">
+            <span class="bullet-marker" id="bullet-marker-2"></span> 7+ Jahre Projekterfahrung
+          </li>
+          <li class="flex items-center gap-4 font-mono text-sm text-muted">
+            <span class="bullet-marker" id="bullet-marker-3"></span> Kerntechnischer Rückbau
+          </li>
+          <li class="flex items-center gap-4 font-mono text-sm text-muted">
+            <span class="bullet-marker" id="bullet-marker-4"></span> MHC Anlagentechnik
+          </li>
+        </ul>
+
         <div class="flex flex-wrap items-center gap-5 mt-10">
           <a href="#projects" class="btn-primary" data-cursor-hover data-magnetic>Meine Arbeit entdecken</a>
           <a href="#contact" class="btn-outline" data-cursor-hover data-magnetic>Kontakt aufnehmen</a>
         </div>
       </div>
-
-      <div class="relative">
-        <div class="viewer-wrap relative w-full h-[50vh] lg:h-[62vh] overflow-hidden">
-          <div id="robot-arm-root" class="w-full h-full"></div>
-          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-orange flex items-center gap-2" id="callout-1" style="left:4%; top:5%;">
-            <span class="w-5 h-px bg-accent-orange"></span> B.Eng. Mechatronik
-          </div>
-          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-blue flex items-center gap-2 flex-row-reverse" id="callout-2" style="right:4%; top:5%;">
-            <span class="w-5 h-px bg-accent-blue"></span> IWE — Schweißfachingenieur
-          </div>
-          <div class="callout-chip absolute font-mono text-[11px] tracking-[0.08em] uppercase text-accent-orange flex items-center gap-2" id="callout-3" style="left:4%; top:13%;">
-            <span class="w-5 h-px bg-accent-orange"></span> 7+ Jahre Projekterfahrung
-          </div>
-        </div>
-      </div>
     </div>
 
     <div class="scroll-cue absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 font-mono text-[11px] tracking-[0.15em] uppercase text-muted">
-      <span>Scrollen, um zusammenzubauen</span>
+      <span>Scrollen</span>
       <span class="w-px h-9 bg-edgehi relative overflow-hidden">
         <span class="absolute inset-x-0 top-0 h-1/3 bg-accent-orange animate-[scrolldown_1.6s_ease-in-out_infinite]"></span>
       </span>
@@ -692,49 +708,6 @@
       onUpdate: () => { el.textContent = Math.round(counter.v) + suffix; },
     });
   });
-</script>
-
-<script>
-  /* ---------------------------------------------------------------- */
-  /* Hero callouts: revealed once the 3D model (a React/R3F island at  */
-  /* #robot-arm-root, see robot-viewer/) has scroll-assembled far      */
-  /* enough. It reports scroll progress via a CustomEvent since it's a */
-  /* separate bundle with no other shared state with this page.       */
-  /* ---------------------------------------------------------------- */
-  (function(){
-    // Model finishes assembling at progress 0.6, then the camera pushes into
-    // the arm's control-panel screen from 0.6 to 1 (see RobotArmViewer.jsx).
-    // Show the callouts only in the assembled-but-not-yet-zoomed window, so
-    // they don't clutter the close-up on the screen overlay.
-    const REVEAL_THRESHOLD = 0.55;
-    const HIDE_THRESHOLD = 0.68;
-    const heroRoot = document.getElementById('robot-arm-root');
-    gsap.set('#callout-1, #callout-2, #callout-3', { opacity: 0, y: 8 });
-    let visible = false;
-    let gotProgress = false;
-    function setCallouts(show){
-      if(show === visible) return;
-      visible = show;
-      gsap.to('#callout-1, #callout-2, #callout-3', {
-        opacity: show ? 1 : 0,
-        y: show ? 0 : 8,
-        duration: 0.5,
-        ease: 'power2.out',
-        stagger: show ? 0.15 : 0.05,
-      });
-    }
-    if(heroRoot){
-      heroRoot.addEventListener('assembly-progress', (e) => {
-        gotProgress = true;
-        const p = e.detail.progress;
-        setCallouts(p >= REVEAL_THRESHOLD && p < HIDE_THRESHOLD);
-      });
-      // Safety net: reveal anyway if the 3D viewer never reports in (e.g. no WebGL).
-      setTimeout(() => { if(!gotProgress) setCallouts(true); }, 3000);
-    } else {
-      setCallouts(true);
-    }
-  })();
 </script>
 
 <script>
