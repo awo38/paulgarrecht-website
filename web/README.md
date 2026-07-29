@@ -59,9 +59,41 @@ reached full parity and is explicitly swapped in.
   outside itself. The plain `"center"` keyword (or `"50% 50%"`) is what you
   want for "scale from its own middle," and is what every scale-pop element
   in this component uses.
-- **Not yet built:** the Commissioning story section, the "machine data
-  sheet" About section, the engineering-documentation project cards, and
-  the contact "control interface" section.
+
+  The isometric cap arcs/ribs, the flange + bolt ring, the foot plates and
+  the steel-gradient color stops were pulled out of this component into
+  `vessel-geometry.ts` (`VESSEL_CAP_FRONT_ARCS`/`VESSEL_CAP_BACK_ARCS`/
+  `VESSEL_RIBS`/`VESSEL_FLANGE`/`VESSEL_BOLTS`/`VESSEL_FOOT_PLATES`/
+  `VESSEL_STEEL_GRADIENT_STOPS`) so the CAD, Manufacturing and Commissioning
+  sections all render the identical "finished" vessel instead of three
+  subtly-drifting copies; `CADStory.tsx` was updated to import the same
+  constants. Each section still needs its own `<linearGradient>` with a
+  unique `id` (SVG gradient ids are document-global and each section is its
+  own `<svg>`), just fed from the shared stops.
+- **Phase 6 (done):** the "Commissioning" scroll story
+  (`components/CommissioningStory.tsx`) — the last of the five scroll-story
+  sections. Picks up the finished, assembled vessel from Manufacturing
+  (rendered already-complete, static) and brings it to life as you scroll:
+  a green running lamp lights up, a pressure gauge appears with its needle
+  settling into a reading, an amber lamp arrives and starts a slow subtle
+  blink, and a few soft steam wisps begin drifting from the top vent.
+  Status labels (SYSTEMPRÜFUNG → MESSTECHNIK AKTIV → IN BETRIEB) track the
+  stages. The lamp blink, needle wobble and steam drift are independent
+  ambient loops — like the CAD/Manufacturing tilt — that start once
+  revealed and keep going rather than being tied to scroll position;
+  amplitudes are kept deliberately small per the brief ("nothing
+  exaggerated"). The needle rotation is animated by recomputing its `x2`/
+  `y2` endpoint via trig in an `onUpdate` callback rather than a CSS
+  `rotation` transform, sidestepping the transform-origin bounding-box trap
+  above entirely for a small pivoting shape. Same pin/scrub mechanic and
+  reduced-motion fallback (steady lamps, resting needle, static faint
+  steam, no tilt) as the previous sections.
+
+  This completes the "hand sketch → engineering → CAD → manufacturing →
+  commissioning" scroll story from the original brief.
+- **Not yet built:** the "machine data sheet" About section, the
+  engineering-documentation project cards, and the contact "control
+  interface" section.
 
 ## Stack
 

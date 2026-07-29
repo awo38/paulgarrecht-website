@@ -3,7 +3,12 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { VESSEL_STROKES } from "@/components/vessel-geometry";
+import {
+  VESSEL_STROKES,
+  VESSEL_CAP_FRONT_ARCS,
+  VESSEL_CAP_BACK_ARCS,
+  VESSEL_RIBS,
+} from "@/components/vessel-geometry";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -17,23 +22,6 @@ gsap.registerPlugin(ScrollTrigger);
 // "small camera movement" — a real Three.js pass comes in a later phase,
 // this is the flat-SVG version of the same beat.
 const CAD_VIEWBOX = "0 0 520 640";
-
-const CAP_FRONT_ARCS = [
-  "M170,140 A70,16 0 0 0 310,140",
-  "M170,460 A70,16 0 0 1 310,460",
-] as const;
-
-const CAP_BACK_ARCS = [
-  "M170,140 A70,16 0 0 1 310,140",
-  "M170,460 A70,16 0 0 0 310,460",
-] as const;
-
-const RIBS = [
-  "M170,140 L170,460",
-  "M205,140 L205,460",
-  "M275,140 L275,460",
-  "M310,140 L310,460",
-] as const;
 
 const STATUS_LABELS = ["DRAHTMODELL", "VERDECKTE LINIEN ENTFERNT", "KANTEN BEREINIGT"] as const;
 
@@ -170,7 +158,7 @@ export default function CADStory() {
                     />
                   ))}
 
-                  {CAP_BACK_ARCS.map((d, i) => (
+                  {VESSEL_CAP_BACK_ARCS.map((d, i) => (
                     <path
                       key={`cap-back-${i}`}
                       ref={(el) => {
@@ -182,7 +170,7 @@ export default function CADStory() {
                     />
                   ))}
 
-                  {CAP_FRONT_ARCS.map((d, i) => (
+                  {VESSEL_CAP_FRONT_ARCS.map((d, i) => (
                     <path
                       key={`cap-front-${i}`}
                       ref={(el) => {
@@ -196,12 +184,12 @@ export default function CADStory() {
                     />
                   ))}
 
-                  {RIBS.map((d, i) => (
+                  {VESSEL_RIBS.map((d, i) => (
                     <path
                       key={`rib-${i}`}
                       ref={(el) => {
                         ribRefs.current[i] = el;
-                        crispTargetRefs.current[CAP_FRONT_ARCS.length + i] = el;
+                        crispTargetRefs.current[VESSEL_CAP_FRONT_ARCS.length + i] = el;
                       }}
                       d={d}
                       stroke="var(--blue)"

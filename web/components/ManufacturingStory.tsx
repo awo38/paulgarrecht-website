@@ -3,7 +3,15 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { VESSEL_STROKES } from "@/components/vessel-geometry";
+import {
+  VESSEL_STROKES,
+  VESSEL_CAP_FRONT_ARCS,
+  VESSEL_RIBS,
+  VESSEL_FLANGE,
+  VESSEL_BOLTS,
+  VESSEL_FOOT_PLATES,
+  VESSEL_STEEL_GRADIENT_STOPS,
+} from "@/components/vessel-geometry";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -16,33 +24,6 @@ gsap.registerPlugin(ScrollTrigger);
 // timeline mechanic, reversibility and reduced-motion fallback as the
 // previous three sections.
 const MFG_VIEWBOX = "0 0 520 640";
-
-const CAP_ARCS = [
-  "M170,140 A70,16 0 0 0 310,140",
-  "M170,460 A70,16 0 0 1 310,460",
-] as const;
-
-const RIBS = [
-  "M170,140 L170,460",
-  "M205,140 L205,460",
-  "M275,140 L275,460",
-  "M310,140 L310,460",
-] as const;
-
-const FLANGE_CENTER = { x: 368, y: 262, rx: 14, ry: 7 };
-
-const BOLTS = [0, 60, 120, 180, 240, 300].map((deg) => {
-  const rad = (deg * Math.PI) / 180;
-  return {
-    x: FLANGE_CENTER.x + FLANGE_CENTER.rx * Math.cos(rad),
-    y: FLANGE_CENTER.y + FLANGE_CENTER.ry * Math.sin(rad),
-  };
-});
-
-const FOOT_PLATES = [
-  { x: 172, y: 578, w: 20, h: 10 },
-  { x: 288, y: 578, w: 20, h: 10 },
-] as const;
 
 const STATUS_LABELS = ["STAHLOBERFLÄCHE", "SCHWEISSNÄHTE", "VERSCHRAUBT"] as const;
 
@@ -155,12 +136,9 @@ export default function ManufacturingStory() {
               >
                 <defs>
                   <linearGradient id="mfg-steel-gradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#4a5259" />
-                    <stop offset="18%" stopColor="#aab4bf" />
-                    <stop offset="38%" stopColor="#6b7480" />
-                    <stop offset="58%" stopColor="#c7d0d8" />
-                    <stop offset="78%" stopColor="#7d8794" />
-                    <stop offset="100%" stopColor="#4a5259" />
+                    {VESSEL_STEEL_GRADIENT_STOPS.map((stop) => (
+                      <stop key={stop.offset} offset={stop.offset} stopColor={stop.color} />
+                    ))}
                   </linearGradient>
                 </defs>
 
@@ -177,11 +155,11 @@ export default function ManufacturingStory() {
                     />
                   ))}
 
-                  {RIBS.map((d, i) => (
+                  {VESSEL_RIBS.map((d, i) => (
                     <path key={`rib-${i}`} d={d} stroke="var(--foreground)" strokeWidth={1} opacity={0.5} />
                   ))}
 
-                  {CAP_ARCS.map((d, i) => (
+                  {VESSEL_CAP_FRONT_ARCS.map((d, i) => (
                     <path
                       key={`seam-${i}`}
                       ref={(el) => {
@@ -196,16 +174,16 @@ export default function ManufacturingStory() {
 
                 <ellipse
                   ref={flangeRef}
-                  cx={FLANGE_CENTER.x}
-                  cy={FLANGE_CENTER.y}
-                  rx={FLANGE_CENTER.rx}
-                  ry={FLANGE_CENTER.ry}
+                  cx={VESSEL_FLANGE.x}
+                  cy={VESSEL_FLANGE.y}
+                  rx={VESSEL_FLANGE.rx}
+                  ry={VESSEL_FLANGE.ry}
                   fill="var(--metal)"
                   stroke="var(--foreground)"
                   strokeWidth={1}
                 />
 
-                {BOLTS.map((b, i) => (
+                {VESSEL_BOLTS.map((b, i) => (
                   <circle
                     key={`bolt-${i}`}
                     ref={(el) => {
@@ -220,7 +198,7 @@ export default function ManufacturingStory() {
                   />
                 ))}
 
-                {FOOT_PLATES.map((f, i) => (
+                {VESSEL_FOOT_PLATES.map((f, i) => (
                   <rect
                     key={`foot-${i}`}
                     ref={(el) => {
