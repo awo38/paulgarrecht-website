@@ -21,6 +21,15 @@ reached full parity and is explicitly swapped in.
   gains reference axes, construction lines, a wall-thickness dimension and a
   hand-written margin note (Caveat font) as you scroll, fully reversible in
   both directions, with a static fallback under `prefers-reduced-motion`.
+- **Phase 3 (done):** the "Engineering" scroll story
+  (`components/EngineeringStory.tsx`) — the same vessel, decluttered of the
+  Blueprint section's axes/construction lines, gaining real documentation
+  as you scroll: ISO-style weld symbols with leaders on both girth seams,
+  a material callout (1.4571 / X6CrNiMoTi17-12-2), a routed pipe connection
+  to a flange (DN50 · PN16), and a DIN/EN/ISO standards stamp. Same
+  pinned-timeline mechanic and reduced-motion fallback as phase 2; renders
+  the vessel in its own wider local viewBox so the annotation labels have
+  room without affecting the shared geometry used elsewhere.
 - **Not yet built:** the CAD → manufacturing → commissioning story sections,
   the "machine data sheet" About section, the engineering-documentation
   project cards, and the contact "control interface" section.
