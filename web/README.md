@@ -91,9 +91,22 @@ reached full parity and is explicitly swapped in.
 
   This completes the "hand sketch → engineering → CAD → manufacturing →
   commissioning" scroll story from the original brief.
-- **Not yet built:** the "machine data sheet" About section, the
-  engineering-documentation project cards, and the contact "control
-  interface" section.
+- **Phase 7 (done):** the About section (`components/AboutNameplate.tsx`)
+  — "instead of a biography, a machine data sheet." A stainless-steel
+  nameplate (brushed-metal gradient, corner rivets, engraved-look text via
+  layered `text-shadow`) with real fields instead of prose: Name, Position,
+  Spezialisierung, Arbeitgeber (MHC Anlagentechnik, seit 2019), Ausbildung
+  (B.Eng. Mechatronik), Zertifizierung (IWE, seit 2023), Software
+  (SolidWorks · AutoCAD · Excel VBA — pulled from the real skills list in
+  the legacy static site's `#skills-grid`, not invented), Normen (DIN EN
+  13480 · EN 1090 · ISO 3834, consistent with the Engineering section),
+  Werkstoffe and Standort. Unlike the five scroll-story sections, this is
+  **not** pinned or scrubbed — it's a normal section that simply reveals
+  once (fade + slight scale-up) when scrolled into view, since there's no
+  multi-stage transformation to narrate here; reduced-motion just skips the
+  reveal and shows it immediately.
+- **Not yet built:** the engineering-documentation project cards and the
+  contact "control interface" section.
 
 ## Stack
 
