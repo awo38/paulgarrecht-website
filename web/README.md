@@ -30,9 +30,20 @@ reached full parity and is explicitly swapped in.
   pinned-timeline mechanic and reduced-motion fallback as phase 2; renders
   the vessel in its own wider local viewBox so the annotation labels have
   room without affecting the shared geometry used elsewhere.
-- **Not yet built:** the CAD → manufacturing → commissioning story sections,
-  the "machine data sheet" About section, the engineering-documentation
-  project cards, and the contact "control interface" section.
+- **Phase 4 (done):** the "CAD" scroll story (`components/CADStory.tsx`) —
+  the flat 2D drawing fades to a ghost as an isometric wireframe cylinder
+  (two elliptical cap cross-sections + vertical ribs) takes its place; the
+  far/hidden half of each cap arc dims in first, then drops out entirely
+  ("hidden lines disappear"); what remains thickens and brightens to a
+  crisp finish ("edges become crisp"); a small continuous 3D tilt (CSS
+  `perspective` + GSAP `rotationY/rotationX`, independent of scroll) stands
+  in for "small camera movement" ahead of a real Three.js pass in a later
+  phase. Status labels (DRAHTMODELL → VERDECKTE LINIEN ENTFERNT → KANTEN
+  BEREINIGT) track the transformation. Same pin/scrub mechanic and
+  reduced-motion fallback as phases 2–3.
+- **Not yet built:** the manufacturing → commissioning story sections, the
+  "machine data sheet" About section, the engineering-documentation project
+  cards, and the contact "control interface" section.
 
 ## Stack
 
