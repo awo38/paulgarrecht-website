@@ -41,9 +41,27 @@ reached full parity and is explicitly swapped in.
   phase. Status labels (DRAHTMODELL → VERDECKTE LINIEN ENTFERNT → KANTEN
   BEREINIGT) track the transformation. Same pin/scrub mechanic and
   reduced-motion fallback as phases 2–3.
-- **Not yet built:** the manufacturing → commissioning story sections, the
-  "machine data sheet" About section, the engineering-documentation project
-  cards, and the contact "control interface" section.
+- **Phase 5 (done):** the "Manufacturing" scroll story
+  (`components/ManufacturingStory.tsx`) — the crisp CAD wireframe from phase
+  4 (rendered here already-finished) receives a steel-gradient surface fill
+  as you scroll, the cap seams recolor to orange to mark them as actual weld
+  seams, and a flange assembles onto the side nozzle with its six bolts
+  popping into place one by one (`back.out` easing), followed by foot plates
+  landing under the support legs. Status labels (STAHLOBERFLÄCHE →
+  SCHWEISSNÄHTE → VERSCHRAUBT) track the stages. Same pin/scrub mechanic,
+  ambient 3D tilt and reduced-motion fallback as phase 4.
+
+  Note for anyone extending this file: SVG shape elements (`<ellipse>`,
+  `<circle>`, `<rect>`) without an explicit `transform-box` resolve
+  `transform-origin` against their own bounding box, not the SVG's user
+  coordinate space — passing absolute canvas coordinates (e.g. `"368px
+  262px"`) as `transformOrigin` scales the element from a point wildly
+  outside itself. The plain `"center"` keyword (or `"50% 50%"`) is what you
+  want for "scale from its own middle," and is what every scale-pop element
+  in this component uses.
+- **Not yet built:** the Commissioning story section, the "machine data
+  sheet" About section, the engineering-documentation project cards, and
+  the contact "control interface" section.
 
 ## Stack
 
