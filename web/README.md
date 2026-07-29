@@ -123,7 +123,28 @@ reached full parity and is explicitly swapped in.
   micro-interaction rather than a scroll narrative. Cards fade/stagger in
   once when scrolled into view, same non-scrubbed pattern as the About
   section.
-- **Not yet built:** the contact "control interface" section.
+- **Phase 9 (done):** the Contact section (`components/ContactTerminal.tsx`)
+  — styled like a machine control interface: a "System Status" readout with
+  a pulsing status dot, terminal-style inputs (`Input_01 · Name`,
+  `Input_02 · E-Mail`, `Input_03 · Nachricht`), and a submit button that
+  runs through the brief's requested "connection established" animation
+  (idle → "Verbinde …" with a small spinner dot → "Verbindung hergestellt
+  ✓" in green) before doing exactly what the legacy static site's form
+  already did: open the visitor's mail client via `mailto:` with a
+  prefilled subject/body, since this is a static site with no backend to
+  receive real submissions. Real contact links only (LinkedIn, mailto) —
+  intentionally omits the legacy site's "Dokumente"/"Lebenslauf anfragen"
+  links, since `dokumente.html`/`impressum.html` haven't been ported to
+  this Next.js app yet and linking to them here would be a dead link.
+  Non-scrubbed reveal-on-scroll like the About/Projects sections; a
+  minimal closing footer bar (copyright, location) is folded into this
+  same component rather than a separate one.
+
+  This completes every section from the original brief: hero → blueprint →
+  engineering → CAD → manufacturing → commissioning → about → projects →
+  contact.
+- **Not yet ported to this rewrite:** the `dokumente.html` (certificates)
+  and `impressum.html` (legal) pages that exist on the legacy static site.
 
 ## Stack
 

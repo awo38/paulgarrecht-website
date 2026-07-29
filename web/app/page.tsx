@@ -6,6 +6,7 @@ import ManufacturingStory from "@/components/ManufacturingStory";
 import CommissioningStory from "@/components/CommissioningStory";
 import AboutNameplate from "@/components/AboutNameplate";
 import ProjectDossiers from "@/components/ProjectDossiers";
+import ContactTerminal from "@/components/ContactTerminal";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
       <CommissioningStory />
       <AboutNameplate />
       <ProjectDossiers />
+      <ContactTerminal />
     </main>
   );
 }
