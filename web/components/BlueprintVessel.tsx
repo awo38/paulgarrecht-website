@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { VESSEL_VIEWBOX, VESSEL_STROKES } from "@/components/vessel-geometry";
 
 // A hand-drawn-feeling technical sketch of a pressure vessel that draws
 // itself in on load, like a pencil tracing a blueprint: each stroke gets its
@@ -10,18 +11,7 @@ import gsap from "gsap";
 // support skirt, then the dimension lines, with the text annotations fading
 // in last once the linework is mostly settled. A very slow, small vertical
 // drift keeps it from feeling frozen once the intro finishes.
-const STROKES = [
-  // 0: main hull outline — one continuous closed contour
-  "M170,140 L170,460 Q170,510 240,510 Q310,510 310,460 L310,140 Q310,90 240,90 Q170,90 170,140 Z",
-  // 1: top nozzle stub
-  "M225,90 L225,45 L255,45 L255,90",
-  // 2: side nozzle stub + flange
-  "M310,250 L368,250 L368,278 L310,278 M368,244 L368,284",
-  // 3: support skirt legs + base line
-  "M197,508 L182,578 M283,508 L298,578 M162,578 L318,578",
-  // 4: centerline axis
-  "M240,58 L240,562",
-] as const;
+const STROKES = VESSEL_STROKES;
 
 const DIMENSIONS = [
   // 5: height dimension line (left)
@@ -107,7 +97,7 @@ export default function BlueprintVessel({ className }: { className?: string }) {
   return (
     <svg
       ref={svgRef}
-      viewBox="0 0 480 640"
+      viewBox={VESSEL_VIEWBOX}
       className={className}
       role="img"
       aria-label="Technische Skizze eines Druckbehälters"

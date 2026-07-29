@@ -15,10 +15,15 @@ reached full parity and is explicitly swapped in.
   CAD-style crosshair cursor with a live coordinate readout and hover
   measurement bracket (`components/CustomCursor.tsx`), and the dark
   industrial background grid.
-- **Not yet built:** the scroll-scrubbed blueprint → CAD → manufacturing →
-  commissioning story sections, the "machine data sheet" About section, the
-  engineering-documentation project cards, and the contact "control
-  interface" section.
+- **Phase 2 (done):** the "Blueprint" scroll story
+  (`components/BlueprintStory.tsx`) — a pinned, scrub-driven section where
+  the hero's vessel (shared geometry in `components/vessel-geometry.ts`)
+  gains reference axes, construction lines, a wall-thickness dimension and a
+  hand-written margin note (Caveat font) as you scroll, fully reversible in
+  both directions, with a static fallback under `prefers-reduced-motion`.
+- **Not yet built:** the CAD → manufacturing → commissioning story sections,
+  the "machine data sheet" About section, the engineering-documentation
+  project cards, and the contact "control interface" section.
 
 ## Stack
 
