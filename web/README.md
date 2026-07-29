@@ -105,8 +105,25 @@ reached full parity and is explicitly swapped in.
   once (fade + slight scale-up) when scrolled into view, since there's no
   multi-stage transformation to narrate here; reduced-motion just skips the
   reveal and shows it immediately.
-- **Not yet built:** the engineering-documentation project cards and the
-  contact "control interface" section.
+- **Phase 8 (done):** the Projects section (`components/ProjectDossiers.tsx`)
+  — displayed like engineering documentation sheets, not a portfolio
+  gallery. Deliberately does **not** use the brief's literal example fields
+  (Project Number / Volume / Pressure / Weight / Completion Status): those
+  fit a vessel-fabrication project list, not Paul's actual work, which is
+  four ongoing professional focus areas (Rückbau, Piping/Druckgeräte, IWE/
+  Qualitätssicherung, Einsatzleitung — the same four already on the legacy
+  static site's `#projects-grid`) without disclosable project-specific
+  numbers. Fabricating volume/pressure/weight figures for real work would
+  misrepresent it, so each card instead documents Bereich (domain) and
+  Rolle (Paul's actual function), which are true. Hover animation: the
+  brief's "blueprint transforms into final render," done at card scale — a
+  small vessel-silhouette icon (same shared hull path) goes from a thin
+  dashed blue outline to a solid, steel-gradient-filled render on `:hover`,
+  in pure CSS (`group-hover` + `transition`), since it's a hover
+  micro-interaction rather than a scroll narrative. Cards fade/stagger in
+  once when scrolled into view, same non-scrubbed pattern as the About
+  section.
+- **Not yet built:** the contact "control interface" section.
 
 ## Stack
 
