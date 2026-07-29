@@ -1,0 +1,46 @@
+# Paul Garrecht — Portfolio (Next.js rewrite)
+
+This is the new Next.js + TypeScript build of the site — an award-level,
+scroll-driven "engineering story" experience (hand sketch → engineering →
+CAD → manufacturing → commissioning), replacing the static-HTML site at the
+repository root. It is being built **phase by phase**; the legacy static
+site (`../index.html` etc.) stays live and untouched until this rewrite has
+reached full parity and is explicitly swapped in.
+
+## Status
+
+- **Phase 1 (done):** Hero — name/title/CTA, a pressure-vessel technical
+  sketch that draws itself in on load (`components/BlueprintVessel.tsx`),
+  smooth scrolling (Lenis + GSAP ticker, `components/SmoothScroll.tsx`), a
+  CAD-style crosshair cursor with a live coordinate readout and hover
+  measurement bracket (`components/CustomCursor.tsx`), and the dark
+  industrial background grid.
+- **Not yet built:** the scroll-scrubbed blueprint → CAD → manufacturing →
+  commissioning story sections, the "machine data sheet" About section, the
+  engineering-documentation project cards, and the contact "control
+  interface" section.
+
+## Stack
+
+Next.js (App Router) · TypeScript · Tailwind CSS v4 · GSAP + ScrollTrigger ·
+Lenis · Three.js / @react-three/fiber (for later 3D phases) · Framer Motion.
+
+## Develop
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+```bash
+npm run build   # production build
+npm run lint    # eslint
+```
+
+## Notes for this Next.js version
+
+This project was scaffolded on Next.js 16, which has notable breaking
+changes from earlier majors — see `AGENTS.md` in this directory before
+assuming an API from older Next.js knowledge still applies.
