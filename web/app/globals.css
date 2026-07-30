@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0d1117;
+  --foreground: #f5f5f5;
+  --muted: #9ea7b3;
+  --blue: #3fa9f5;
+  --orange: #f7931e;
+  --metal: #c0c0c0;
+  --line: rgba(158, 167, 179, 0.16);
+  --line-strong: rgba(158, 167, 179, 0.32);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-blue: var(--blue);
+  --color-orange: var(--orange);
+  --color-metal: var(--metal);
+  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-ibm-plex-mono);
+  --font-hand: var(--font-hand);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--blue);
+  color: var(--background);
+}
+
+/* Faint moving blueprint grid, sitting behind all content */
+.industrial-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px),
+    linear-gradient(var(--line-strong) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-strong) 1px, transparent 1px);
+  background-size:
+    32px 32px,
+    32px 32px,
+    160px 160px,
+    160px 160px;
+  animation: grid-drift 60s linear infinite;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 20%, black 30%, transparent 85%);
+}
+
+@keyframes grid-drift {
+  from {
+    background-position: 0 0, 0 0, 0 0, 0 0;
+  }
+  to {
+    background-position: 160px 160px, 160px 160px, 160px 160px, 160px 160px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .industrial-bg {
+    animation: none;
+  }
+}
+
+/* Custom CAD-style crosshair cursor — hidden entirely on touch devices */
+@media (hover: hover) and (pointer: fine) {
+  .cad-cursor-active,
+  .cad-cursor-active * {
+    cursor: none !important;
+  }
+}

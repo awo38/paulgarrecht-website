@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-panel text-ink font-body antialiased;
+  }
+  ::selection {
+    @apply bg-accent-orange/30 text-ink;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply font-mono text-xs tracking-[0.2em] uppercase text-accent-orange inline-flex items-center gap-3;
+  }
+  .eyebrow::before {
+    content: '';
+    @apply w-6 h-px bg-accent-orange;
+  }
+  .glass {
+    @apply bg-card backdrop-blur-md border border-edge rounded-2xl;
+  }
+  .glass-hover {
+    @apply transition-all duration-500 ease-out hover:bg-cardhi hover:border-edgehi hover:-translate-y-1.5;
+  }
+  .btn {
+    @apply relative inline-flex items-center gap-3 font-mono text-xs tracking-[0.12em] uppercase px-7 py-4 rounded-full transition-all duration-300;
+  }
+  .btn-primary {
+    @apply btn bg-accent-orange text-panel hover:shadow-[0_0_40px_rgba(255,122,0,0.35)];
+  }
+  .btn-outline {
+    @apply btn border border-edgehi text-ink hover:border-accent-orange hover:text-accent-orange;
+  }
+  .section-pad {
+    @apply max-w-content mx-auto px-6 md:px-10 lg:px-16 py-28 md:py-36;
+  }
+  .heading-xl {
+    @apply font-display font-semibold tracking-tight text-ink;
+  }
+}

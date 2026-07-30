@@ -4,922 +4,729 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Paul Garrecht — Projektingenieur</title>
-<meta name="description" content="Paul Garrecht — Projektingenieur & Einsatzleiter im kerntechnischen Rückbau bei MHC Anlagentechnik. Mechatronik-Ingenieur, internationaler Schweißfachingenieur (IWE).">
+<meta name="description" content="Paul Garrecht — Projektingenieur &amp; Einsatzleiter im kerntechnischen Rückbau bei MHC Anlagentechnik. Mechatronik-Ingenieur, internationaler Schweißfachingenieur (IWE).">
+<meta name="theme-color" content="#0B0F14">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/tailwind/tailwind.css">
+<link rel="stylesheet" href="vendor/lenis/lenis.css">
 <script src="vendor/gsap/gsap.min.js"></script>
 <script src="vendor/gsap/ScrollTrigger.min.js"></script>
+<script src="vendor/lenis/lenis.min.js"></script>
+<script src="vendor/robot-viewer/robot-viewer.js" defer></script>
 <style>
-  :root{
-    --ink:#F3F1E8;
-    --ink-2:#EBE8DB;
-    --ink-3:#E6E3D5;
-    --line:#D9D5C4;
-    --blue:#2C4A9E;
-    --blue-dim:#7286BC;
-    --paper:#171A16;
-    --muted:#726C5C;
-    --amber:#A8620F;
+  html{ background:#0B0F14; }
+  body{ overflow-x:hidden; cursor:none; }
+  @media (max-width:860px), (hover:none){
+    body{ cursor:auto; }
   }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html{scroll-behavior:smooth;}
-  body{
-    background:var(--ink);
-    color:var(--paper);
-    font-family:'Inter', sans-serif;
-    overflow-x:hidden;
-  }
-  ::selection{ background:var(--blue); color:var(--ink); }
+  .font-display{ font-family:'Space Grotesk', sans-serif; }
+  .font-body{ font-family:'Inter', sans-serif; }
+  .font-mono{ font-family:'IBM Plex Mono', monospace; }
 
-  .mono{ font-family:'JetBrains Mono', monospace; }
-  .display{ font-family:'Space Grotesk', sans-serif; }
+  /* ---- custom scrollbar ---- */
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:#0B0F14; }
+  ::-webkit-scrollbar-thumb{ background:#1E2530; border-radius:6px; border:2px solid #0B0F14; }
+  ::-webkit-scrollbar-thumb:hover{ background:#FF7A00; }
+  html{ scrollbar-color:#1E2530 #0B0F14; scrollbar-width:thin; }
 
-  /* --- grid backdrop --- */
-  .grid-bg{
-    position:fixed; inset:0; z-index:0; pointer-events:none;
+  /* ---- blueprint grid backdrop ---- */
+  .blueprint-grid{
+    position:fixed; inset:-10% -10% -10% -10%; z-index:0; pointer-events:none;
     background-image:
-      linear-gradient(var(--line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size:64px 64px;
-    opacity:0.7;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, black 40%, transparent 90%);
+      linear-gradient(rgba(148,163,184,0.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,0.10) 1px, transparent 1px),
+      linear-gradient(rgba(148,163,184,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,0.045) 1px, transparent 1px);
+    background-size:120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    background-position:0 0;
+    animation:gridDrift 60s linear infinite;
+    mask-image:radial-gradient(ellipse 75% 65% at 60% 20%, black 0%, transparent 75%);
+  }
+  @keyframes gridDrift{
+    0%{ background-position:0 0, 0 0, 0 0, 0 0; }
+    100%{ background-position:120px 120px, 120px 120px, 24px 24px, 24px 24px; }
+  }
+  .vignette{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(ellipse 60% 50% at 50% 0%, rgba(59,130,246,0.08), transparent 60%),
+               radial-gradient(ellipse 50% 40% at 100% 100%, rgba(255,122,0,0.06), transparent 60%);
   }
 
-  header.nav{
-    position:fixed; top:0; left:0; right:0; z-index:50;
-    display:flex; justify-content:space-between; align-items:center;
-    padding:22px 6vw;
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px; letter-spacing:0.08em;
-    color:var(--muted);
-    backdrop-filter: blur(6px);
-    background:linear-gradient(180deg, rgba(243,241,232,0.82), transparent);
+  /* ---- floating technical labels ---- */
+  .float-label{
+    position:absolute; font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.08em;
+    color:rgba(148,163,184,0.5); white-space:nowrap; pointer-events:none;
+    animation:floatY 8s ease-in-out infinite;
   }
-  header.nav .id{ color:var(--paper); }
-  header.nav nav a{
-    color:var(--muted); text-decoration:none; margin-left:24px;
-    text-transform:uppercase;
-  }
-  header.nav nav a:hover{ color:var(--blue); }
+  @keyframes floatY{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-10px);} }
 
-  section{ position:relative; z-index:1; }
-
-  /* --- HERO --- */
-  .hero{
-    height:340vh;
-    position:relative;
+  /* ---- custom cursor ---- */
+  #cursor-dot, #cursor-ring{
+    position:fixed; top:0; left:0; z-index:100; pointer-events:none;
+    transform:translate(-50%,-50%); will-change:transform;
   }
-  .hero-pin{
-    position:sticky; top:0; height:100vh;
-    display:flex; align-items:center; justify-content:center;
-    overflow:hidden;
+  #cursor-dot{ width:4px; height:4px; border-radius:50%; background:#FF7A00; }
+  #cursor-ring{
+    width:32px; height:32px; border:1px solid rgba(255,122,0,0.6);
+    transition:width .25s ease, height .25s ease, border-color .25s ease, background .25s ease;
   }
-  .hero-grid{
-    display:grid; grid-template-columns: 1fr 0.85fr;
-    align-items:center; gap:3vw;
-    width:100%; max-width:1280px; padding:0 6vw;
-  }
-  .portrait{
-    width:104px; height:104px; margin-bottom:28px;
-    border:1px dashed var(--muted); border-radius:4px;
-    background:var(--ink-2); color:var(--muted);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
-  }
-  .portrait svg{ width:38px; height:38px; opacity:0.55; }
-  .portrait-tag{
-    font-family:'JetBrains Mono', monospace; font-size:9px;
-    letter-spacing:0.08em; text-transform:uppercase;
-  }
-  .hero-copy .eyebrow{
-    font-size:12px; letter-spacing:0.18em; color:var(--blue);
-    text-transform:uppercase; margin-bottom:18px; display:block;
-  }
-  .hero-copy h1{
-    font-size:clamp(38px, 5.4vw, 68px);
-    line-height:1.04;
-    font-weight:600;
-    letter-spacing:-0.01em;
-  }
-  .hero-copy .role{
-    margin-top:20px; color:var(--muted); font-size:17px; line-height:1.6;
-    max-width:38ch;
-  }
-  .hero-copy .role b{ color:var(--paper); font-weight:500; }
-  .scroll-cue{
-    margin-top:48px; font-size:11px; color:var(--muted);
-    display:flex; align-items:center; gap:10px;
-    font-family:'JetBrains Mono', monospace; letter-spacing:0.1em;
-  }
-  .scroll-cue .bar{ width:1px; height:34px; background:var(--line); position:relative; overflow:hidden; }
-  .scroll-cue .bar::after{
-    content:''; position:absolute; top:0; left:0; width:100%; height:40%;
-    background:var(--blue); animation:scrolldown 1.6s ease-in-out infinite;
-  }
-  @keyframes scrolldown{ 0%{transform:translateY(-100%)} 100%{transform:translateY(250%)} }
-
-  .schematic-wrap{
-    position:relative; width:100%; height:84vh;
-    display:flex; align-items:center; justify-content:center;
-  }
-  svg#schematic{ height:100%; width:auto; max-width:100%; overflow:visible; }
-  .sch-line{ fill:none; stroke:var(--blue); stroke-width:1.6; }
-  .sch-line-dim{ fill:none; stroke:var(--line); stroke-width:1; }
-  .sch-fill{ fill:var(--ink-3); stroke:var(--blue); stroke-width:1; }
-  .sch-dot{ fill:var(--amber); }
-  .sch-label{ font-family:'JetBrains Mono', monospace; font-size:9px; fill:var(--muted); }
-  .sch-label-hl{ fill:var(--amber); }
-
-  /* --- section shell --- */
-  .panel{
-    max-width:1280px; margin:0 auto; padding:160px 6vw;
-    border-top:1px solid var(--line);
-  }
-  .eyebrow-row{
-    display:flex; align-items:center; gap:14px; margin-bottom:28px;
-    font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.1em;
-    color:var(--muted); text-transform:uppercase;
-  }
-  .eyebrow-row .tick{ width:24px; height:1px; background:var(--blue); }
-  .panel h2{
-    font-family:'Space Grotesk', sans-serif; font-weight:600;
-    font-size:clamp(28px, 3.4vw, 42px); letter-spacing:-0.01em; margin-bottom:36px;
-    max-width:16ch;
+  #cursor-ring::before, #cursor-ring::after{ content:''; position:absolute; background:rgba(255,122,0,0.7); }
+  #cursor-ring::before{ left:50%; top:-6px; width:1px; height:6px; transform:translateX(-50%); }
+  #cursor-ring::after{ top:50%; left:-6px; height:1px; width:6px; transform:translateY(-50%); }
+  #cursor-ring.hover{ width:56px; height:56px; background:rgba(255,122,0,0.08); border-color:#FF7A00; }
+  @media (max-width:860px), (hover:none){
+    #cursor-dot, #cursor-ring{ display:none; }
   }
 
-  /* --- About --- */
-  .about-grid{ display:grid; grid-template-columns: 1.3fr 1fr; gap:60px; }
-  .about-grid p{ color:var(--muted); font-size:17px; line-height:1.75; margin-bottom:18px; }
-  .about-grid p b{ color:var(--paper); font-weight:500; }
-  .spec-list{ border-top:1px solid var(--line); }
-  .spec-row{
-    display:flex; justify-content:space-between; padding:16px 0;
-    border-bottom:1px solid var(--line);
-    font-size:14px;
+  /* ---- glass sheen sweep on hover ---- */
+  .sheen{ position:relative; overflow:hidden; }
+  .sheen::after{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%);
+    transform:translateX(-120%); transition:transform .8s ease;
   }
-  .spec-row .k{ color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; }
-  .spec-row .v{ color:var(--paper); text-align:right; }
+  .sheen:hover::after{ transform:translateX(120%); }
 
-  /* --- live counters: seit wann --- */
-  .counter-grid{
-    display:grid; grid-template-columns:repeat(3, 1fr); gap:1px;
-    background:var(--line); border:1px solid var(--line); margin-top:56px;
-  }
-  .counter-cell{ background:var(--ink); padding:28px 26px; }
-  .counter-cell .c-label{
-    font-family:'Space Grotesk', sans-serif; font-size:16px; font-weight:600; margin-bottom:14px;
-  }
-  .counter-cell .c-value{
-    font-family:'JetBrains Mono', monospace; font-size:15px; color:var(--blue); line-height:1.5;
-  }
-  .counter-cell .c-since{
-    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted); margin-top:10px; display:block;
-  }
-  @media (max-width:860px){ .counter-grid{ grid-template-columns:1fr; } }
+  /* ---- section rule ---- */
+  .rule{ border-top:1px solid rgba(255,255,255,0.08); }
 
-  /* --- persistent thread: the hero's zoomed line keeps wandering down the page --- */
-  .thread-wrap{ position:relative; }
-  svg.thread{
-    position:absolute; top:0; left:0; width:100%; height:100%;
-    pointer-events:none; overflow:visible;
-  }
-  .thread-path{ fill:none; stroke:var(--blue); stroke-width:2; opacity:0.4; }
-  .thread-pulse{ fill:var(--blue); opacity:0; }
-  @media (max-width:860px){ svg.thread{ display:none; } }
+  /* ---- skill ring ---- */
+  .ring-track{ stroke:rgba(255,255,255,0.08); fill:none; }
+  .ring-value{ stroke:#FF7A00; fill:none; stroke-linecap:round; }
 
-  /* --- Experience timeline --- */
-  .tl{ position:relative; }
-  .tl-line{ position:absolute; left:9px; top:8px; bottom:8px; width:1px; background:var(--blue); transform-origin:top; transform:scaleY(0); }
-  .tl-item{ position:relative; padding:0 0 56px 46px; }
-  .tl-item:last-child{ padding-bottom:0; }
-  .tl-dot{
-    position:absolute; left:0; top:4px; width:20px; height:20px; border-radius:50%;
-    border:1px solid var(--blue); background:var(--ink);
-    display:flex; align-items:center; justify-content:center;
-  }
-  .tl-dot::after{ content:''; width:6px; height:6px; border-radius:50%; background:var(--blue); }
-  .tl-item .period{
-    font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--blue); letter-spacing:0.05em;
-  }
-  .tl-item h3{ font-family:'Space Grotesk', sans-serif; font-size:22px; font-weight:600; margin:8px 0 6px; }
-  .tl-item .org{ color:var(--muted); font-size:15px; margin-bottom:10px; }
-  .tl-item .tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-  .tag{
-    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted);
-    border:1px solid var(--line); padding:4px 10px; border-radius:2px;
-  }
+  /* ---- timeline ---- */
+  .tl-line{ transform-origin:top; transform:scaleY(0); }
 
-  /* --- Skills --- */
-  .skill-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
-  .skill-cell{ background:var(--ink); padding:32px 28px; }
-  .skill-cell .num{ font-family:'JetBrains Mono', monospace; color:var(--blue-dim); font-size:12px; margin-bottom:16px; display:block; }
-  .skill-cell h4{ font-family:'Space Grotesk', sans-serif; font-size:18px; font-weight:600; margin-bottom:10px; }
-  .skill-cell p{ color:var(--muted); font-size:14px; line-height:1.6; }
+  /* ---- nav link underline ---- */
+  .nav-link{ position:relative; }
+  .nav-link::after{
+    content:''; position:absolute; left:0; right:0; bottom:-4px; height:1px;
+    background:#FF7A00; transform:scaleX(0); transform-origin:left; transition:transform .3s ease;
+  }
+  .nav-link:hover::after{ transform:scaleX(1); }
 
-  /* --- Meta / About this site --- */
-  .meta-panel{ background:var(--ink-2); }
-  .meta-grid{ display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start; }
-  .meta-grid p{ color:var(--muted); font-size:16px; line-height:1.75; margin-bottom:16px; }
-  .meta-grid p b{ color:var(--paper); }
-  .stack-list{ list-style:none; }
-  .stack-list li{
-    display:flex; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--line);
-    font-family:'JetBrains Mono', monospace; font-size:13px;
-  }
-  .stack-list li span:first-child{ color:var(--paper); }
-  .stack-list li span:last-child{ color:var(--muted); }
+  @keyframes scrolldown{ 0%{ transform:translateY(-100%); } 100%{ transform:translateY(250%); } }
 
-  /* --- Contact --- */
-  .contact{ text-align:left; }
-  .contact h2{ max-width:none; }
-  .contact-links{ display:flex; flex-wrap:wrap; gap:16px; margin-top:36px; }
-  .contact-links a{
-    color:var(--paper); text-decoration:none; font-family:'JetBrains Mono', monospace;
-    font-size:14px; border:1px solid var(--line); padding:14px 22px; border-radius:2px;
-    display:flex; align-items:center; gap:10px; transition:border-color .2s, color .2s;
-  }
-  .contact-links a:hover{ border-color:var(--blue); color:var(--blue); }
+  /* ---- 3D scene (React/R3F island mounted at #hero-scene-root) ----
+     Covers the full hero, behind the text (z-0) — no frame/border, so the
+     floating planets read as part of the page rather than a boxed widget,
+     and can visually roam/migrate across the whole hero on scroll. */
+  #hero-scene-root{ pointer-events:auto; }
 
-  /* --- Fotografie: interaktive Weltkarte --- */
-  .map-wrap{ position:relative; margin-top:20px; }
-  svg.world-map{ width:100%; height:auto; display:block; overflow:visible; }
-  .map-zone{ fill:var(--ink-3); opacity:0.6; }
-  .map-grid{ stroke:var(--line); stroke-width:1; fill:none; }
-  .map-pin{ cursor:pointer; }
-  .map-pin circle{ fill:var(--amber); transition:r .2s ease; }
-  .map-pin:hover circle, .map-pin.active circle{ r:6; }
-  .map-pin text{ font-family:'JetBrains Mono', monospace; font-size:12px; fill:var(--muted); }
-  .map-pin:hover text, .map-pin.active text{ fill:var(--blue); }
-  .photo-card{
-    position:absolute; left:0; top:0; transform:translate(-50%,-125%);
-    background:var(--ink-2); border:1px dashed var(--muted); border-radius:4px;
-    padding:16px 18px; display:flex; flex-direction:column; align-items:center; gap:8px;
-    min-width:130px; text-align:center;
-    opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
-    z-index:3;
-  }
-  .photo-card.active{ opacity:1; transform:translate(-50%,-135%); pointer-events:auto; }
-  .photo-card svg{ width:24px; height:24px; color:var(--muted); opacity:0.6; }
-  .photo-card .photo-country{ font-family:'Space Grotesk', sans-serif; font-size:14px; font-weight:600; }
-  .photo-card .photo-tag{
-    font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
-    color:var(--muted);
-  }
-  .map-hint{
-    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted);
-    margin-top:18px; letter-spacing:0.04em;
-  }
+  /* Empty slots the 3D planets settle into as bullet markers once scrolled
+     (see PlanetsHero.jsx) — sized to match a docked planet's on-screen size.
+     Below 768px and under prefers-reduced-motion, mount-embed.jsx skips the
+     scene entirely, so these get a plain static dot instead (next rules). */
+  .bullet-marker{ width:1.5rem; height:1.5rem; flex-shrink:0; }
 
-  footer{
-    padding:40px 6vw; color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:11px;
-    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
-    border-top:1px solid var(--line);
-  }
-  footer a{ color:var(--muted); text-decoration:none; }
-  footer a:hover{ color:var(--blue); }
-
-  @media (max-width:860px){
-    .hero-grid{ grid-template-columns:1fr; }
-    .schematic-wrap{ opacity:0.5; margin-top:20px; height:46vh; }
-    .about-grid, .meta-grid{ grid-template-columns:1fr; gap:32px; }
-    .skill-grid{ grid-template-columns:1fr; }
-    .panel{ padding:100px 6vw; }
-    header.nav nav{ display:none; }
+  @media (max-width:767px){
+    .bullet-marker{
+      width:0.5rem; height:0.5rem; border-radius:9999px;
+      background:hsla(0,0%,100%,.35); margin:0 0.5rem;
+    }
   }
 
   @media (prefers-reduced-motion: reduce){
-    *{ animation:none !important; transition:none !important; }
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
     html{ scroll-behavior:auto; }
+    .bullet-marker{
+      width:0.5rem; height:0.5rem; border-radius:9999px;
+      background:hsla(0,0%,100%,.35); margin:0 0.5rem;
+    }
   }
 </style>
 </head>
-<body>
+<body class="bg-panel text-ink font-body antialiased selection:bg-accent-orange/30">
 
-<div class="grid-bg"></div>
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+<div class="blueprint-grid"></div>
+<div class="vignette"></div>
 
-<header class="nav">
-  <span class="id">PG / 01</span>
-  <nav>
-    <a href="#about">Profil</a>
-    <a href="#experience">Erfahrung</a>
-    <a href="#skills">Kompetenzen</a>
-    <a href="#photography">Fotografie</a>
-    <a href="#contact">Kontakt</a>
-    <a href="dokumente.html">Dokumente</a>
+<span class="float-label hidden md:block" style="top:14%; left:4%; animation-delay:0s;">X: 128.402 · Y: 55.910</span>
+<span class="float-label hidden md:block" style="top:92%; left:4%; animation-delay:2s;">REV. 04 — MHC ANLAGENTECHNIK</span>
+<span class="float-label hidden md:block" style="top:80%; right:3%; animation-delay:1s;">LAYER: STRUCTURAL_01</span>
+<span class="float-label hidden md:block" style="top:32%; right:2%; animation-delay:3s;">Ø 1200 MM · DIN EN 13480</span>
+
+<header class="fixed top-0 inset-x-0 z-50">
+  <div class="max-w-content mx-auto px-6 md:px-10 lg:px-16 h-20 flex items-center justify-between backdrop-blur-md bg-panel/60 border-b border-edge">
+    <a href="#hero" class="font-display font-semibold text-lg tracking-tight" data-cursor-hover>
+      PG<span class="text-accent-orange">.</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-10 font-mono text-xs tracking-[0.12em] uppercase text-muted">
+      <a href="#about" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Profil</a>
+      <a href="#skills" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Kompetenzen</a>
+      <a href="#projects" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Schwerpunkte</a>
+      <a href="#timeline" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Werdegang</a>
+      <a href="#contact" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Kontakt</a>
+      <a href="dokumente.html" class="nav-link hover:text-ink transition-colors" data-cursor-hover>Dokumente</a>
+    </nav>
+    <button id="nav-toggle" class="md:hidden text-ink w-9 h-9 flex flex-col items-center justify-center gap-1.5" aria-label="Menü öffnen" aria-expanded="false">
+      <span class="block w-6 h-px bg-ink"></span>
+      <span class="block w-6 h-px bg-ink"></span>
+    </button>
+  </div>
+  <nav id="mobile-nav" class="hidden md:hidden bg-panel/95 backdrop-blur-md border-b border-edge px-6 py-6 flex flex-col gap-5 font-mono text-sm uppercase tracking-widest text-muted">
+    <a href="#about" class="hover:text-ink">Profil</a>
+    <a href="#skills" class="hover:text-ink">Kompetenzen</a>
+    <a href="#projects" class="hover:text-ink">Schwerpunkte</a>
+    <a href="#timeline" class="hover:text-ink">Werdegang</a>
+    <a href="#contact" class="hover:text-ink">Kontakt</a>
+    <a href="dokumente.html" class="hover:text-ink">Dokumente</a>
   </nav>
 </header>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-pin">
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <div class="portrait" aria-label="Platzhalter für Porträtfoto">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+<main class="relative z-10">
+
+  <!-- ================= HERO ================= -->
+  <section id="hero" class="hero-section relative" style="height:180vh;">
+  <div class="hero-pin sticky top-0 h-[100svh] flex items-center overflow-hidden">
+    <div id="hero-scene-root" class="absolute inset-0 z-0"></div>
+
+    <div class="max-w-content w-full mx-auto px-6 md:px-10 lg:px-16 pt-28 pb-20 relative z-10">
+      <div class="max-w-[60ch]">
+        <span class="eyebrow mb-8">Projektingenieur — Kerntechnischer Rückbau</span>
+        <h1 class="heading-xl text-[13vw] leading-[0.92] sm:text-7xl md:text-8xl xl:text-[7.5rem]">
+          PROJECT<br><span class="text-accent-orange">ENGINEER</span>
+        </h1>
+        <div class="font-mono text-sm md:text-base text-muted mt-8 h-7 overflow-hidden relative" id="hero-rotator">
+          <span class="rotator-line block">Industrielle Anlagen gestalten.</span>
+          <span class="rotator-line block">Technische Lösungen entwickeln.</span>
+          <span class="rotator-line block">Ideen in Realität verwandeln.</span>
+        </div>
+        <p class="text-muted text-base md:text-lg leading-relaxed max-w-[46ch] mt-8">
+          Ich bin Paul Garrecht — Mechatronik-Ingenieur und internationaler Schweißfachingenieur (IWE), seit 2019 bei
+          <span class="text-ink font-medium"> MHC Anlagentechnik</span> verantwortlich für Planung und Einsatzleitung
+          im Betrieb, der Stilllegung und dem Rückbau kerntechnischer Anlagen.
+        </p>
+
+        <ul class="mt-8 space-y-3">
+          <li class="flex items-center gap-4 font-mono text-sm text-muted">
+            <span class="bullet-marker" id="bullet-marker-0"></span> B.Eng. Mechatronik
+          </li>
+          <li class="flex items-center gap-4 font-mono text-sm text-muted">
+            <span class="bullet-marker" id="bullet-marker-1"></span> IWE — Internationaler Schweißfachingenieur
+          </li>
+          <li class="flex items-center gap-4 font-mono text-sm text-muted">
+            <span class="bullet-marker" id="bullet-marker-2"></span> 7+ Jahre Projekterfahrung
+          </li>
+          <li class="flex items-center gap-4 font-mono text-sm text-muted">
+            <span class="bullet-marker" id="bullet-marker-3"></span> Kerntechnischer Rückbau
+          </li>
+          <li class="flex items-center gap-4 font-mono text-sm text-muted">
+            <span class="bullet-marker" id="bullet-marker-4"></span> MHC Anlagentechnik
+          </li>
+        </ul>
+
+        <div class="flex flex-wrap items-center gap-5 mt-10">
+          <a href="#projects" class="btn-primary" data-cursor-hover data-magnetic>Meine Arbeit entdecken</a>
+          <a href="#contact" class="btn-outline" data-cursor-hover data-magnetic>Kontakt aufnehmen</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-cue absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 font-mono text-[11px] tracking-[0.15em] uppercase text-muted">
+      <span>Scrollen</span>
+      <span class="w-px h-9 bg-edgehi relative overflow-hidden">
+        <span class="absolute inset-x-0 top-0 h-1/3 bg-accent-orange animate-[scrolldown_1.6s_ease-in-out_infinite]"></span>
+      </span>
+    </div>
+  </div>
+  </section>
+
+  <!-- ================= ABOUT ================= -->
+  <section id="about" class="section-pad rule">
+    <div class="grid lg:grid-cols-[0.85fr_1.15fr] gap-16">
+      <div>
+        <div class="glass sheen aspect-[4/5] w-full max-w-sm flex flex-col items-center justify-center gap-4 text-muted border-dashed" data-cursor-hover>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="w-14 h-14 opacity-50">
             <circle cx="12" cy="8" r="4"/>
             <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
           </svg>
-          <span class="portrait-tag">Foto folgt</span>
+          <span class="font-mono text-xs uppercase tracking-[0.15em]">Porträt folgt</span>
         </div>
-        <span class="eyebrow mono">Projektingenieur — Kerntechnik</span>
-        <h1 class="display">Paul<br>Garrecht</h1>
-        <p class="role">Projektingenieur &amp; Einsatzleiter im kerntechnischen Rückbau bei <b>MHC Anlagentechnik</b>. Mechatronik-Ingenieur, internationaler Schweißfachingenieur (IWE) — Präzision ist der Beruf, nicht nur der Anspruch.</p>
-        <div class="scroll-cue"><span class="bar"></span> SCROLLEN, UM ZUSAMMENZUBAUEN</div>
       </div>
-      <div class="schematic-wrap">
-        <svg id="schematic" viewBox="0 0 760 1600" xmlns="http://www.w3.org/2000/svg">
-          <!-- dimension line: this becomes the thread that runs through the whole site -->
-          <g class="draw" id="dims">
-            <line id="dims-line" class="sch-line-dim" x1="20" y1="55" x2="20" y2="1526"/>
-            <g id="dims-deco">
-              <line class="sch-line-dim" x1="14" y1="55" x2="26" y2="55"/>
-              <line class="sch-line-dim" x1="14" y1="1526" x2="26" y2="1526"/>
-              <text class="sch-label" x="6" y="790" transform="rotate(-90 6 790)">REV.03 · MHC-ANLAGENTECHNIK</text>
-            </g>
-          </g>
-
-          <!-- Roboterarm aus echter 3D-Geometrie (STL), Explosionszeichnung: Teile fliegen beim Scrollen zusammen -->
-          <g id="explode-guides">
-            <line class="sch-line-dim" x1="139.2" y1="886.7" x2="277.2" y2="827.8" stroke-dasharray="3,4"/>
-            <line class="sch-line-dim" x1="196.3" y1="687.4" x2="341.4" y2="711.1" stroke-dasharray="3,4"/>
-            <line class="sch-line-dim" x1="514.6" y1="551.2" x2="502.5" y2="654.6" stroke-dasharray="3,4"/>
-            <line class="sch-line-dim" x1="691.7" y1="691.9" x2="583.6" y2="715.8" stroke-dasharray="3,4"/>
-            <line class="sch-line-dim" x1="672.7" y1="615.6" x2="576.7" y2="679.8" stroke-dasharray="3,4"/>
-            <line class="sch-line-dim" x1="810.7" y1="892.0" x2="676.1" y2="825.8" stroke-dasharray="3,4"/>
-          </g>
-
-          <g class="draw explode" id="base">
-            <path class="sch-fill" fill-rule="evenodd" d="M125.3,751.9 L110.3,801.5 L110.0,805.6 L112.4,808.7 L128.7,816.4 L126.3,820.5 L126.3,838.9 L127.7,840.6 L156.1,846.5 L156.8,847.2 L158.5,861.4 L167.5,861.4 L168.6,863.2 L177.6,868.7 L221.3,863.5 L247.6,847.9 L251.8,844.4 L251.8,882.2 L245.9,886.0 L240.3,893.0 L239.6,895.7 L239.6,930.4 L210.5,955.7 L207.4,960.6 L206.4,964.4 L206.7,968.9 L208.1,972.7 L214.7,980.3 L222.3,985.5 L241.0,993.5 L235.5,1001.1 L235.8,1004.9 L238.6,1008.4 L246.9,1012.9 L258.4,1016.0 L272.6,1017.7 L288.5,1017.7 L300.6,1016.4 L313.8,1012.9 L322.1,1008.4 L325.6,1003.2 L341.6,1002.5 L348.5,1005.3 L359.6,1007.7 L369.3,1008.7 L387.0,1008.7 L400.5,1007.0 L408.8,1004.9 L417.5,1001.1 L421.6,997.6 L423.0,994.9 L423.0,992.1 L415.7,981.7 L420.9,977.2 L425.1,970.6 L425.8,963.3 L424.7,960.2 L418.5,952.2 L392.5,930.4 L392.5,895.0 L391.5,891.9 L388.7,888.1 L384.2,884.3 L379.0,881.5 L377.6,877.7 L375.9,876.3 L379.0,871.5 L380.4,867.0 L380.4,764.7 L378.3,763.7 L377.6,758.8 L375.5,756.1 L340.2,748.8 L337.0,741.9 L327.3,741.2 L318.0,742.5 L319.0,740.1 L312.4,740.5 L314.2,739.4 L302.0,741.9 L289.6,748.8 L284.7,736.0 L281.9,734.6 L275.3,735.3 L275.3,731.8 L278.1,729.4 L277.8,725.9 L280.5,723.5 L280.5,719.7 L283.3,717.2 L283.3,714.8 L281.6,710.0 L286.4,707.5 L288.2,705.5 L286.4,697.8 L288.5,694.4 L285.7,689.5 L285.4,690.9 L283.7,687.8 L281.2,686.4 L280.9,681.5 L276.7,680.5 L272.9,680.5 L268.4,682.9 L268.8,686.7 L265.6,689.2 L266.0,692.6 L263.2,695.1 L263.2,698.5 L264.9,702.7 L258.7,706.2 L258.0,707.9 L258.7,710.3 L255.9,712.4 L255.9,716.6 L253.2,719.0 L253.5,722.4 L250.4,725.2 L251.1,728.3 L248.3,730.4 L248.3,734.2 L245.5,737.0 L245.5,739.8 L247.6,745.0 L240.7,750.2 L232.4,748.4 L228.2,749.8 L218.1,755.7 L217.5,759.9 L212.3,761.3 L207.1,764.4 L208.1,756.4 L205.3,752.9 L162.0,733.2 L157.1,732.5 L127.0,750.2 Z"/>
-          </g>
-
-          <g class="draw explode" id="boom">
-            <path class="sch-fill" fill-rule="evenodd" d="M458.1,639.1 L455.0,639.1 L440.7,650.5 L441.8,647.1 L351.3,719.5 L350.3,720.2 L346.4,719.5 L328.4,730.2 L318.0,739.6 L310.4,739.9 L296.9,748.3 L305.5,747.6 L305.5,748.3 L288.9,752.1 L303.1,750.0 L305.5,750.3 L302.1,752.8 L298.6,752.8 L295.8,754.5 L297.2,754.5 L297.2,755.2 L293.4,755.9 L297.2,756.2 L294.1,760.0 L287.8,763.8 L286.8,765.9 L284.7,767.0 L290.3,766.6 L289.6,776.0 L292.0,776.0 L285.8,778.4 L286.8,779.4 L284.0,780.5 L291.7,780.5 L291.7,786.0 L262.9,780.1 L267.4,783.3 L266.7,783.6 L268.8,783.9 L274.0,787.8 L260.5,786.4 L277.8,790.2 L281.6,793.0 L279.5,793.3 L258.4,789.8 L285.8,796.1 L288.2,797.5 L259.4,792.3 L279.2,797.1 L276.1,797.8 L269.1,801.6 L277.1,811.0 L280.9,813.0 L277.1,813.0 L280.9,816.9 L282.3,822.4 L284.7,819.6 L284.7,823.4 L291.3,832.5 L292.4,832.8 L296.2,829.7 L300.3,817.9 L305.2,830.7 L305.2,889.3 L305.9,833.5 L306.6,834.9 L307.3,897.9 L308.3,840.4 L309.3,842.8 L310.0,901.8 L312.5,852.6 L316.3,862.6 L317.0,895.5 L317.3,866.1 L319.7,872.6 L319.7,828.6 L320.4,828.6 L322.9,835.2 L326.7,834.9 L337.1,827.3 L338.1,832.8 L340.5,830.0 L341.6,830.7 L344.0,828.3 L344.7,834.2 L345.7,834.5 L361.0,823.8 L365.5,815.8 L368.3,804.7 L370.4,803.3 L372.4,796.4 L392.9,778.4 L393.2,774.6 L391.9,771.1 L486.2,678.3 L486.9,676.2 L476.1,682.1 L473.3,682.1 L460.5,691.4 L460.5,689.7 L469.2,681.0 L460.8,686.9 L458.4,687.3 L448.4,695.6 L443.2,688.7 L455.6,677.6 L456.0,674.8 L454.6,672.0 L452.5,669.9 L448.7,668.9 L436.2,679.6 L432.4,675.5 L431.7,672.4 L445.6,659.9 L435.9,665.8 L435.2,665.4 L449.8,651.2 Z M385.3,744.8 L387.3,747.6 L387.3,749.6 L381.5,754.8 L378.3,750.7 Z M371.1,726.4 L373.8,730.6 L367.2,736.5 L365.2,734.0 L365.2,731.3 Z M406.8,723.7 L409.2,726.8 L409.9,729.2 L403.6,735.1 L400.5,730.9 L405.0,727.1 Z M393.2,706.7 L398.1,712.6 L393.9,712.9 L389.1,716.7 L387.0,713.6 L387.0,712.2 Z M427.9,702.5 L431.4,706.7 L432.1,709.8 L425.8,715.3 L420.6,708.8 Z M415.4,686.6 L420.6,693.5 L413.7,699.7 L409.9,694.9 L409.5,692.1 Z M268.1,695.6 L272.2,701.1 L275.7,702.9 L275.7,707.7 L284.4,708.4 L286.8,707.4 L287.8,706.0 L287.5,702.5 L289.9,700.8 L291.0,698.7 L290.3,696.3 L293.0,694.2 L293.4,691.4 L292.7,690.4 L295.8,687.6 L295.5,684.2 L298.2,681.7 L297.9,678.3 L301.0,675.1 L301.0,673.1 L298.6,667.5 L299.3,665.1 L297.6,661.6 L305.5,661.3 L310.0,659.6 L318.0,654.7 L323.9,646.7 L335.0,655.4 L337.1,655.4 L339.2,654.0 L342.3,655.7 L345.4,654.4 L349.6,655.7 L352.0,654.4 L354.1,655.7 L358.6,654.7 L362.4,656.1 L364.8,654.7 L366.9,656.1 L369.7,656.1 L374.5,652.3 L379.4,656.4 L383.9,655.4 L386.0,656.8 L387.7,656.8 L390.1,655.4 L392.2,656.8 L396.7,655.7 L400.5,657.1 L403.3,655.7 L405.0,657.1 L407.5,657.1 L409.5,655.7 L412.0,657.5 L413.4,657.5 L419.6,652.3 L422.0,651.9 L423.8,650.2 L421.3,648.1 L421.7,644.7 L419.9,643.3 L421.3,641.2 L419.6,640.5 L418.9,638.1 L414.4,637.4 L409.2,631.1 L405.4,632.9 L406.4,630.8 L405.4,631.8 L405.0,631.1 L403.6,631.8 L400.9,630.1 L397.4,631.5 L395.0,630.1 L392.9,630.1 L390.5,631.5 L388.0,629.8 L384.6,631.1 L381.8,629.8 L379.7,629.8 L374.5,633.6 L369.7,629.4 L367.6,629.4 L365.5,630.8 L362.0,629.1 L359.3,630.4 L355.1,629.1 L352.7,630.4 L349.6,628.7 L346.4,630.1 L344.0,628.7 L341.9,628.7 L339.5,630.1 L336.7,628.4 L334.3,629.1 L329.4,633.6 L327.0,633.9 L324.6,636.7 L321.1,629.4 L315.2,624.2 L310.4,622.5 L300.7,623.2 L289.9,629.4 L284.4,637.0 L283.3,640.1 L283.7,647.8 L288.5,657.1 L287.8,658.2 L284.7,658.9 L283.3,661.3 L278.1,663.0 L276.1,664.7 L276.4,668.6 L274.0,670.3 L273.3,671.7 L273.6,674.8 L270.5,677.9 L271.2,680.7 L268.8,682.4 L268.1,684.2 L269.5,689.0 Z"/>
-          </g>
-
-          <g class="draw explode" id="elbow">
-            <path class="sch-fill" fill-rule="evenodd" d="M577.6,666.6 L559.2,642.0 L562.7,635.7 L560.6,636.4 L558.2,634.7 L560.3,625.7 L560.3,619.4 L558.6,610.7 L554.4,601.4 L549.9,595.1 L543.3,588.9 L536.4,584.7 L529.1,582.3 L514.2,582.3 L505.5,584.0 L484.4,596.1 L477.1,603.4 L468.4,618.0 L466.3,619.8 L463.9,618.7 L461.8,619.1 L451.1,628.4 L444.8,635.4 L434.8,633.6 L424.7,639.2 L423.0,636.8 L420.2,636.1 L414.3,630.5 L412.2,630.5 L409.8,631.9 L407.0,630.2 L403.2,631.9 L401.1,635.4 L405.3,637.5 L404.6,640.2 L406.3,642.3 L406.0,644.8 L411.2,647.9 L417.4,649.6 L414.3,651.0 L418.5,651.0 L421.6,652.0 L424.4,649.3 L425.1,650.0 L425.1,659.0 L426.5,659.3 L438.9,651.3 L439.6,651.7 L434.1,658.6 L436.5,658.6 L436.9,659.3 L414.0,681.6 L435.8,664.2 L425.8,674.6 L436.2,666.6 L437.9,666.6 L454.5,688.5 L454.2,690.6 L459.0,687.5 L460.8,689.2 L452.1,698.2 L463.2,689.5 L470.1,685.7 L473.6,685.7 L476.0,684.0 L477.1,684.0 L480.2,686.8 L483.0,686.8 L485.4,684.3 L489.6,685.4 L502.4,674.3 L507.2,668.4 L515.6,668.0 L520.4,665.9 L523.5,665.9 L531.9,661.1 L548.5,681.9 L552.0,685.0 L541.6,670.8 L541.9,670.1 L554.0,684.7 L547.1,676.0 L547.5,675.3 L555.8,684.7 L549.9,676.7 L556.8,683.6 L554.7,681.2 L555.1,680.5 L556.8,682.2 L553.0,677.4 L553.4,676.7 L557.9,681.9 L547.8,668.0 L555.8,660.7 L553.0,659.0 L551.3,660.0 L548.5,656.6 L546.1,657.9 L543.3,654.8 L549.2,649.3 L551.6,645.8 L568.6,667.0 L569.6,667.3 L567.6,665.9 L567.9,665.2 L568.6,665.9 L562.4,657.9 L562.7,657.3 L570.0,666.3 L571.7,667.3 L571.4,668.0 L572.8,668.7 L569.3,663.8 L570.7,664.5 L558.6,649.3 L558.9,648.6 L573.5,665.9 L575.9,668.0 L567.6,657.3 L567.9,656.6 L574.5,664.2 L569.6,657.9 L571.7,659.3 Z"/>
-          </g>
-
-          <g class="draw explode" id="forearm">
-            <path class="sch-fill" fill-rule="evenodd" d="M514.2,666.7 L539.1,698.7 L537.4,700.4 L548.5,715.0 L554.4,722.3 L555.8,721.2 L557.2,721.9 L580.8,752.1 L580.8,754.2 L578.0,756.6 L588.7,770.1 L590.8,776.4 L588.0,780.6 L595.0,789.2 L598.8,792.4 L606.1,796.2 L607.8,796.2 L612.7,793.4 L622.4,794.1 L624.5,796.5 L622.4,798.3 L626.5,802.1 L624.8,799.6 L625.5,799.3 L627.2,801.0 L627.2,800.0 L629.3,802.4 L632.8,798.6 L634.9,800.3 L647.0,795.1 L648.7,791.7 L651.9,791.3 L650.8,788.2 L653.6,787.8 L652.5,785.8 L655.7,783.0 L655.0,781.6 L658.1,779.9 L656.0,775.3 L658.8,777.4 L656.0,772.9 L655.0,772.6 L653.2,774.0 L651.2,771.5 L652.5,767.7 L652.9,762.2 L656.0,759.0 L657.4,756.3 L653.2,743.4 L647.0,735.1 L644.9,735.1 L642.1,737.2 L635.6,732.0 L625.5,719.5 L622.4,721.6 L621.0,720.9 L596.7,690.0 L593.2,692.4 L578.7,675.7 L588.4,687.9 L588.0,688.6 L575.9,675.1 L588.0,692.1 L586.0,690.7 L574.5,677.1 L581.1,685.8 L576.6,681.3 L588.4,696.2 L590.5,695.5 L613.4,724.7 L605.7,730.2 L599.1,721.6 L600.5,719.8 L600.9,715.3 L597.7,715.0 L597.1,714.3 L597.1,710.8 L593.2,709.8 L593.6,705.9 L590.1,705.2 L589.8,701.1 L586.0,700.0 L586.3,696.6 L582.1,695.5 L582.5,691.7 L577.6,691.4 L576.2,692.1 L573.8,688.9 L575.2,687.2 L575.2,683.7 L571.0,682.3 L571.4,679.2 L570.0,679.6 L567.6,678.5 L567.2,675.1 L563.1,675.1 L561.7,671.9 L558.2,671.2 L557.5,668.1 L552.7,668.1 L553.7,666.7 L552.7,665.0 L551.6,665.0 L548.1,668.1 L541.9,660.5 L544.0,662.9 L542.9,663.3 L544.0,664.3 L543.6,665.0 L537.7,658.0 L546.1,668.8 L545.4,669.2 L538.4,661.2 L543.3,667.4 L542.9,668.5 L534.3,658.7 L538.8,664.6 L534.6,661.5 L535.7,661.9 L535.7,662.9 L540.5,668.8 L540.2,669.8 L535.3,663.9 L537.7,668.1 L538.8,668.5 L538.8,669.5 L536.7,671.2 L536.4,675.1 L540.5,676.4 L540.2,679.9 L543.6,680.6 L544.0,684.8 L547.8,685.8 L547.5,689.3 L550.9,690.0 L551.3,694.1 L555.1,695.2 L554.7,698.7 L558.9,699.7 L562.0,703.2 L562.0,708.0 L565.8,709.1 L565.5,712.5 L569.7,713.6 L569.3,717.4 L573.1,718.4 L572.8,721.9 L576.9,722.9 L576.6,726.8 L580.4,727.8 L580.4,731.6 L585.3,732.0 L586.6,731.3 L593.2,740.0 L586.3,745.9 L563.1,716.4 L564.4,713.9 L548.5,693.4 L547.1,692.8 L545.7,693.8 L523.9,665.7 L522.8,666.0 L519.7,663.6 Z"/>
-          </g>
-
-          <g class="draw explode" id="wrist">
-            <path class="sch-fill" fill-rule="evenodd" d="M533.8,649.0 L533.5,651.1 L543.9,664.3 L539.7,662.9 L540.4,667.4 L538.0,665.0 L539.7,668.1 L537.7,670.2 L537.7,673.6 L541.8,674.0 L542.2,677.4 L543.2,676.4 L547.7,681.2 L555.0,685.4 L557.8,686.1 L573.1,705.5 L576.9,703.4 L596.7,728.0 L581.7,708.6 L582.1,707.9 L599.8,729.1 L583.5,706.5 L583.8,705.8 L599.8,725.6 L592.8,716.6 L593.2,715.9 L596.7,720.0 L588.7,709.7 L589.0,709.0 L593.9,714.9 L581.7,699.6 L583.1,697.9 L580.7,694.4 L581.7,691.6 L578.6,691.3 L575.1,687.1 L575.5,683.0 L571.7,681.9 L571.7,678.1 L567.9,677.1 L568.2,673.6 L564.7,672.9 L564.4,668.8 L560.6,667.7 L560.9,663.9 L557.1,662.9 L556.7,659.1 L552.6,658.7 L550.8,659.8 L540.4,646.6 L539.4,646.9 L537.7,645.9 Z M555.0,640.0 L556.7,642.1 L555.4,641.7 L556.4,643.8 L558.5,645.5 L567.9,658.4 L566.1,657.3 L554.3,642.8 L563.0,654.9 L561.3,653.9 L555.0,646.2 L560.6,653.2 L560.2,653.9 L553.6,646.2 L557.4,651.8 L556.4,651.4 L558.5,652.8 L558.1,653.5 L557.4,652.8 L573.1,673.3 L571.7,675.0 L588.3,696.1 L591.8,693.0 L595.6,691.3 L607.1,705.1 L609.5,713.1 L614.7,723.5 L618.2,724.2 L626.9,733.9 L621.0,725.9 L621.3,725.2 L629.3,733.6 L623.0,724.6 L623.4,723.9 L628.2,729.4 L621.0,721.1 L619.9,711.7 L614.4,694.1 L612.6,694.1 L609.2,684.0 L609.2,683.0 L613.3,679.9 L616.4,674.0 L616.4,668.4 L614.0,663.2 L610.2,659.8 L605.7,658.0 L599.1,658.7 L594.2,661.5 L580.7,649.0 L562.6,635.5 L560.9,636.2 L556.4,641.7 Z M597.4,686.1 L603.3,686.4 L605.7,695.8 L604.6,697.5 L606.0,703.1 L596.7,690.6 L598.4,688.9 Z M567.9,652.5 L574.8,657.7 L577.6,657.0 L589.0,666.0 L586.6,672.9 L582.1,667.0 L579.7,668.1 Z"/>
-          </g>
-
-          <g class="draw explode" id="gripper">
-            <path class="sch-fill" fill-rule="evenodd" d="M648.0,773.6 L647.7,776.1 L645.2,774.7 L642.1,777.1 L640.7,777.1 L638.0,780.2 L636.6,779.9 L634.8,782.3 L633.8,780.2 L634.1,783.0 L631.4,782.7 L632.1,784.4 L629.6,785.1 L630.3,786.1 L625.5,790.3 L625.8,793.8 L622.3,798.3 L626.1,803.5 L624.1,811.8 L625.1,818.1 L626.5,820.2 L630.3,818.8 L633.1,821.2 L636.9,822.6 L642.1,820.2 L643.5,821.2 L641.8,822.9 L642.8,825.4 L641.4,827.4 L641.1,831.6 L639.0,833.7 L640.7,837.2 L643.2,836.8 L646.3,840.6 L645.6,843.4 L646.6,844.1 L651.2,854.9 L653.6,855.9 L655.0,859.0 L655.0,861.1 L653.2,862.2 L653.2,863.2 L655.0,866.3 L657.1,865.6 L660.9,868.8 L660.5,872.6 L663.3,873.6 L666.8,871.5 L668.5,872.2 L669.9,874.7 L678.9,878.1 L682.8,877.8 L683.1,881.2 L686.2,882.3 L689.7,880.2 L691.1,876.4 L692.8,876.4 L698.0,873.3 L699.1,869.4 L698.4,868.4 L703.9,864.9 L705.0,861.5 L710.2,859.0 L709.9,855.9 L706.4,854.9 L706.0,852.1 L707.4,850.4 L706.7,849.7 L705.7,840.3 L703.9,838.9 L703.3,835.8 L706.4,833.7 L706.4,832.0 L707.8,833.0 L712.3,853.5 L714.0,856.9 L718.2,856.6 L723.1,853.8 L724.8,849.7 L730.0,847.2 L729.7,844.1 L726.2,843.4 L725.8,840.6 L727.2,838.6 L726.5,837.9 L725.5,828.5 L723.4,826.4 L723.1,824.0 L726.2,821.9 L725.8,819.1 L722.0,818.1 L719.9,813.9 L721.0,811.5 L717.8,809.0 L715.1,810.8 L711.2,807.7 L711.2,805.9 L701.9,798.6 L701.2,797.2 L698.4,797.2 L696.0,794.1 L696.7,791.7 L693.9,789.3 L684.8,792.7 L679.6,795.9 L676.5,799.0 L674.8,797.2 L672.3,798.6 L671.6,797.2 L675.1,793.4 L675.1,788.9 L673.4,785.1 L675.5,781.6 L669.6,777.8 L665.7,777.1 L659.5,777.5 L655.7,772.6 L650.8,774.7 Z M664.4,830.2 L668.9,829.5 L672.0,827.8 L680.0,834.7 L681.7,839.9 L684.5,842.7 L688.0,844.5 L692.1,864.6 L677.6,857.3 L676.2,852.1 L673.4,849.3 L670.3,847.9 L663.3,833.7 Z M685.5,812.9 L687.3,812.5 L697.4,821.2 L695.3,822.6 L691.4,819.5 L691.1,817.0 Z"/>
-          </g>
-
-          <!-- annotation callouts -->
-          <g class="draw" id="callouts">
-            <circle class="sch-line-dim" cx="150" cy="1050" r="11"/>
-            <text class="sch-label" x="146" y="1054">1</text>
-            <line class="sch-line-dim" x1="161" y1="1045" x2="250" y2="900"/>
-
-            <circle class="sch-line-dim" cx="100" cy="600" r="11"/>
-            <text class="sch-label" x="96" y="604">2</text>
-            <line class="sch-line-dim" x1="111" y1="600" x2="300" y2="700"/>
-
-            <circle class="sch-line-dim" cx="520" cy="470" r="11"/>
-            <text class="sch-label" x="516" y="474">3</text>
-            <line class="sch-line-dim" x1="516" y1="480" x2="503" y2="605"/>
-
-            <circle class="sch-line-dim" cx="705" cy="560" r="11"/>
-            <text class="sch-label" x="701" y="564">4</text>
-            <line class="sch-line-dim" x1="694" y1="565" x2="590" y2="690"/>
-
-            <circle class="sch-line-dim" cx="705" cy="1010" r="11"/>
-            <text class="sch-label" x="701" y="1014">5</text>
-            <line class="sch-line-dim" x1="694" y1="1005" x2="650" y2="870"/>
-
-            <line class="sch-line-dim" x1="130" y1="710" x2="300" y2="715"/>
-            <circle class="sch-dot" cx="300" cy="715" r="3"/>
-            <text class="sch-label sch-label-hl" x="60" y="700">B.ENG MECHATRONIK</text>
-
-            <line class="sch-line-dim" x1="560" y1="380" x2="503" y2="605"/>
-            <circle class="sch-dot" cx="503" cy="605" r="3"/>
-            <text class="sch-label sch-label-hl" x="480" y="368">IWE — SCHWEISSFACHING.</text>
-
-            <line class="sch-line-dim" x1="150" y1="1200" x2="270" y2="880"/>
-            <circle class="sch-dot" cx="270" cy="880" r="3"/>
-            <text class="sch-label sch-label-hl" x="90" y="1218">7 JAHRE PROJEKTERFAHRUNG</text>
-          </g>
-        </svg>
+      <div>
+        <span class="eyebrow mb-6">01 — Profil</span>
+        <h2 class="heading-xl text-4xl md:text-5xl mb-8 max-w-[16ch]">Präzision ist der Beruf, nicht nur der Anspruch.</h2>
+        <p class="text-muted text-base md:text-lg leading-relaxed mb-5">
+          Ich bin Projektingenieur und Einsatzleiter im kerntechnischen Hilfsdienst bei der
+          <span class="text-ink font-medium">MHC Anlagentechnik GmbH</span> in Ladenburg. Mein Aufgabenfeld liegt im
+          Betrieb, der Stilllegung und dem Rückbau kerntechnischer Anlagen — ein Bereich, in dem Genauigkeit keine
+          Option, sondern Voraussetzung ist.
+        </p>
+        <p class="text-muted text-base md:text-lg leading-relaxed mb-10">
+          Nach meinem dualen Studium Mechatronik mit Schwerpunkt Project Engineering an der DHBW Mannheim — unter
+          anderem bei HeidelbergCement — bin ich seit 2019 bei MHC. Ergänzend habe ich die Qualifikation zum
+          internationalen Schweißfachingenieur (IWE) erworben, die technisches Tiefenwissen mit Projektverantwortung
+          verbindet.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4" id="about-cards">
+          <div class="glass glass-hover sheen p-6" data-cursor-hover>
+            <span class="font-mono text-xs text-accent-blue">01</span>
+            <div class="font-display text-2xl font-semibold mt-3">7+ Jahre</div>
+            <p class="text-muted text-sm mt-2">Praxiserfahrung im kerntechnischen Anlagenbau.</p>
+          </div>
+          <div class="glass glass-hover sheen p-6" data-cursor-hover>
+            <span class="font-mono text-xs text-accent-blue">02</span>
+            <div class="font-display text-2xl font-semibold mt-3">Rückbau &amp; Stilllegung</div>
+            <p class="text-muted text-sm mt-2">Begleitung kerntechnischer Anlagenprojekte.</p>
+          </div>
+          <div class="glass glass-hover sheen p-6" data-cursor-hover>
+            <span class="font-mono text-xs text-accent-blue">03</span>
+            <div class="font-display text-2xl font-semibold mt-3">IWE</div>
+            <p class="text-muted text-sm mt-2">Internationaler Schweißfachingenieur.</p>
+          </div>
+          <div class="glass glass-hover sheen p-6" data-cursor-hover>
+            <span class="font-mono text-xs text-accent-blue">04</span>
+            <div class="font-display text-2xl font-semibold mt-3">Einsatzleitung</div>
+            <p class="text-muted text-sm mt-2">Koordination technischer Teams vor Ort.</p>
+          </div>
+        </div>
       </div>
     </div>
+  </section>
+
+  <!-- ================= SKILLS ================= -->
+  <section id="skills" class="section-pad rule">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+      <div>
+        <span class="eyebrow mb-6">02 — Kompetenzen</span>
+        <h2 class="heading-xl text-4xl md:text-5xl max-w-[18ch]">Engineering Dashboard.</h2>
+      </div>
+      <p class="text-muted max-w-[42ch] font-mono text-sm leading-relaxed">Werkzeuge, Normen und Fachwissen aus sieben Jahren Projektingenieurwesen im kerntechnischen Rückbau.</p>
+    </div>
+    <div id="skills-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      <!-- skill cells injected via template below -->
+    </div>
+  </section>
+
+  <!-- ================= PROJECTS / FOCUS AREAS ================= -->
+  <section id="projects" class="section-pad rule">
+    <span class="eyebrow mb-6">03 — Schwerpunkte</span>
+    <h2 class="heading-xl text-4xl md:text-5xl max-w-[20ch] mb-16">Woran ich arbeite.</h2>
+    <div id="projects-grid" class="grid md:grid-cols-2 gap-6 md:gap-8">
+      <article class="glass glass-hover sheen overflow-hidden flex flex-col" data-cursor-hover>
+        <div class="aspect-video border-b border-edge flex items-center justify-center border-dashed text-muted">
+          <span class="font-mono text-xs uppercase tracking-[0.15em]">Bild folgt</span>
+        </div>
+        <div class="p-7 md:p-8 flex flex-col flex-1">
+          <h3 class="font-display text-xl font-semibold mb-2">Rückbau kerntechnischer Anlagen</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5 flex-1">Planung und technische Begleitung von Rückbau- und Stilllegungsmaßnahmen — von der Konzeption bis zur Umsetzung vor Ort.</p>
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Rückbau</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Stilllegung</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Genehmigungsverfahren</span>
+          </div>
+          <div class="flex gap-4">
+            <a href="#contact" class="text-accent-orange font-mono text-xs uppercase tracking-widest hover:underline" data-cursor-hover>Kontakt aufnehmen →</a>
+            <a href="#about" class="text-muted font-mono text-xs uppercase tracking-widest hover:text-ink" data-cursor-hover>Mehr zum Profil</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="glass glass-hover sheen overflow-hidden flex flex-col" data-cursor-hover>
+        <div class="aspect-video border-b border-edge flex items-center justify-center border-dashed text-muted">
+          <span class="font-mono text-xs uppercase tracking-[0.15em]">Bild folgt</span>
+        </div>
+        <div class="p-7 md:p-8 flex flex-col flex-1">
+          <h3 class="font-display text-xl font-semibold mb-2">Rohrleitungs- &amp; Druckgerätetechnik</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5 flex-1">Auslegung und Bewertung von Rohrleitungssystemen und Druckgeräten nach DIN EN 13480.</p>
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Piping</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">DIN EN 13480</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Druckgeräte</span>
+          </div>
+          <div class="flex gap-4">
+            <a href="#contact" class="text-accent-orange font-mono text-xs uppercase tracking-widest hover:underline" data-cursor-hover>Kontakt aufnehmen →</a>
+            <a href="#about" class="text-muted font-mono text-xs uppercase tracking-widest hover:text-ink" data-cursor-hover>Mehr zum Profil</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="glass glass-hover sheen overflow-hidden flex flex-col" data-cursor-hover>
+        <div class="aspect-video border-b border-edge flex items-center justify-center border-dashed text-muted">
+          <span class="font-mono text-xs uppercase tracking-[0.15em]">Bild folgt</span>
+        </div>
+        <div class="p-7 md:p-8 flex flex-col flex-1">
+          <h3 class="font-display text-xl font-semibold mb-2">Schweißtechnische Qualitätssicherung</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5 flex-1">Fachliche Bewertung schweißtechnischer Prozesse als internationaler Schweißfachingenieur (IWE).</p>
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">IWE</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Qualitätssicherung</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Schweißtechnik</span>
+          </div>
+          <div class="flex gap-4">
+            <a href="#contact" class="text-accent-orange font-mono text-xs uppercase tracking-widest hover:underline" data-cursor-hover>Kontakt aufnehmen →</a>
+            <a href="#about" class="text-muted font-mono text-xs uppercase tracking-widest hover:text-ink" data-cursor-hover>Mehr zum Profil</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="glass glass-hover sheen overflow-hidden flex flex-col" data-cursor-hover>
+        <div class="aspect-video border-b border-edge flex items-center justify-center border-dashed text-muted">
+          <span class="font-mono text-xs uppercase tracking-[0.15em]">Bild folgt</span>
+        </div>
+        <div class="p-7 md:p-8 flex flex-col flex-1">
+          <h3 class="font-display text-xl font-semibold mb-2">Einsatzleitung vor Ort</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5 flex-1">Koordination und Steuerung technischer Teams im laufenden Betrieb kerntechnischer Anlagen.</p>
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Einsatzleitung</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Projektsteuerung</span>
+            <span class="font-mono text-[11px] uppercase tracking-wide border border-edge rounded-full px-3 py-1 text-muted">Koordination</span>
+          </div>
+          <div class="flex gap-4">
+            <a href="#contact" class="text-accent-orange font-mono text-xs uppercase tracking-widest hover:underline" data-cursor-hover>Kontakt aufnehmen →</a>
+            <a href="#about" class="text-muted font-mono text-xs uppercase tracking-widest hover:text-ink" data-cursor-hover>Mehr zum Profil</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= TIMELINE ================= -->
+  <section id="timeline" class="section-pad rule">
+    <span class="eyebrow mb-6">04 — Werdegang</span>
+    <h2 class="heading-xl text-4xl md:text-5xl max-w-[18ch] mb-16">Stationen im Werdegang.</h2>
+    <div class="relative max-w-3xl">
+      <div class="absolute left-[9px] top-2 bottom-2 w-px bg-edge">
+        <div class="tl-line absolute inset-0 bg-accent-orange"></div>
+      </div>
+      <div class="tl-items flex flex-col gap-14">
+        <div class="relative pl-12">
+          <div class="absolute left-0 top-1 w-5 h-5 rounded-full border border-accent-orange bg-panel flex items-center justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent-orange"></span>
+          </div>
+          <div class="font-mono text-xs text-accent-orange tracking-widest">2016 — 2019</div>
+          <h3 class="font-display text-xl md:text-2xl font-semibold mt-2">Bachelor of Engineering</h3>
+          <div class="text-muted text-sm mt-1">Duales Studium Mechatronik, DHBW Mannheim &amp; HeidelbergCement</div>
+        </div>
+        <div class="relative pl-12">
+          <div class="absolute left-0 top-1 w-5 h-5 rounded-full border border-accent-orange bg-panel flex items-center justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent-orange"></span>
+          </div>
+          <div class="font-mono text-xs text-accent-orange tracking-widest">SEIT 2019</div>
+          <h3 class="font-display text-xl md:text-2xl font-semibold mt-2">Projektingenieur</h3>
+          <div class="text-muted text-sm mt-1">MHC Anlagentechnik GmbH, Ladenburg</div>
+        </div>
+        <div class="relative pl-12">
+          <div class="absolute left-0 top-1 w-5 h-5 rounded-full border border-accent-orange bg-panel flex items-center justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent-orange"></span>
+          </div>
+          <div class="font-mono text-xs text-accent-orange tracking-widest">SEIT 2023</div>
+          <h3 class="font-display text-xl md:text-2xl font-semibold mt-2">IWE-Zertifizierung</h3>
+          <div class="text-muted text-sm mt-1">Internationaler Schweißfachingenieur</div>
+        </div>
+        <div class="relative pl-12">
+          <div class="absolute left-0 top-1 w-5 h-5 rounded-full border border-accent-orange bg-accent-orange flex items-center justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-panel"></span>
+          </div>
+          <div class="font-mono text-xs text-accent-orange tracking-widest">HEUTE</div>
+          <h3 class="font-display text-xl md:text-2xl font-semibold mt-2">Einsatzleiter im kerntechnischen Rückbau</h3>
+          <div class="text-muted text-sm mt-1">MHC Anlagentechnik GmbH</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NUMBERS ================= -->
+  <section id="numbers" class="section-pad rule">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-edge border border-edge rounded-2xl overflow-hidden" id="numbers-grid">
+      <div class="bg-panel p-8 md:p-10">
+        <div class="font-display text-4xl md:text-5xl font-semibold"><span data-count-to="7" data-suffix="+">0</span></div>
+        <div class="font-mono text-xs uppercase tracking-widest text-muted mt-3">Jahre Erfahrung</div>
+      </div>
+      <div class="bg-panel p-8 md:p-10">
+        <div class="font-display text-4xl md:text-5xl font-semibold"><span data-count-to="2019">0</span></div>
+        <div class="font-mono text-xs uppercase tracking-widest text-muted mt-3">Bei MHC seit</div>
+      </div>
+      <div class="bg-panel p-8 md:p-10">
+        <div class="font-display text-4xl md:text-5xl font-semibold"><span data-count-to="2023">0</span></div>
+        <div class="font-mono text-xs uppercase tracking-widest text-muted mt-3">IWE-zertifiziert seit</div>
+      </div>
+      <div class="bg-panel p-8 md:p-10">
+        <div class="font-display text-4xl md:text-5xl font-semibold"><span data-count-to="100" data-suffix="%">0</span></div>
+        <div class="font-mono text-xs uppercase tracking-widest text-muted mt-3">Fokus auf Sicherheit &amp; Präzision</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section id="contact" class="section-pad rule">
+    <div class="grid lg:grid-cols-[1fr_0.9fr] gap-16">
+      <div>
+        <span class="eyebrow mb-6">05 — Kontakt</span>
+        <h2 class="heading-xl text-4xl md:text-5xl max-w-[16ch] mb-6">Lassen Sie uns sprechen.</h2>
+        <p class="text-muted text-base md:text-lg leading-relaxed max-w-[46ch] mb-10">
+          Offen für Austausch rund um kerntechnischen Rückbau, Projektingenieurwesen oder technische Zusammenarbeit.
+        </p>
+        <form id="contact-form" class="flex flex-col gap-5 max-w-lg">
+          <div>
+            <label for="cf-name" class="font-mono text-xs uppercase tracking-widest text-muted mb-2 block">Name</label>
+            <input id="cf-name" name="name" type="text" required class="w-full bg-transparent border border-edge focus:border-accent-orange outline-none rounded-lg px-4 py-3 text-ink placeholder:text-muted/60 transition-colors" placeholder="Ihr Name">
+          </div>
+          <div>
+            <label for="cf-email" class="font-mono text-xs uppercase tracking-widest text-muted mb-2 block">E-Mail</label>
+            <input id="cf-email" name="email" type="email" required class="w-full bg-transparent border border-edge focus:border-accent-orange outline-none rounded-lg px-4 py-3 text-ink placeholder:text-muted/60 transition-colors" placeholder="ihre@email.de">
+          </div>
+          <div>
+            <label for="cf-message" class="font-mono text-xs uppercase tracking-widest text-muted mb-2 block">Nachricht</label>
+            <textarea id="cf-message" name="message" rows="4" required class="w-full bg-transparent border border-edge focus:border-accent-orange outline-none rounded-lg px-4 py-3 text-ink placeholder:text-muted/60 transition-colors resize-none" placeholder="Ihre Nachricht"></textarea>
+          </div>
+          <button type="submit" class="btn-primary w-fit" data-cursor-hover data-magnetic>Nachricht senden</button>
+          <p class="font-mono text-[11px] text-muted">Öffnet Ihr E-Mail-Programm mit vorausgefüllter Nachricht an hallo@paulgarrecht.de.</p>
+        </form>
+      </div>
+      <div class="flex flex-col gap-4">
+        <a href="https://www.linkedin.com/in/paulgarrecht/" target="_blank" rel="noopener" class="glass glass-hover sheen p-6 flex items-center justify-between" data-cursor-hover>
+          <span class="font-display font-medium">LinkedIn</span>
+          <span class="font-mono text-accent-orange text-sm">→</span>
+        </a>
+        <a href="mailto:hallo@paulgarrecht.de" class="glass glass-hover sheen p-6 flex items-center justify-between" data-cursor-hover>
+          <span class="font-display font-medium">E-Mail</span>
+          <span class="font-mono text-accent-orange text-sm">→</span>
+        </a>
+        <a href="dokumente.html" class="glass glass-hover sheen p-6 flex items-center justify-between" data-cursor-hover>
+          <span class="font-display font-medium">Dokumente</span>
+          <span class="font-mono text-accent-orange text-sm">→</span>
+        </a>
+        <a href="mailto:hallo@paulgarrecht.de?subject=Lebenslauf%20anfragen&body=Hallo%20Paul%2C%0A%0Ak%C3%B6nntest%20du%20mir%20bitte%20deinen%20aktuellen%20Lebenslauf%20zusenden%3F" class="btn-outline justify-center mt-2" data-cursor-hover data-magnetic>Lebenslauf anfragen</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="relative z-10 rule">
+  <div class="max-w-content mx-auto px-6 md:px-10 lg:px-16 py-14">
+    <p class="font-mono text-sm text-muted max-w-[48ch] mb-10">„Präzision ist kein Zufall — sie ist das Ergebnis sorgfältiger Planung.“</p>
+    <div class="flex flex-wrap items-center justify-between gap-4 font-mono text-xs text-muted uppercase tracking-widest">
+      <span>© 2026 Paul Garrecht</span>
+      <a href="impressum.html" class="hover:text-ink transition-colors">Impressum &amp; Datenschutz</a>
+      <span>Ladenburg, DE</span>
+    </div>
   </div>
-</section>
-
-<div class="thread-wrap">
-<svg class="thread" id="thread-svg" preserveAspectRatio="none">
-  <path class="thread-path" id="thread-path" d=""/>
-  <circle class="thread-pulse" id="thread-pulse-1" r="4"/>
-  <circle class="thread-pulse" id="thread-pulse-2" r="4"/>
-</svg>
-
-<!-- ABOUT -->
-<section class="panel" id="about">
-  <div class="eyebrow-row"><span class="tick"></span> 02 — PROFIL</div>
-  <div class="about-grid">
-    <div>
-      <p><b>Ich bin Paul, Projektingenieur und Einsatzleiter im kerntechnischen Hilfsdienst</b> bei der MHC Anlagentechnik GmbH in Ladenburg. Mein Aufgabenfeld liegt im Betrieb, der Stilllegung und dem Rückbau kerntechnischer Anlagen — ein Bereich, in dem Genauigkeit keine Option, sondern Voraussetzung ist.</p>
-      <p>Nach meinem dualen Studium Mechatronik mit Schwerpunkt Project Engineering an der DHBW Mannheim — unter anderem bei HeidelbergCement — bin ich seit 2019 bei MHC. Ergänzend habe ich die Qualifikation zum internationalen Schweißfachingenieur (IWE) erworben, die technisches Tiefenwissen mit Projektverantwortung verbindet.</p>
-      <p>Was mich antreibt: komplexe technische Systeme so zu strukturieren, dass sie sicher, nachvollziehbar und termingerecht umgesetzt werden — im Projekt genauso wie, als kleines Hobby, beim Bauen dieser Seite mit KI.</p>
-    </div>
-    <div class="spec-list">
-      <div class="spec-row"><span class="k">Standort</span><span class="v">Ladenburg, Baden-Württemberg</span></div>
-      <div class="spec-row"><span class="k">Rolle</span><span class="v">Projektingenieur / Einsatzleiter</span></div>
-      <div class="spec-row"><span class="k">Branche</span><span class="v">Kerntechnischer Rückbau</span></div>
-      <div class="spec-row"><span class="k">Ausbildung</span><span class="v">B.Eng. Mechatronik, DHBW Mannheim</span></div>
-      <div class="spec-row"><span class="k">Zertifizierung</span><span class="v">Int. Schweißfachingenieur (IWE)</span></div>
-      <div class="spec-row"><span class="k">Bei MHC seit</span><span class="v">2019 · 7 Jahre</span></div>
-    </div>
-  </div>
-  <div class="counter-grid">
-    <div class="counter-cell">
-      <div class="c-label">B.Eng. Mechatronik</div>
-      <div class="c-value mono" data-since="2019-09-01T00:00:00" data-unit="Bachelor of Engineering">läuft…</div>
-      <span class="c-since">seit 01.09.2019</span>
-    </div>
-    <div class="counter-cell">
-      <div class="c-label">Projektingenieur</div>
-      <div class="c-value mono" data-since="2019-09-01T00:00:00" data-unit="Projektingenieur">läuft…</div>
-      <span class="c-since">seit 01.09.2019 · MHC Anlagentechnik</span>
-    </div>
-    <div class="counter-cell">
-      <div class="c-label">Int. Schweißfachingenieur (IWE)</div>
-      <div class="c-value mono" data-since="2022-03-01T00:00:00" data-unit="IWE">läuft…</div>
-      <span class="c-since">seit 01.03.2022</span>
-    </div>
-  </div>
-</section>
-
-<!-- EXPERIENCE -->
-<section class="panel" id="experience">
-  <div class="eyebrow-row"><span class="tick"></span> 03 — ERFAHRUNG</div>
-  <h2>Stationen im<br>Werdegang.</h2>
-  <div class="tl">
-    <div class="tl-line"></div>
-    <div class="tl-item">
-      <div class="tl-dot"></div>
-      <div class="period">DEZ. 2019 — HEUTE · 6 JAHRE 8 MONATE</div>
-      <h3>Projektingenieur</h3>
-      <div class="org">MHC Anlagentechnik GmbH</div>
-      <p style="color:var(--muted); font-size:15px; line-height:1.6;">Projektingenieur und Einsatzleitung im kerntechnischen Hilfsdienst — Verantwortung für Planung und Umsetzung im Bereich Betrieb, Stilllegung und Rückbau.</p>
-      <div class="tags"><span class="tag">SolidWorks</span><span class="tag">Projektmanagement</span><span class="tag">Einsatzleitung</span></div>
-    </div>
-    <div class="tl-item">
-      <div class="tl-dot"></div>
-      <div class="period">AUG. 2019 — NOV. 2019 · 4 MONATE</div>
-      <h3>Dualer Student Mechatronik, Project Engineering</h3>
-      <div class="org">MHC Anlagentechnik GmbH</div>
-      <div class="tags"><span class="tag">Projektmanagement</span></div>
-    </div>
-    <div class="tl-item">
-      <div class="tl-dot"></div>
-      <div class="period">SEPT. 2016 — JULI 2019 · 2 JAHRE 11 MONATE</div>
-      <h3>Dualer Student Mechatronik, Project Engineering</h3>
-      <div class="org">HeidelbergCement · Duales Studium</div>
-      <div class="tags"><span class="tag">Projektmanagement</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- SKILLS -->
-<section class="panel" id="skills">
-  <div class="eyebrow-row"><span class="tick"></span> 04 — KOMPETENZEN</div>
-  <h2>Werkzeuge &amp;<br>Fachwissen.</h2>
-  <div class="skill-grid">
-    <div class="skill-cell">
-      <span class="num mono">01</span>
-      <h4>SolidWorks &amp; CAD</h4>
-      <p>Konstruktion und technische Ausarbeitung von Anlagenkomponenten für Rückbau- und Stilllegungsprojekte.</p>
-    </div>
-    <div class="skill-cell">
-      <span class="num mono">02</span>
-      <h4>Projektmanagement</h4>
-      <p>Planung, Steuerung und Einsatzleitung technischer Projekte im kerntechnischen Umfeld.</p>
-    </div>
-    <div class="skill-cell">
-      <span class="num mono">03</span>
-      <h4>Schweißtechnik (IWE)</h4>
-      <p>Internationaler Schweißfachingenieur — Qualitätssicherung und fachliche Bewertung schweißtechnischer Prozesse.</p>
-    </div>
-  </div>
-</section>
-
-<!-- META: how the site was built -->
-<section class="panel meta-panel">
-  <div class="eyebrow-row"><span class="tick"></span> 05 — WIE DIESE SEITE ENTSTAND</div>
-  <div class="meta-grid">
-    <div>
-      <p><b>Diese Website ist selbst ein kleines Projekt</b> — mein Hobby, mit KI zu bauen, angewendet auf etwas Reales statt auf ein Spielzeug-Beispiel.</p>
-      <p>Der Ablauf: Inhalte und Struktur mit Claude erarbeitet, Design-Richtung bewusst vom generischen KI-Look abgegrenzt (kein Standard-Dunkelmodus-Template), und die scroll-gesteuerte technische Zeichnung als Kernidee statt eines echten Videos umgesetzt — passend zum eigenen Beruf als Ingenieur. Die Hero-Grafik ist direkt aus der originalen DXF-Konstruktionszeichnung eines Druckbehälters extrahiert (Sattellager, Stutzen, Flansche, inklusive Schnitt A-A), nicht nachgezeichnet — hochkant gestellt, damit sie präsent im Bild steht. Die Maßlinie aus dem Zoom-Finale zieht sich als wandernder Faden durch die ganze Seite weiter.</p>
-      <p>Der nächste Schritt: die Seite lokal mit Claude Code weiter verfeinern, mit echten Projektbildern füllen und live schalten.</p>
-    </div>
-    <ul class="stack-list">
-      <li><span>Konzept &amp; Copy</span><span>Claude</span></li>
-      <li><span>Layout &amp; Prototyp</span><span>HTML / CSS / JS</span></li>
-      <li><span>Scroll-Animation</span><span>GSAP ScrollTrigger</span></li>
-      <li><span>Weiterentwicklung</span><span>Claude Code</span></li>
-      <li><span>Hosting</span><span>Vercel / GitHub Pages</span></li>
-    </ul>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section class="panel contact" id="contact">
-  <div class="eyebrow-row"><span class="tick"></span> 06 — KONTAKT</div>
-  <h2>Lassen Sie uns<br>sprechen.</h2>
-  <p style="color:var(--muted); max-width:48ch; font-size:16px; line-height:1.7;">Offen für Austausch rund um kerntechnischen Rückbau, Projektingenieurwesen oder auch dieses kleine KI-Nebenprojekt.</p>
-  <div class="contact-links">
-    <a href="https://www.linkedin.com/in/paulgarrecht/" target="_blank" rel="noopener">→ LinkedIn</a>
-    <a href="mailto:hallo@paulgarrecht.de">→ E-Mail</a>
-  </div>
-</section>
-
-<!-- PHOTOGRAPHY: interactive world map, the thread coils in here -->
-<section class="panel" id="photography">
-  <div class="eyebrow-row"><span class="tick"></span> 07 — FOTOGRAFIE</div>
-  <h2>Ein anderes<br>Hobby: unterwegs.</h2>
-  <p style="color:var(--muted); max-width:52ch; font-size:16px; line-height:1.7;">Neben KI und Technik: Fotografie auf Reisen. Eine kleine, unvollständige Auswahl der Orte — mit dem Cursor über die Punkte fahren, um Bilder zu sehen.</p>
-
-  <div class="map-wrap">
-    <svg class="world-map" viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg">
-      <!-- coordinate grid -->
-      <g class="map-grid">
-        <line x1="0" y1="130" x2="1000" y2="130"/>
-        <line x1="0" y1="260" x2="1000" y2="260"/>
-        <line x1="0" y1="390" x2="1000" y2="390"/>
-        <line x1="166" y1="0" x2="166" y2="520"/>
-        <line x1="333" y1="0" x2="333" y2="520"/>
-        <line x1="500" y1="0" x2="500" y2="520"/>
-        <line x1="666" y1="0" x2="666" y2="520"/>
-        <line x1="833" y1="0" x2="833" y2="520"/>
-      </g>
-
-      <!-- abstracted landmass zones (schematisch, keine exakten Küstenlinien) -->
-      <g>
-        <ellipse class="map-zone" cx="220" cy="160" rx="140" ry="100"/>
-        <ellipse class="map-zone" cx="290" cy="370" rx="70" ry="110"/>
-        <ellipse class="map-zone" cx="510" cy="120" rx="60" ry="50"/>
-        <ellipse class="map-zone" cx="520" cy="290" rx="75" ry="130"/>
-        <ellipse class="map-zone" cx="740" cy="160" rx="170" ry="110"/>
-        <ellipse class="map-zone" cx="860" cy="390" rx="70" ry="50"/>
-      </g>
-
-      <!-- pins -->
-      <g class="map-pin" data-country="usa">
-        <line class="sch-line-dim" x1="226" y1="136" x2="226" y2="100"/>
-        <circle cx="226" cy="136" r="4"/>
-        <text x="200" y="90">USA</text>
-      </g>
-      <g class="map-pin" data-country="spanien">
-        <line class="sch-line-dim" x1="490" y1="134" x2="470" y2="90"/>
-        <circle cx="490" cy="134" r="4"/>
-        <text x="418" y="86">SPANIEN</text>
-      </g>
-      <g class="map-pin" data-country="griechenland">
-        <line class="sch-line-dim" x1="561" y1="139" x2="590" y2="185"/>
-        <circle cx="561" cy="139" r="4"/>
-        <text x="596" y="190">GRIECHENLAND</text>
-      </g>
-      <g class="map-pin" data-country="japan">
-        <line class="sch-line-dim" x1="884" y1="149" x2="920" y2="110"/>
-        <circle cx="884" cy="149" r="4"/>
-        <text x="860" y="100">JAPAN</text>
-      </g>
-      <g class="map-pin" data-country="srilanka">
-        <line class="sch-line-dim" x1="724" y1="258" x2="700" y2="310"/>
-        <circle cx="724" cy="258" r="4"/>
-        <text x="618" y="325">SRI LANKA</text>
-      </g>
-    </svg>
-
-    <div class="photo-card" id="photo-usa" style="left:22.6%; top:26.2%;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span class="photo-country">USA</span>
-      <span class="photo-tag">Foto folgt</span>
-    </div>
-    <div class="photo-card" id="photo-spanien" style="left:49%; top:25.8%;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span class="photo-country">Spanien</span>
-      <span class="photo-tag">Foto folgt</span>
-    </div>
-    <div class="photo-card" id="photo-griechenland" style="left:56.1%; top:26.7%;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span class="photo-country">Griechenland</span>
-      <span class="photo-tag">Foto folgt</span>
-    </div>
-    <div class="photo-card" id="photo-japan" style="left:88.4%; top:28.7%;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span class="photo-country">Japan</span>
-      <span class="photo-tag">Foto folgt</span>
-    </div>
-    <div class="photo-card" id="photo-srilanka" style="left:72.4%; top:49.6%;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span class="photo-country">Sri Lanka</span>
-      <span class="photo-tag">Foto folgt</span>
-    </div>
-  </div>
-  <div class="map-hint mono">← Platzhalter — echte Fotos folgen in Kürze</div>
-</section>
-
-</div>
-
-<footer>
-  <span>© 2026 Paul Garrecht</span>
-  <span><a href="impressum.html">Impressum &amp; Datenschutz</a></span>
-  <span>LADENBURG, DE</span>
 </footer>
+
+<template id="skill-cell-template">
+  <div class="glass glass-hover sheen p-5 flex flex-col items-center text-center gap-3" data-cursor-hover>
+    <svg viewBox="0 0 100 100" class="w-20 h-20 -rotate-90">
+      <circle class="ring-track" cx="50" cy="50" r="42" stroke-width="7"/>
+      <circle class="ring-value" cx="50" cy="50" r="42" stroke-width="7" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+    </svg>
+    <div class="font-mono text-lg font-medium -mt-16 mb-8"><span class="ring-percent">0</span>%</div>
+    <div class="font-display text-sm font-medium leading-tight">Skill</div>
+  </div>
+</template>
+
+<script>
+  const SKILLS = [
+    ['Projektingenieurwesen', 95],
+    ['SolidWorks', 90],
+    ['AutoCAD', 82],
+    ['Anlagenplanung', 88],
+    ['Rohrleitungsbau', 90],
+    ['Druckgerätetechnik', 92],
+    ['Schweißtechnik (IWE)', 96],
+    ['DIN EN 13480', 90],
+    ['Excel VBA', 75],
+    ['3D-Scanning', 70],
+    ['Projektmanagement', 90],
+    ['Problemlösung', 93],
+  ];
+
+  const skillsGrid = document.getElementById('skills-grid');
+  const skillTpl = document.getElementById('skill-cell-template');
+  SKILLS.forEach(([label, value]) => {
+    const node = skillTpl.content.cloneNode(true);
+    node.querySelector('.font-display').textContent = label;
+    const circle = node.querySelector('.ring-value');
+    const circumference = 2 * Math.PI * 42;
+    circle.dataset.circumference = circumference;
+    circle.dataset.target = value;
+    skillsGrid.appendChild(node);
+  });
+</script>
 
 <script>
   gsap.registerPlugin(ScrollTrigger);
 
-  // live counters: "seit X Tagen, Y Std, Z Min"
-  function updateCounters(){
-    const now = Date.now();
-    document.querySelectorAll('.c-value[data-since]').forEach(el => {
-      const since = new Date(el.dataset.since).getTime();
-      let diff = Math.max(0, now - since);
-      const days = Math.floor(diff / 86400000);
-      diff -= days * 86400000;
-      const hours = Math.floor(diff / 3600000);
-      diff -= hours * 3600000;
-      const minutes = Math.floor(diff / 60000);
-      el.textContent = `seit ${days} Tagen, ${hours} Std, ${minutes} Min`;
-    });
-  }
-  updateCounters();
-  setInterval(updateCounters, 1000);
-
-  // Explosionszeichnung: Teile starten versetzt (echte STL-Silhouetten), fliegen beim Scrollen zusammen
-  const explodeOffsets = {
-    base:    [-138.0, 58.8],
-    boom:    [-145.2, -23.7],
-    elbow:   [12.2, -103.4],
-    forearm: [108.1, -23.9],
-    wrist:   [96.0, -64.2],
-    gripper: [134.6, 66.2],
-  };
-  const explodeParts = Object.keys(explodeOffsets);
-  explodeParts.forEach((id) => {
-    gsap.set('#' + id, { x: explodeOffsets[id][0], y: explodeOffsets[id][1] });
-  });
-
-  // stroke-draw effect just for the dimension line + callouts (the parts themselves are fully rendered, they only travel)
-  const drawGroups = ['#dims', '#callouts'];
-  drawGroups.forEach((sel) => {
-    document.querySelectorAll(sel + ' .sch-line, ' + sel + ' .sch-line-dim, ' + sel + ' .sch-fill').forEach(el => {
-      const len = el.getTotalLength ? el.getTotalLength() : 0;
-      if(len){
-        el.style.strokeDasharray = len;
-        el.style.strokeDashoffset = len;
-      }
-    });
-    document.querySelectorAll(sel + ' .sch-dot, ' + sel + ' .sch-label').forEach(el => {
-      el.style.opacity = 0;
-    });
-  });
-
-  const tl = gsap.timeline({
-    scrollTrigger:{
-      trigger: '.hero',
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: 0.6,
-    }
-  });
-
-  // all six parts glide from their exploded position into the assembled pose at once
-  tl.to(explodeParts.map(id => '#' + id).join(','), {
-    x: 0, y: 0,
-    duration: 3,
-    ease: 'none',
-  }, 0)
-  .to('#explode-guides', {
-    opacity: 0,
-    duration: 2.2,
-    ease: 'none',
-  }, 0.4);
-
-  // once assembled: the spec line draws in, then the callouts fade in
-  tl.to('#dims .sch-line, #dims .sch-line-dim, #dims .sch-fill', {
-    strokeDashoffset: 0,
-    duration: 1,
-    ease: 'none',
-  }, 3.0)
-  .to('#dims .sch-dot, #dims .sch-label', {
-    opacity: 1,
-    duration: 0.4,
-  }, 3.6)
-  .to('#callouts .sch-line, #callouts .sch-line-dim, #callouts .sch-fill', {
-    strokeDashoffset: 0,
-    duration: 0.8,
-    ease: 'none',
-  }, 4.0)
-  .to('#callouts .sch-dot, #callouts .sch-label', {
-    opacity: 1,
-    duration: 0.4,
-  }, 4.5);
-
-  // finale: zoom into the dimension line — it becomes the thread the timeline below picks up
-  const zoomStart = 5.2;
-  tl.to('#base, #boom, #elbow, #forearm, #wrist, #gripper, #callouts, #dims-deco', {
-    opacity: 0,
-    duration: 0.5,
-  }, zoomStart)
-  .to('#dims-line', {
-    stroke: '#2C4A9E',
-    duration: 0.4,
-  }, zoomStart)
-  .to('#schematic', {
-    scale: 24,
-    duration: 1.3,
-    ease: 'power2.in',
-    transformOrigin: '2.6% 49%',
-  }, zoomStart);
-
-  // Zeitstrahl: die Linie wächst mit, während man durch die Erfahrung scrollt
-  gsap.to('.tl-line', {
-    scaleY: 1,
-    ease: 'none',
-    scrollTrigger:{
-      trigger: '.tl',
-      start: 'top 70%',
-      end: 'bottom 80%',
-      scrub: 0.6,
-    }
-  });
-
-  // persistent thread: the zoomed hero line keeps wandering left/right down the whole page
-  function catmullRomPath(pts){
-    let d = `M${pts[0][0]},${pts[0][1]}`;
-    for(let i=0;i<pts.length-1;i++){
-      const p0 = pts[i-1] || pts[i];
-      const p1 = pts[i];
-      const p2 = pts[i+1];
-      const p3 = pts[i+2] || p2;
-      const c1x = p1[0] + (p2[0]-p0[0])/6;
-      const c1y = p1[1] + (p2[1]-p0[1])/6;
-      const c2x = p2[0] - (p3[0]-p1[0])/6;
-      const c2y = p2[1] - (p3[1]-p1[1])/6;
-      d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
-    }
-    return d;
-  }
-
-  const threadWaypoints = [
-    [0.62, 0.000], [0.50, 0.045], [0.16, 0.150], [0.16, 0.300],
-    [0.58, 0.400], [0.58, 0.480], [0.30, 0.600], [0.50, 0.700],
-    [0.50, 0.780], [0.20, 0.860],
-  ];
-  const pulseAt = [2, 6]; // indices into threadWaypoints that get a zoom-pulse marker
-
-  let threadTween = null;
-  function buildThread(){
-    const wrap = document.querySelector('.thread-wrap');
-    const svg = document.getElementById('thread-svg');
-    const path = document.getElementById('thread-path');
-    const W = wrap.clientWidth, H = wrap.scrollHeight;
-    if(!W || !H) return;
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    const pts = threadWaypoints.map(([fx,fy]) => [fx*W, fy*H]);
-
-    // finale: the thread coils into the world map at the very bottom of the page
-    const mapEl = document.querySelector('.map-wrap');
-    if(mapEl){
-      const mapRect = mapEl.getBoundingClientRect();
-      const wrapRect = wrap.getBoundingClientRect();
-      const cx = mapRect.left - wrapRect.left + mapRect.width * 0.5;
-      const cy = mapRect.top - wrapRect.top + mapRect.height * 0.42;
-      const turns = 2.75, steps = 48, maxR = Math.min(90, mapRect.width * 0.12);
-      const last = pts[pts.length - 1];
-      const startAngle = Math.atan2(last[1] - cy, last[0] - cx);
-      for(let i = 0; i <= steps; i++){
-        const t = i / steps;
-        const angle = startAngle + t * turns * Math.PI * 2;
-        const r = maxR * (1 - t);
-        pts.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
-      }
-    }
-
-    // "Part 2": the thread dissolves into the spec-list table, then re-forms and continues
-    let d;
-    const specEl = document.querySelector('.spec-list');
-    if(specEl){
-      const specRect = specEl.getBoundingClientRect();
-      const wrapRect = wrap.getBoundingClientRect();
-      const left = specRect.left - wrapRect.left;
-      const right = specRect.right - wrapRect.left;
-      const top = specRect.top - wrapRect.top;
-      const bottom = specRect.bottom - wrapRect.top;
-
-      let k = 0;
-      while(k < pts.length - 2 && pts[k + 1][1] < top) k++;
-      const before = pts.slice(0, k + 1);
-      const after = pts.slice(k + 1);
-
-      let tableTrace = `M${left.toFixed(1)},${top.toFixed(1)} L${right.toFixed(1)},${top.toFixed(1)} L${right.toFixed(1)},${bottom.toFixed(1)} L${left.toFixed(1)},${bottom.toFixed(1)} L${left.toFixed(1)},${top.toFixed(1)}`;
-      const rows = specEl.querySelectorAll('.spec-row');
-      rows.forEach((row, i) => {
-        if(i === rows.length - 1) return;
-        const rowRect = row.getBoundingClientRect();
-        const y = rowRect.bottom - wrapRect.top;
-        tableTrace += ` M${left.toFixed(1)},${y.toFixed(1)} L${right.toFixed(1)},${y.toFixed(1)}`;
+  /* ---------------------------------------------------------------- */
+  /* Lenis smooth scroll, synced with GSAP's ticker/ScrollTrigger      */
+  /* ---------------------------------------------------------------- */
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isTouch = window.matchMedia('(hover:none)').matches;
+  let lenis = null;
+  if(!reduceMotion){
+    lenis = new Lenis({ duration: 1.1, smoothWheel: true, autoRaf: false });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+    gsap.ticker.lagSmoothing(0);
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', (e) => {
+        const id = a.getAttribute('href');
+        if(id.length > 1 && document.querySelector(id)){
+          e.preventDefault();
+          lenis.scrollTo(id, { offset: -20 });
+        }
       });
-
-      d = catmullRomPath(before) + ' ' + tableTrace + ' ' + catmullRomPath([[left, bottom], ...after]);
-    } else {
-      d = catmullRomPath(pts);
-    }
-
-    path.setAttribute('d', d);
-    const len = path.getTotalLength();
-    path.style.strokeDasharray = len;
-    path.style.strokeDashoffset = len;
-
-    pulseAt.forEach((idx, i) => {
-      const el = document.getElementById(`thread-pulse-${i+1}`);
-      el.setAttribute('cx', pts[idx][0]);
-      el.setAttribute('cy', pts[idx][1]);
     });
-
-    if(threadTween) threadTween.scrollTrigger.kill();
-    threadTween = gsap.to(path, {
-      strokeDashoffset: 0,
-      ease: 'none',
-      scrollTrigger:{
-        trigger: '.thread-wrap',
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 0.6,
-      }
-    });
-    ScrollTrigger.refresh();
   }
 
-  buildThread();
-  let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(buildThread, 250);
+  /* ---------------------------------------------------------------- */
+  /* Mobile nav toggle                                                  */
+  /* ---------------------------------------------------------------- */
+  const navToggle = document.getElementById('nav-toggle');
+  const mobileNav = document.getElementById('mobile-nav');
+  navToggle.addEventListener('click', () => {
+    const open = mobileNav.classList.toggle('hidden') === false;
+    navToggle.setAttribute('aria-expanded', String(open));
   });
+  mobileNav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    mobileNav.classList.add('hidden');
+    navToggle.setAttribute('aria-expanded', 'false');
+  }));
 
-  // zoom-pulse markers: the thread briefly "zooms in" as you scroll past
-  [1, 2].forEach(i => {
-    const el = document.getElementById(`thread-pulse-${i}`);
-    gsap.timeline({
-      scrollTrigger:{
-        trigger: el,
-        start: 'top 70%',
-        end: 'top 30%',
-        scrub: 0.4,
-      }
-    })
-    .fromTo(el, { scale: 0.4, opacity: 0, transformOrigin: '50% 50%' }, { scale: 2.6, opacity: 0.9, duration: 0.5, ease: 'power1.out' })
-    .to(el, { scale: 0.8, opacity: 0.3, duration: 0.5, ease: 'power1.in' });
-  });
-
-  // Weltkarte: Pins zeigen Platzhalter-Fotokarten bei Hover/Tap
-  document.querySelectorAll('.map-pin').forEach(pin => {
-    const country = pin.dataset.country;
-    const card = document.getElementById('photo-' + country);
-    if(!card) return;
-    function closeAll(){
-      document.querySelectorAll('.photo-card.active').forEach(c => c.classList.remove('active'));
-      document.querySelectorAll('.map-pin.active').forEach(p => p.classList.remove('active'));
+  /* ---------------------------------------------------------------- */
+  /* Custom cursor + magnetic buttons                                   */
+  /* ---------------------------------------------------------------- */
+  if(!isTouch){
+    const dot = document.getElementById('cursor-dot');
+    const ring = document.getElementById('cursor-ring');
+    let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+    let rx = mx, ry = my;
+    window.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+    function cursorTick(){
+      requestAnimationFrame(cursorTick);
+      rx += (mx - rx) * 0.18;
+      ry += (my - ry) * 0.18;
+      dot.style.transform = `translate(${mx}px, ${my}px) translate(-50%, -50%)`;
+      ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%, -50%)`;
     }
-    function show(){ closeAll(); card.classList.add('active'); pin.classList.add('active'); }
-    function hide(){ card.classList.remove('active'); pin.classList.remove('active'); }
-    pin.addEventListener('mouseenter', show);
-    pin.addEventListener('mouseleave', hide);
-    pin.addEventListener('click', (e) => {
-      e.stopPropagation();
-      card.classList.contains('active') ? hide() : show();
+    requestAnimationFrame(cursorTick);
+    document.querySelectorAll('[data-cursor-hover]').forEach(el => {
+      el.addEventListener('mouseenter', () => ring.classList.add('hover'));
+      el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
+    });
+
+    document.querySelectorAll('[data-magnetic]').forEach(el => {
+      el.addEventListener('mousemove', (e) => {
+        const r = el.getBoundingClientRect();
+        const relX = e.clientX - (r.left + r.width / 2);
+        const relY = e.clientY - (r.top + r.height / 2);
+        gsap.to(el, { x: relX * 0.35, y: relY * 0.45, duration: 0.4, ease: 'power2.out' });
+      });
+      el.addEventListener('mouseleave', () => {
+        gsap.to(el, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.4)' });
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Hero rotating subtitle                                             */
+  /* ---------------------------------------------------------------- */
+  (function rotator(){
+    const lines = document.querySelectorAll('#hero-rotator .rotator-line');
+    if(!lines.length) return;
+    gsap.set(lines, { position: 'absolute', top: 0, left: 0, opacity: 0, y: 12 });
+    gsap.set(lines[0], { opacity: 1, y: 0 });
+    let i = 0;
+    setInterval(() => {
+      const next = (i + 1) % lines.length;
+      gsap.to(lines[i], { opacity: 0, y: -12, duration: 0.5, ease: 'power2.in' });
+      gsap.to(lines[next], { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out', delay: 0.15 });
+      i = next;
+    }, 3200);
+  })();
+
+  /* ---------------------------------------------------------------- */
+  /* Section fade-ins                                                   */
+  /* ---------------------------------------------------------------- */
+  document.querySelectorAll('main > section').forEach(section => {
+    gsap.from(section.querySelectorAll('h2, p, form, .eyebrow'), {
+      opacity: 0, y: 24, duration: 0.8, ease: 'power2.out', stagger: 0.08,
+      scrollTrigger: { trigger: section, start: 'top 78%' },
     });
   });
-  document.addEventListener('click', () => {
-    document.querySelectorAll('.photo-card.active').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.map-pin.active').forEach(p => p.classList.remove('active'));
+  gsap.utils.toArray('#about-cards > div, #projects-grid > article').forEach((card, i) => {
+    gsap.from(card, {
+      opacity: 0, y: 30, duration: 0.7, ease: 'power2.out',
+      scrollTrigger: { trigger: card, start: 'top 88%' },
+      delay: (i % 4) * 0.06,
+    });
   });
 
-  // subtle fade-up for panels
-  document.querySelectorAll('.panel').forEach(panel => {
-    gsap.from(panel.querySelectorAll('h2, .about-grid, .tl-item, .skill-cell, .meta-grid, .contact-links, .map-wrap'), {
-      opacity: 0,
-      y: 24,
-      duration: 0.8,
+  /* ---------------------------------------------------------------- */
+  /* Skill rings                                                        */
+  /* ---------------------------------------------------------------- */
+  document.querySelectorAll('#skills-grid .glass').forEach((cell, i) => {
+    const circle = cell.querySelector('.ring-value');
+    const percentEl = cell.querySelector('.ring-percent');
+    const circumference = parseFloat(circle.dataset.circumference);
+    const target = parseFloat(circle.dataset.target);
+    gsap.from(cell, {
+      opacity: 0, y: 24, duration: 0.6, ease: 'power2.out',
+      scrollTrigger: { trigger: cell, start: 'top 90%' },
+      delay: (i % 4) * 0.05,
+    });
+    const counter = { v: 0 };
+    gsap.to(counter, {
+      v: target,
+      duration: 1.4,
       ease: 'power2.out',
-      stagger: 0.08,
-      scrollTrigger:{
-        trigger: panel,
-        start: 'top 75%',
-      }
+      scrollTrigger: { trigger: cell, start: 'top 85%', once: true },
+      onUpdate: () => {
+        percentEl.textContent = Math.round(counter.v);
+        circle.setAttribute('stroke-dashoffset', circumference * (1 - counter.v / 100));
+      },
+    });
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Timeline connecting line                                           */
+  /* ---------------------------------------------------------------- */
+  gsap.to('.tl-line', {
+    scaleY: 1, ease: 'none',
+    scrollTrigger: { trigger: '#timeline .relative.max-w-3xl', start: 'top 70%', end: 'bottom 80%', scrub: 0.6 },
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Animated counters (Numbers section)                                */
+  /* ---------------------------------------------------------------- */
+  document.querySelectorAll('[data-count-to]').forEach(el => {
+    const target = parseFloat(el.dataset.countTo);
+    const suffix = el.dataset.suffix || '';
+    const counter = { v: 0 };
+    gsap.to(counter, {
+      v: target,
+      duration: 1.8,
+      ease: 'power2.out',
+      scrollTrigger: { trigger: el, start: 'top 85%', once: true },
+      onUpdate: () => { el.textContent = Math.round(counter.v) + suffix; },
     });
   });
 </script>
+
+<script>
+  /* ---------------------------------------------------------------- */
+  /* Contact form → mailto fallback (static site, no backend)          */
+  /* ---------------------------------------------------------------- */
+  const contactForm = document.getElementById('contact-form');
+  if(contactForm){
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('cf-name').value;
+      const email = document.getElementById('cf-email').value;
+      const message = document.getElementById('cf-message').value;
+      const subject = encodeURIComponent(`Kontaktanfrage von ${name}`);
+      const body = encodeURIComponent(`${message}\n\n— ${name} (${email})`);
+      window.location.href = `mailto:hallo@paulgarrecht.de?subject=${subject}&body=${body}`;
+    });
+  }
+</script>
+
 </body>
 </html>
